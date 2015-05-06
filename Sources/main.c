@@ -28,20 +28,25 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 #include <stdio.h>
-
-static int i = 0;
+#include "MKL26Z4.h"
+#include "systick.h"
 
 int main(void)
 {
+	SystemCoreClockUpdate();
+	systickSetClockRate(SystemCoreClock);
 
-    /* Write your code here */
+	/* Write your code here */
 	printf("Hello bare world!\n");
 
-    /* This for loop should be replaced. By default this loop allows a single stepping. */
-    for (;;) {
-        i++;
-    }
     /* Never leave main */
+	int i = 0;
+
+	for(;;) {
+		systickDelayMs(1000);
+		printf("%d\n", ++i);
+	}
+
     return 0;
 }
 ////////////////////////////////////////////////////////////////////////////////
