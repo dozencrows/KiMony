@@ -30,21 +30,20 @@
 #include <stdio.h>
 #include "MKL26Z4.h"
 #include "systick.h"
+#include "i2c.h"
+#include "keymatrix.h"
 
 int main(void)
 {
 	SystemCoreClockUpdate();
 	systickSetClockRate(SystemCoreClock);
 
-	/* Write your code here */
-	printf("Hello bare world!\n");
+	i2cInit();
+	keyMatrixInit();
 
-    /* Never leave main */
-	int i = 0;
+	testKeyMatrix();
 
 	for(;;) {
-		systickDelayMs(1000);
-		printf("%d\n", ++i);
 	}
 
     return 0;
