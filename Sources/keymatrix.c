@@ -9,8 +9,7 @@
 
 #include "i2c.h"
 #include "systick.h"
-#include "gpio_util.h"
-
+#include "port_util.h"
 
 #define MCP23008_IODIR      0x00
 #define MCP23008_IPOL       0x01
@@ -35,14 +34,22 @@
 #define MCP_GPIO_POLL_COL3  0xb0
 #define MCP_GPIO_POLL_COL4  0x70
 
-static const GpioPortRef buttonPorts[] =
+static const PortConfig portAButtons =
 {
-	{ PORTA_BASE_PTR, 4 },
-	{ PORTA_BASE_PTR, 12 },
-	{ PORTE_BASE_PTR, 21 },
-	{ PORTE_BASE_PTR, 22 },
-	{ PORTE_BASE_PTR, 23 },
-	{ PORTE_BASE_PTR, 30 },
+	PORTA_BASE_PTR,
+	~(PORT_PCR_ISF_MASK | PORT_PCR_MUX_MASK),
+	PORT_PCR_MUX(1) | PORT_PCR_PS_MASK | PORT_PCR_PE_MASK,
+	2,
+	{ 4, 12 }
+};
+
+static const PortConfig portEButtons =
+{
+	PORTE_BASE_PTR,
+	~(PORT_PCR_ISF_MASK | PORT_PCR_MUX_MASK),
+	PORT_PCR_MUX(1) | PORT_PCR_PS_MASK | PORT_PCR_PE_MASK,
+	4,
+	{ 21, 22, 23, 30 }
 };
 
 void keyMatrixInit()
@@ -56,7 +63,9 @@ void keyMatrixInit()
 
 	SIM_SCGC5 |= SIM_SCGC5_PORTA_MASK|SIM_SCGC5_PORTB_MASK|SIM_SCGC5_PORTE_MASK;
 
-	gpioInitPorts(buttonPorts, sizeof(buttonPorts) / sizeof(buttonPorts[0]), GPIO_PULLUP);
+	portInitialise(&portAButtons);
+	portInitialise(&portEButtons);
+
 	FGPIOA_PDDR &= ~((1<<4)|(1<<12));
 	FGPIOE_PDDR &= ~((1<<21)|(1<<22)|(1<<23)|(1<<30));
 
