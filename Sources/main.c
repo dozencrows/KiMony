@@ -32,16 +32,127 @@
 #include "systick.h"
 #include "i2c.h"
 #include "keymatrix.h"
+#include "lcd.h"
+
+void waitForButton()
+{
+	uint32_t lastKeys = keyMatrixPoll();
+
+	while (1) {
+		uint32_t keys = keyMatrixPoll();
+		uint32_t change = keys ^ lastKeys;
+		if (keys & change) {
+			lastKeys = keys;
+			break;
+		}
+		else {
+			systickDelayMs(100);
+		}
+	}
+}
 
 int main(void)
 {
 	SystemCoreClockUpdate();
+
+	systickInit();
 	systickSetClockRate(SystemCoreClock);
 
 	i2cInit();
 	keyMatrixInit();
+	//testKeyMatrix();
 
-	testKeyMatrix();
+	tftInit();
+	tftSetBacklight(1);
+
+	int frames = 0;
+	systickEventInMs(1000);
+	while (!systickCheckEvent()) {
+		drawTestRectDma();
+		frames++;
+	}
+
+	printf("DMA %d\n", frames);
+	waitForButton();
+	drawTestRect_PEInline_FGPIO(0);
+
+	frames = 0;
+	systickEventInMs(1000);
+	while (!systickCheckEvent()) {
+		drawTestRect_PEInline_FGPIO(0x1ff8);
+		frames++;
+	}
+
+	printf("FGPIO %d\n", frames);
+	waitForButton();
+	drawTestRect_PEInline_FGPIO(0);
+
+	frames = 0;
+	systickEventInMs(1000);
+	while (!systickCheckEvent()) {
+		drawTestRect_PEInline_BME(0x1ff8);
+		frames++;
+	}
+
+	printf("BME %d\n", frames);
+	waitForButton();
+	drawTestRect_PEInline_FGPIO(0);
+
+	frames = 0;
+	systickEventInMs(1000);
+	while (!systickCheckEvent()) {
+		drawTestRect_PEInline_SRAM(0x1ff8);
+		frames++;
+	}
+
+	printf("FGPIO SRAM %d\n", frames);
+	waitForButton();
+	drawTestRect_PEInline_FGPIO(0);
+
+	frames = 0;
+	systickEventInMs(1000);
+	while (!systickCheckEvent()) {
+		drawTestRect_PEInline_SRAM_PDOR(0x1ff8);
+		frames++;
+	}
+
+	printf("FGPIO SRAM PDOR %d\n", frames);
+	waitForButton();
+	drawTestRect_PEInline_FGPIO(0);
+
+	frames = 0;
+	systickEventInMs(1000);
+	while (!systickCheckEvent()) {
+		drawTestRect_PEInline_SRAM_PDOR_BufferFill(0x1ff8);
+		frames++;
+	}
+
+	printf("FGPIO SRAM PDOR BufferFill %d\n", frames);
+	waitForButton();
+	drawTestRect_PEInline_FGPIO(0);
+
+	frames = 0;
+	systickEventInMs(1000);
+	while (!systickCheckEvent()) {
+		drawTestRect_PEInline_WROnly(0x1ff8);
+		frames++;
+	}
+
+	printf("WROnly %d\n", frames);
+	waitForButton();
+	drawTestRect_PEInline_FGPIO(0);
+
+	frames = 0;
+	systickEventInMs(1000);
+	while (!systickCheckEvent()) {
+		drawTestImage(0, 0);
+		drawTestImage(120, 0);
+		drawTestImage(0, 160);
+		drawTestImage(120, 160);
+		frames++;
+	}
+
+	printf("FGPIO Flash %d\n", frames);
 
 	for(;;) {
 	}

@@ -19,6 +19,11 @@ void SysTick_Handler()
 uint32_t sysTickClocksPerMs = CLOCK_HZ_TO_CLOCKS_PER_MS(DEFAULT_SYSTEM_CLOCK);
 uint32_t sysTickConfig = 0;
 
+void systickInit()
+{
+	NVIC_SetPriority(SysTick_IRQn, 0x80);
+}
+
 void systickSetClockRate(unsigned int clock_hz)
 {
 	sysTickClocksPerMs = CLOCK_HZ_TO_CLOCKS_PER_MS(clock_hz);
