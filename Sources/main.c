@@ -36,6 +36,7 @@
 #include "keymatrix.h"
 #include "lcd.h"
 #include "touchscreen.h"
+#include "ir.h"
 
 void waitForButton()
 {
@@ -69,6 +70,7 @@ int main(void)
 	tftInit();
 	tftSetBacklight(1);
 
+	irTest();
 	testKeyMatrix();
 	touchScreenTest();
 
