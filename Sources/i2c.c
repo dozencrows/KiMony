@@ -7,6 +7,20 @@
 #include "i2c.h"
 
 #include "MKL26Z4.h"
+#include "port_util.h"
+
+// Pins to initialise
+// PTE: 0 (SCLK)
+//		1 (MOSI)
+
+static const PortConfig portEPins =
+{
+	PORTE_BASE_PTR,
+	~(PORT_PCR_ISF_MASK | PORT_PCR_MUX_MASK),
+	PORT_PCR_MUX(6),
+	2,
+	{ 0, 1 }
+};
 
 void i2cInit()
 {
@@ -36,24 +50,7 @@ void i2cInit()
 	I2C1_C1 = 0x00U;
 
 	SIM_SCGC5 |= SIM_SCGC5_PORTE_MASK;
-
-	/* PORTE_PCR0: ISF=0,MUX=6 */
-	PORTE_PCR0 = (uint32_t)((PORTE_PCR0 & (uint32_t)~(uint32_t)(
-								PORT_PCR_ISF_MASK |
-								PORT_PCR_MUX(0x01)
-								)) | (uint32_t)(
-								PORT_PCR_MUX(0x06)
-								));
-	/* PORTE_PCR1: ISF=0,MUX=6 */
-	PORTE_PCR1 = (uint32_t)((PORTE_PCR1 & (uint32_t)~(uint32_t)(
-								PORT_PCR_ISF_MASK |
-								PORT_PCR_MUX(0x01)
-								)) | (uint32_t)(
-								PORT_PCR_MUX(0x06)
-								));
-
-	PORTE_PCR0 |= PORT_PCR_PS_MASK|PORT_PCR_PE_MASK;		// Configure pullups on I2C pins
-	PORTE_PCR1 |= PORT_PCR_PS_MASK|PORT_PCR_PE_MASK;
+	portInitialise(&portEPins);
 
 	I2C1_F   = (I2C_F_MULT(0x00) | I2C_F_ICR(0x27));		// Mult = 1, Divider = 480 -> 100KHz for 48MHz clock
 	I2C1_C1 |= I2C_C1_IICEN_MASK;							// Enable module

@@ -69,9 +69,8 @@ int main(void)
 	tftInit();
 	tftSetBacklight(1);
 
-	//testKeyMatrix();
+	testKeyMatrix();
 	touchScreenTest();
-
 
 	int frames = 0;
 	systickEventInMs(1000);
