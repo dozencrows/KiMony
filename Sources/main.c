@@ -31,8 +31,11 @@
 #include "MKL26Z4.h"
 #include "systick.h"
 #include "i2c.h"
+#include "spi.h"
+
 #include "keymatrix.h"
 #include "lcd.h"
+#include "touchscreen.h"
 
 void waitForButton()
 {
@@ -59,11 +62,16 @@ int main(void)
 	systickSetClockRate(SystemCoreClock);
 
 	i2cInit();
-	keyMatrixInit();
-	//testKeyMatrix();
+	spiInit();
 
+	keyMatrixInit();
+	touchScreenInit();
 	tftInit();
 	tftSetBacklight(1);
+
+	//testKeyMatrix();
+	touchScreenTest();
+
 
 	int frames = 0;
 	systickEventInMs(1000);

@@ -9,6 +9,7 @@
 #define SYSTICK_H_
 #include <stdint.h>
 
+extern void systickInit();
 extern void systickSetClockRate(unsigned int clock_hz);
 extern void systickDelayMs(unsigned int delayMs);
 extern void systickEventInMs(unsigned int delayMs);
