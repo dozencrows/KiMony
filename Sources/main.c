@@ -37,6 +37,7 @@
 #include "lcd.h"
 #include "touchscreen.h"
 #include "ir.h"
+#include "flash.h"
 
 void waitForButton()
 {
@@ -69,8 +70,10 @@ int main(void)
 	touchScreenInit();
 	tftInit();
 	tftSetBacklight(1);
+	flashInit();
 
 	irTest();
+	flashTest();
 	testKeyMatrix();
 	touchScreenTest();
 
