@@ -73,7 +73,7 @@ int main(void)
 	flashInit();
 
 	irTest();
-	flashTest();
+	//flashTest();
 	testKeyMatrix();
 	touchScreenTest();
 

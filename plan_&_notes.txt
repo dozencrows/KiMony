@@ -1,0 +1,186 @@
+Plan
+====
+* Sony remote encoding function for LIRC remote data
+* Interrupt-driven I2C.
+* Reduce standard library footprint but still work with semi-hosting
+
+Work-in-progress
+================
+* SPI-driven touch screen.
+  * Need smoothing, calibration, visual feedback test
+
+Done
+====
+* Bump clock rate to 48MHz.
+* Tried turning on compiler optimisations:
+  * O2/O3 doubled the communication rate from ~3KHz to ~6KHz
+  * LPC test receiver had problems reliably receiving that
+* Switch to 'chip-select' mode, using a separate GPIO to signal start and end of packet
+  * Simpler implementation, scope to optimise
+  * LPC test receiver has problem receiving full packet when sender runs at O3 optimisations
+  * Replaced interrupt version with polling - still hard to get faster speeds
+* Implement timer-driven DMA of packet
+  * Store packet as pre-shifted 16 bit words in memory buffer
+  * Two events on timer:
+    * Clear write pin and trigger one DMA cycle to load GPIO data out register (may need to be two separate events?)
+    * Set write pin
+  * Use DMA cycle steal mode to cause one DMA req at a time in step with timer
+  * Use current PTC pin range (4-11) for data
+  * Use current PTA13 pin for write
+  * Ensure PTC0-2 are disabled (3, 12, 13 disabled by default - 14, 15 not present - 12, 13 not connected)
+* Replaced PE GPIO code with just PE GPIO initialisation and optimised C code.
+  * Ensure all bit-banging code is inline
+  * Write bit toggle by single register writes (set then clear), no conditional - keep value preshifted?
+  * Use BME bit field write to set byte onto multiple GPIO lines - actually slower than using FGPIO!
+* Try driving DMA from PIT
+  * Works, but due to error in silicon, writes twice as much
+* Try driving DMA from TPM
+  * Works, and achieves close to theoretical throughput:
+    * DMA runs at bus clock freq (24Mhz)
+    * One full byte write to TFT via DMA takes 6 cycles
+    * Therefore peak transfer rate is 4Mbytes/second - which for 2-byte pixels at 240x320 is 26fps
+    * Test with DMA per row achieves 21fps
+    * Double buffering with CPU writes concurrently doesn't hit performance.
+* Polled I2C driving LPC IR blaster
+  * Works: however, LPC somehow delays the clock after 8th bit, nearly halving the actual speed possible.
+* Investigate ACK delay on LPC side - caused by aggressive power-down after each I2C byte received!
+  * Fixed by delaying power-down to after 4 seconds of idle
+* Investigate why powered-on reset of LPC IR blaster causes it to get stuck with IR output floating...
+  * Gets stuck in ISP because pin 5 is just slightly too low as circuit with pullup and transistor
+    acts as a voltage divider.
+  * Fixed by reducing pullup resistor value.
+* Turn off internal I2C pins on LPC for lower power use
+* Investigate IR blaster power use when in low power mode
+  * IR blaster on PIO0_1: ~0.76ma
+    * LPC itself consumes ~0.06mA
+    * IR blaster consumes ~0.7mA (from pullup into LPC PIO0_1/ISP)
+  * IR blaster on PIO0_0/RXD: ~0.05mA
+* Keypad matrix reading via I2C.
+  * Kept all I2C devices on same power rail to avoid noise
+* Rig up a simple button -> IR code sending test.
+  * Worked with TV on/off, and DVD off - DVD on rarely worked
+* Investigated why DVD on doesn't work
+  * Same code as DVD off, which does work.
+  * Compared TSOP receiver response for original remote and testbed
+    * Logic signals pretty much the same
+    * Achieved same repeat rate, but that didn't help.
+  * Tried increasing power through LEDs - didn't help.
+  * Noticed that pattern below was 100% reproduceable:
+    * Turn on with original remote or Harmony - works
+    * Turn off with test rig - works
+    * Turn on with test rig - works
+    * Turn off with test rig - works
+    * Turn on with test rig - fails
+  * Tried sending power code twice with different toggle bits - on/off now works fine via test rig!
+* Built IR intensity meter out of LPC1114, character LCD, IR photo-diode and op-amp
+* Put backlight under GPIO control.
+* Hardware: tune best IR LED circuit for intensity and power consumption via IR meter
+  * Done: use TSAL6400 IR LEDs with 3.3 Ohm resistors
+* Hardware: Investigate electrical issue on I2C with GPIO expander
+  * Custom circuit has resolved this
+* Switch to dedicated, non-PE project
+* Impemented RC6 encoding for LIRC remote data
+  
+Notes
+=====
+Using ProcessorExpert generated functions for setting bits on GPIO introduces significant overhead:
+* Extra level of function call (register saving, etc)
+* Conditional check to determine which GPIO register to write for single bit (already known in advance)
+* Byte written by reading GPIO data reg, xor with new values, mask, write to GPIO toggle reg
+* Does use Fast GPIO addresses, though.
+
+Pin connections
+===============
+KL26Z -> Buydisplay TFT Parallel
+
+GND		-> 1		(Ground)
+P3V3	-> 2		(Power)
+PTC4	-> 3		(DB0)
+PTC5	-> 4		(DB1)
+PTC6	-> 5		(DB2)
+PTC7	-> 6		(DB3)
+PTC8	-> 7		(DB4)
+PTC9	-> 8		(DB5)
+PTC10	-> 9		(DB6)
+PTC11	-> 10		(DB7)
+
+PTA2	-> 21		(Reset - active low)
+PTA5	-> 23		(TFT Chip Select)
+PTA1	-> 24		(Data/Command)
+PTA13	-> 25		(Write)
+P3V3	-> 26		(Read - pull high)
+
+PTD3	-> 29		(Backlight - active high)
+		
+PTD4	-> 30		(Touchpad Chip Select)
+PTD2	-> 31		(Touchpad interrupt - active low)
+PTD7	-> 32		(Touchpad MISO)
+PTD5	-> 33		(Touchpad SCL)
+PTD6	-> 34		(Touchpad MOSI)
+
+GND		-> 40		(Ground)
+
+Other connections
+=================
+
+KL26Z SPI0 (bus clock)
+	MOSI	PTC6, PTC7, PTD2, PTD3
+	MISO	PTC6, PTC7, PTD2, PTD3
+	SCL		PTC5
+	CS		PTC4
+	(not usable, as PTC4 and 5 are used for TFT Parallel)
+
+KL26Z SPI1	(system clock)
+	MOSI	PTE1, PTD6, PTD7
+	MISO	PTE0, PTE1, PTD6, PTD7
+	SCL		PTD5
+	CS		PTD4
+
+KL26Z I2C0	(bus clock)
+	SCL		PTB0, PTB2, PTC8
+	SDA		PTB1, PTB3, PTC9
+	(PTC pins not usable, see above)
+
+KL26Z I2C1	(system clock)
+	SCL		PTE1, PTC1, PTC10
+	SDA		PTE0, PTA4, PTC2, PTC11
+	(PTC pins not usable, see above)
+
+Suggested use:
+	SPI1 using pins on PTD for touch screen.
+	I2C1 using pins on PTE for switch matrix and IR blaster
+	I2C0 using internal pins PTE24/25, PTD0/1 for accelerometer (I2C address 0x1d)
+	PTD2    -> Touch int
+	PTD3    -> Backlight
+	PTB18   -> Flash SPI CS
+
+Other hardware:
+	Light sensor: ADC0_SE3 on PTE22		(on J4)
+	Capacitative sensor: PTB16, PTB17	(no physical connector)
+	(neither really usable, as they will be inside case)
+	
+Available for GPIO:
+	PTA4, PTA12
+	PTB0, PTB1, PTB2, PTB3, PTB19 
+	PTE30, PTE23, PTE22, PTE21, PTE20
+	
+	Uses for these:
+		* Backlight control.
+		* Switch matrix interrupt
+		* Dedicated buttons
+		* Power switching?
+		* Flash SPI Chip
+
+Image conversions
+=================
+PNG -> RAW:	ffmpeg -vcodec png -i image.png -vcodec rawvideo -f rawvideo -pix_fmt rgb565be image.raw
+RAW -> C:   xxd -i image.raw > Sources/image.c
+
+Encoding Remote Signals
+=======================
+Best to work from LIRC source - Ken Shirriff's code (https://github.com/shirriff/Arduino-IRremote) works differently 
+in that bit encodings appear to be 1's complement of LIRC values (at least for RC6). Also LIRC can split up the
+encoded data into 'pre-data', 'data' and 'post-data' - while Ken's code just uses an integer and bit count for
+the whole. Interestingly the SB-Projects IR site (http://www.sbprojects.com/knowledge/ir/rc6.php) for RC6 matches 
+Ken's code, which is the inverse of LIRC.
+

@@ -8,6 +8,8 @@
 #include "ir.h"
 
 #include <string.h>
+#include <stdio.h>
+
 #include "i2c.h"
 #include "systick.h"
 
@@ -20,6 +22,7 @@ static const uint16_t powerCode2[] = { 2440, 568, 1223, 565, 626, 565, 1223, 565
 #define IR_I2C_ADDRESS	0x70
 #define IR_STAGE_COUNT  64
 #define IR_PACKET_SIZE(packet) (sizeof(packet->header) + sizeof(uint16_t) * packet->header.length)
+#define IR_MAX_DURATION	65535
 
 #define END_DELAY_US	100000
 
@@ -34,6 +37,138 @@ typedef struct _IrPacket {
 	IrPacketHeader	header;
     uint16_t    	timing[IR_STAGE_COUNT];
 } IrPacket;
+
+#define IRENCODER_STATE_UNDEFINED		0
+#define IRENCODER_STATE_ON				1
+#define IRENCODER_STATE_OFF				2
+
+#define IRENCODER_RESULT_OK					0
+#define IRENCODER_RESULT_BUFFER_OVERFLOW	1
+#define IRENCODER_RESULT_TIMER_OVERFLOW		2
+
+typedef struct _IrEncoder {
+	int			state;
+	uint16_t	counter;
+	IrPacket*	packet;
+} IrEncoder;
+
+static void irEncoderBegin(IrEncoder* encoder, IrPacket* packet)
+{
+	encoder->state 					= IRENCODER_STATE_UNDEFINED;
+	encoder->counter				= 0;
+	encoder->packet					= packet;
+	encoder->packet->header.length	= 0;
+}
+
+static int irEncoderRecordTiming(IrEncoder* encoder)
+{
+	uint8_t packetLength = encoder->packet->header.length;
+	if (packetLength == IR_STAGE_COUNT) {
+		return IRENCODER_RESULT_BUFFER_OVERFLOW;
+	}
+
+	encoder->packet->timing[packetLength++] = encoder->counter;
+	encoder->counter = 0;
+	encoder->packet->header.length = packetLength;
+
+	return IRENCODER_RESULT_OK;
+}
+
+static int irEncoderMark(IrEncoder* encoder, uint16_t duration)
+{
+	int result = IRENCODER_RESULT_OK;
+
+	if (encoder->state == IRENCODER_STATE_OFF) {
+		 result = irEncoderRecordTiming(encoder);
+		 if (result != IRENCODER_RESULT_OK) {
+			 return result;
+		 }
+	}
+
+	encoder->state = IRENCODER_STATE_ON;
+	if ((uint32_t)encoder->counter + (uint32_t)duration > IR_MAX_DURATION) {
+		result = IRENCODER_RESULT_TIMER_OVERFLOW;
+	}
+	else {
+		encoder->counter += duration;
+	}
+	return result;
+}
+
+static int irEncoderSpace(IrEncoder* encoder, uint16_t duration)
+{
+	int result = IRENCODER_RESULT_OK;
+
+	if (encoder->state == IRENCODER_STATE_ON) {
+		 result = irEncoderRecordTiming(encoder);
+		 if (result != IRENCODER_RESULT_OK) {
+			 return result;
+		 }
+	}
+
+	encoder->state = IRENCODER_STATE_OFF;
+	if ((uint32_t)encoder->counter + (uint32_t)duration > IR_MAX_DURATION) {
+		result = IRENCODER_RESULT_TIMER_OVERFLOW;
+	}
+	else {
+		encoder->counter += duration;
+	}
+	return result;
+}
+
+static int irEncoderEnd(IrEncoder* encoder, uint16_t duration)
+{
+	int result = irEncoderSpace(encoder, duration);
+	if (result == IRENCODER_RESULT_OK) {
+		result = irEncoderRecordTiming(encoder);
+	}
+	encoder->state = IRENCODER_STATE_UNDEFINED;
+	return result;
+}
+
+#define RC6_HDR_MARK	2666
+#define RC6_HDR_SPACE	889
+#define RC6_T1			444
+#define RC6_RPT_LENGTH	46000
+#define RC6_END_QUIET	2666
+#define TOP_BIT			0x80000000
+
+static int irEncodeRC6(IrPacket* packet, uint32_t data, int bitCount)
+{
+	int result = IRENCODER_RESULT_OK;
+	IrEncoder encoder;
+
+	packet->header.start		= 1;
+	packet->header.repeats		= 1;
+	packet->header.repeat_delay	= 1;
+	irEncoderBegin(&encoder, packet);
+
+	irEncoderMark(&encoder, RC6_HDR_MARK);
+	irEncoderSpace(&encoder, RC6_HDR_SPACE);
+	//irEncoderMark(&encoder, RC6_T1);
+	//irEncoderSpace(&encoder, RC6_T1);
+
+	data <<= 32 - bitCount;
+
+	for (int i = 0; i < bitCount && !result; i++, data <<= 1) {
+		uint16_t t = RC6_T1;
+		if (i == 4) {
+			t += t;
+		}
+
+		if (data & TOP_BIT) {
+			result = !result ? irEncoderSpace(&encoder, t) : result;
+			result = !result ? irEncoderMark(&encoder, t) : result;
+		}
+		else {
+			result = !result ? irEncoderMark(&encoder, t) : result;
+			result = !result ? irEncoderSpace(&encoder, t) : result;
+		}
+	}
+
+	result = !result ? irEncoderEnd(&encoder, RC6_END_QUIET) : result;
+	return result;
+}
 
 static void sendIrPacketAndWait(IrPacket* packet, uint32_t endDelayUs)
 {
@@ -50,21 +185,37 @@ static void sendIrPacketAndWait(IrPacket* packet, uint32_t endDelayUs)
 	sysTickDelayMs(totalMs);
 }
 
+IrPacket irPacket;
+
 void irTest()
 {
-	IrPacket irPacket;
+//	irPacket.header.start			= 1;
+//	irPacket.header.repeats			= 1;
+//	irPacket.header.repeat_delay	= 1;
+//
+//	irPacket.header.length		 	= sizeof(powerCode1a) / sizeof(uint16_t);
+//	memcpy(irPacket.timing, powerCode1a, sizeof(powerCode1a));
+//
+//	sendIrPacketAndWait(&irPacket, 74000);
+//
+//	irPacket.header.length		 	= sizeof(powerCode1b) / sizeof(uint16_t);
+//	memcpy(irPacket.timing, powerCode1b, sizeof(powerCode1b));
+//
+//	sendIrPacketAndWait(&irPacket, 74000);
 
-	irPacket.header.start			= 1;
-	irPacket.header.repeats			= 1;
-	irPacket.header.repeat_delay	= 1;
+	// Need to encode pre-data (0x77) and toggle bit
 
-	irPacket.header.length		 	= sizeof(powerCode1a) / sizeof(uint16_t);
-	memcpy(irPacket.timing, powerCode1a, sizeof(powerCode1a));
-
+	irEncodeRC6(&irPacket, 0xFFB38, 21);
+	sendIrPacketAndWait(&irPacket, 74000);
+	irEncodeRC6(&irPacket, 0xEFB38, 21);
 	sendIrPacketAndWait(&irPacket, 74000);
 
-	irPacket.header.length		 	= sizeof(powerCode1b) / sizeof(uint16_t);
-	memcpy(irPacket.timing, powerCode1b, sizeof(powerCode1b));
-
-	sendIrPacketAndWait(&irPacket, 74000);
+//	//int result = irEncodeRC6(&irPacket, 0xFFB38, 21);
+//	int result = irEncodeRC6(&irPacket, 0xEFB38, 21);
+//
+//	printf("%d: %d\n", result, irPacket.header.length);
+//
+//	for (int i = 0; i < irPacket.header.length; i++) {
+//		printf("%d\n", irPacket.timing[i]);
+//	}
 }
