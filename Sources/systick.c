@@ -19,12 +19,12 @@ void SysTick_Handler()
 uint32_t sysTickClocksPerMs = CLOCK_HZ_TO_CLOCKS_PER_MS(DEFAULT_SYSTEM_CLOCK);
 uint32_t sysTickConfig = 0;
 
-void systickInit()
+void sysTickInit()
 {
 	NVIC_SetPriority(SysTick_IRQn, 0x80);
 }
 
-void systickSetClockRate(unsigned int clock_hz)
+void sysTickSetClockRate(unsigned int clock_hz)
 {
 	sysTickClocksPerMs = CLOCK_HZ_TO_CLOCKS_PER_MS(clock_hz);
 	if (clock_hz > 0xffffff) {
@@ -36,7 +36,7 @@ void systickSetClockRate(unsigned int clock_hz)
 	}
 }
 
-void systickDelayMs(unsigned int delayMs)
+void sysTickDelayMs(unsigned int delayMs)
 {
 	SysTick->CTRL = 0x00U;
 	sysTickCounter = 0;
@@ -51,7 +51,7 @@ void systickDelayMs(unsigned int delayMs)
 	SysTick->CTRL = 0x00U;
 }
 
-void systickEventInMs(unsigned int delayMs)
+void sysTickEventInMs(unsigned int delayMs)
 {
 	SysTick->CTRL = 0x00U;
 	sysTickCounter = 0;
@@ -60,7 +60,7 @@ void systickEventInMs(unsigned int delayMs)
 	SysTick->CTRL = 0x03U | sysTickConfig;
 }
 
-int systickCheckEvent()
+int sysTickCheckEvent()
 {
 	if (sysTickCounter) {
 		SysTick->CTRL = 0x00U;
@@ -73,7 +73,7 @@ int systickCheckEvent()
 
 const uint32_t sysTickMax = 0xffffff;
 
-void systickStartCycleCount()
+void sysTickStartCycleCount()
 {
 	SysTick->CTRL = 0x00U;
 	sysTickCounter = 0;
@@ -83,7 +83,7 @@ void systickStartCycleCount()
 	SysTick->CTRL = 0x07;
 }
 
-uint32_t systickStopCycleCount()
+uint32_t sysTickStopCycleCount()
 {
 	SysTick->CTRL = 0x00U;
 	return (sysTickCounter << 24) | (sysTickMax + 1 - SysTick->VAL);

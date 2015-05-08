@@ -51,7 +51,7 @@ void waitForButton()
 			break;
 		}
 		else {
-			systickDelayMs(100);
+			sysTickDelayMs(100);
 		}
 	}
 }
@@ -60,8 +60,8 @@ int main(void)
 {
 	SystemCoreClockUpdate();
 
-	systickInit();
-	systickSetClockRate(SystemCoreClock);
+	sysTickInit();
+	sysTickSetClockRate(SystemCoreClock);
 
 	i2cInit();
 	spiInit();
@@ -78,8 +78,8 @@ int main(void)
 	touchScreenTest();
 
 	int frames = 0;
-	systickEventInMs(1000);
-	while (!systickCheckEvent()) {
+	sysTickEventInMs(1000);
+	while (!sysTickCheckEvent()) {
 		drawTestRectDma();
 		frames++;
 	}
@@ -89,8 +89,8 @@ int main(void)
 	drawTestRect_PEInline_FGPIO(0);
 
 	frames = 0;
-	systickEventInMs(1000);
-	while (!systickCheckEvent()) {
+	sysTickEventInMs(1000);
+	while (!sysTickCheckEvent()) {
 		drawTestRect_PEInline_FGPIO(0x1ff8);
 		frames++;
 	}
@@ -100,8 +100,8 @@ int main(void)
 	drawTestRect_PEInline_FGPIO(0);
 
 	frames = 0;
-	systickEventInMs(1000);
-	while (!systickCheckEvent()) {
+	sysTickEventInMs(1000);
+	while (!sysTickCheckEvent()) {
 		drawTestRect_PEInline_BME(0x1ff8);
 		frames++;
 	}
@@ -111,8 +111,8 @@ int main(void)
 	drawTestRect_PEInline_FGPIO(0);
 
 	frames = 0;
-	systickEventInMs(1000);
-	while (!systickCheckEvent()) {
+	sysTickEventInMs(1000);
+	while (!sysTickCheckEvent()) {
 		drawTestRect_PEInline_SRAM(0x1ff8);
 		frames++;
 	}
@@ -122,8 +122,8 @@ int main(void)
 	drawTestRect_PEInline_FGPIO(0);
 
 	frames = 0;
-	systickEventInMs(1000);
-	while (!systickCheckEvent()) {
+	sysTickEventInMs(1000);
+	while (!sysTickCheckEvent()) {
 		drawTestRect_PEInline_SRAM_PDOR(0x1ff8);
 		frames++;
 	}
@@ -133,8 +133,8 @@ int main(void)
 	drawTestRect_PEInline_FGPIO(0);
 
 	frames = 0;
-	systickEventInMs(1000);
-	while (!systickCheckEvent()) {
+	sysTickEventInMs(1000);
+	while (!sysTickCheckEvent()) {
 		drawTestRect_PEInline_SRAM_PDOR_BufferFill(0x1ff8);
 		frames++;
 	}
@@ -144,8 +144,8 @@ int main(void)
 	drawTestRect_PEInline_FGPIO(0);
 
 	frames = 0;
-	systickEventInMs(1000);
-	while (!systickCheckEvent()) {
+	sysTickEventInMs(1000);
+	while (!sysTickCheckEvent()) {
 		drawTestRect_PEInline_WROnly(0x1ff8);
 		frames++;
 	}
@@ -155,8 +155,8 @@ int main(void)
 	drawTestRect_PEInline_FGPIO(0);
 
 	frames = 0;
-	systickEventInMs(1000);
-	while (!systickCheckEvent()) {
+	sysTickEventInMs(1000);
+	while (!sysTickCheckEvent()) {
 		drawTestImage(0, 0);
 		drawTestImage(120, 0);
 		drawTestImage(0, 160);

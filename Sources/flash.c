@@ -8,7 +8,7 @@
 #include <stdio.h>
 #include "spi.h"
 #include "MKL26Z4.h"
-#include "port_util.h"
+#include "ports.h"
 
 // Pins to initialise
 // PTB: 18 (Chip Select)

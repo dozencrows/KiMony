@@ -7,7 +7,7 @@
 #include "i2c.h"
 
 #include "MKL26Z4.h"
-#include "port_util.h"
+#include "ports.h"
 
 // Pins to initialise
 // PTE: 0 (SCLK)

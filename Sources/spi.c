@@ -7,7 +7,7 @@
 #include "spi.h"
 
 #include "MKL26Z4.h"
-#include "port_util.h"
+#include "ports.h"
 
 // Pins to initialise
 // PTD: 5 (SCLK)

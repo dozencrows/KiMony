@@ -4,7 +4,7 @@
  *  Created on: 7 May 2015
  *      Author: ntuckett
  */
-#include "port_util.h"
+#include "ports.h"
 
 void portInitialise(PortConfigPtr config)
 {

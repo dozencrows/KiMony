@@ -47,7 +47,7 @@ static void sendIrPacketAndWait(IrPacket* packet, uint32_t endDelayUs)
 	i2cSendBlock(IR_I2C_ADDRESS, &packet->header.start, IR_PACKET_SIZE(packet));
 
 	uint32_t totalMs = (totalUs + 999) / 1000;
-	systickDelayMs(totalMs);
+	sysTickDelayMs(totalMs);
 }
 
 void irTest()

@@ -9,7 +9,7 @@
 
 #include "i2c.h"
 #include "systick.h"
-#include "port_util.h"
+#include "ports.h"
 
 #define MCP23008_IODIR      0x00
 #define MCP23008_IPOL       0x01
@@ -134,6 +134,6 @@ void testKeyMatrix()
 			printf("Keypad: %08x\n", keypadVal);
 		}
 
-		systickDelayMs(50);
+		sysTickDelayMs(50);
 	}
 }

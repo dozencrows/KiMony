@@ -8,7 +8,7 @@
 
 #include "MKL26Z4.h"
 #include "systick.h"
-#include "port_util.h"
+#include "ports.h"
 
 // Ports & pins to initialise:
 //  All as GPIO outputs
@@ -140,7 +140,7 @@ void tftReset()
 	FGPIO_PSOR_REG(FGPIOA) = TFT_RS_MASK;
 
 	tftWriteCmd(0x01);	// SW reset
-	systickDelayMs(5);
+	sysTickDelayMs(5);
 	tftWriteCmd(0x28);	// display off
 
 	tftWriteCmd(0xEF);
@@ -248,7 +248,7 @@ void tftReset()
 
 	tftWriteCmd(ILI9341_SLPOUT);    //Exit Sleep
 
-	systickDelayMs(120);
+	sysTickDelayMs(120);
 	tftWriteCmd(ILI9341_DISPON);    //Display on
 }
 
@@ -717,7 +717,7 @@ void tftInit()
 	FGPIOD_PDDR |= TFT_BL_MASK;
 
 	FGPIO_PSOR_REG(FGPIOA) = TFT_CS_MASK | TFT_WR_MASK | TFT_DC_MASK | TFT_RS_MASK;
-	systickDelayMs(5);
+	sysTickDelayMs(5);
 
 	tftReset();
 	tftInitDma();

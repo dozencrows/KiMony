@@ -1,12 +1,12 @@
 /*
- * port_util.h
+ * ports.h
  *
  *  Created on: 7 May 2015
  *      Author: ntuckett
  */
 
-#ifndef PORT_UTIL_H_
-#define PORT_UTIL_H_
+#ifndef PORTS_H_
+#define PORTS_H_
 
 #include "MKL26Z4.h"
 

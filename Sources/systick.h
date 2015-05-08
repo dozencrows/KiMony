@@ -9,12 +9,12 @@
 #define SYSTICK_H_
 #include <stdint.h>
 
-extern void systickInit();
-extern void systickSetClockRate(unsigned int clock_hz);
-extern void systickDelayMs(unsigned int delayMs);
-extern void systickEventInMs(unsigned int delayMs);
-extern int systickCheckEvent();
-extern void systickStartCycleCount();
-extern uint32_t systickStopCycleCount();
+extern void sysTickInit();
+extern void sysTickSetClockRate(unsigned int clock_hz);
+extern void sysTickDelayMs(unsigned int delayMs);
+extern void sysTickEventInMs(unsigned int delayMs);
+extern int sysTickCheckEvent();
+extern void sysTickStartCycleCount();
+extern uint32_t sysTickStopCycleCount();
 
 #endif /* SYSTICK_H_ */

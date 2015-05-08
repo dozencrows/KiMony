@@ -11,7 +11,7 @@
 #include <stdio.h>
 
 #include "spi.h"
-#include "port_util.h"
+#include "ports.h"
 
 // Pins to initialise
 // PTD: 2 (Interrupt)
