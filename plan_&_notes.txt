@@ -1,12 +1,18 @@
 Plan
 ====
-* Interrupt-driven I2C.
-* Reduce standard library footprint but still work with semi-hosting
+* Touch screen smoothing, calibration
+* Scanline renderer for rectangles
+* Scanline renderer for text
+* Interrupt-driven button reading.
+* Interrupt-driven touchscreen reading
+* Interrupt/DMA driven I2C.
+* Interrupt/DMA driven SPI. 
 
 Work-in-progress
 ================
-* SPI-driven touch screen.
-  * Need smoothing, calibration, visual feedback test
+* Reduce standard library footprint but still work with semi-host printf
+  * Tried this with workaround from http://mcuoneclipse.com/2014/07/12/printf-for-the-frdm-k64f-board-and-kinetis-design-studio/
+    but still only prints first character
 
 Done
 ====
@@ -71,6 +77,7 @@ Done
     * Turn off with test rig - works
     * Turn on with test rig - fails
   * Tried sending power code twice with different toggle bits - on/off now works fine via test rig!
+* SPI-driven touch screen - basic reading working
 * Built IR intensity meter out of LPC1114, character LCD, IR photo-diode and op-amp
 * Put backlight under GPIO control.
 * Hardware: tune best IR LED circuit for intensity and power consumption via IR meter
