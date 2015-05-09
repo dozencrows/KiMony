@@ -1,6 +1,5 @@
 Plan
 ====
-* Sony remote encoding function for LIRC remote data
 * Interrupt-driven I2C.
 * Reduce standard library footprint but still work with semi-hosting
 
@@ -79,7 +78,8 @@ Done
 * Hardware: Investigate electrical issue on I2C with GPIO expander
   * Custom circuit has resolved this
 * Switch to dedicated, non-PE project
-* Impemented RC6 encoding for LIRC remote data
+* Implemented RC6 encoding for LIRC remote data
+* Implemented Sony remote encoding function for LIRC remote data
   
 Notes
 =====
@@ -184,3 +184,7 @@ encoded data into 'pre-data', 'data' and 'post-data' - while Ken's code just use
 the whole. Interestingly the SB-Projects IR site (http://www.sbprojects.com/knowledge/ir/rc6.php) for RC6 matches 
 Ken's code, which is the inverse of LIRC.
 
+IR Signal Interference
+======================
+If some codes for different devices are sent too close together, the devices can behave incorrectly:
+* E.g. sending Sony TV KEY_POWER too close to Phillips HTS KEY_POWER prevents the HTS turning on or off.

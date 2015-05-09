@@ -145,8 +145,6 @@ static int irEncodeRC6(IrPacket* packet, uint32_t data, int bitCount)
 
 	irEncoderMark(&encoder, RC6_HDR_MARK);
 	irEncoderSpace(&encoder, RC6_HDR_SPACE);
-	//irEncoderMark(&encoder, RC6_T1);
-	//irEncoderSpace(&encoder, RC6_T1);
 
 	data <<= 32 - bitCount;
 
@@ -167,6 +165,45 @@ static int irEncodeRC6(IrPacket* packet, uint32_t data, int bitCount)
 	}
 
 	result = !result ? irEncoderEnd(&encoder, RC6_END_QUIET) : result;
+	return result;
+}
+
+#define SIRC_HDR_MARK	2440
+#define SIRC_HDR_SPACE	568
+#define SIRC_ONE_MARK	1223
+#define SIRC_ONE_SPACE	565
+#define SIRC_ZERO_MARK	626
+#define SIRC_ZERO_SPACE	565
+#define SIRC_GAP_MS		45
+#define SIRC_REPEATS	3
+
+static int irEncodeSIRC(IrPacket* packet, uint32_t data, int bitCount)
+{
+	int result = IRENCODER_RESULT_OK;
+	IrEncoder encoder;
+
+	packet->header.start		= 1;
+	packet->header.repeats		= SIRC_REPEATS;
+	packet->header.repeat_delay	= SIRC_GAP_MS;
+	irEncoderBegin(&encoder, packet);
+
+	irEncoderMark(&encoder, SIRC_HDR_MARK);
+	irEncoderSpace(&encoder, SIRC_HDR_SPACE);
+
+	data <<= 32 - bitCount;
+
+	for (int i = 0; i < bitCount && !result; i++, data <<= 1) {
+		if (data & TOP_BIT) {
+			result = !result ? irEncoderMark(&encoder, SIRC_ONE_MARK) : result;
+			result = !result ? irEncoderSpace(&encoder, SIRC_ONE_SPACE) : result;
+		}
+		else {
+			result = !result ? irEncoderMark(&encoder, SIRC_ZERO_MARK) : result;
+			result = !result ? irEncoderSpace(&encoder, SIRC_ZERO_SPACE) : result;
+		}
+	}
+
+	result = !result ? irEncoderEnd(&encoder, 0) : result;
 	return result;
 }
 
@@ -207,8 +244,15 @@ void irTest()
 
 	irEncodeRC6(&irPacket, 0xFFB38, 21);
 	sendIrPacketAndWait(&irPacket, 74000);
+
 	irEncodeRC6(&irPacket, 0xEFB38, 21);
 	sendIrPacketAndWait(&irPacket, 74000);
+
+	sysTickDelayMs(1000);
+
+	irEncodeSIRC(&irPacket, 0xA90, 12);
+	sendIrPacketAndWait(&irPacket, 45000);
+
 
 //	//int result = irEncodeRC6(&irPacket, 0xFFB38, 21);
 //	int result = irEncodeRC6(&irPacket, 0xEFB38, 21);
