@@ -12,6 +12,7 @@
 
 #include "spi.h"
 #include "ports.h"
+#include "renderer.h"
 
 // Pins to initialise
 // PTD: 2 (Interrupt)
@@ -20,11 +21,40 @@
 static const PortConfig portDPins =
 {
 	PORTD_BASE_PTR,
-	~(PORT_PCR_ISF_MASK | PORT_PCR_MUX_MASK),
+	~(PORT_PCR_ISF_MASK | PORT_PCR_MUX_MASK | PORT_PCR_IRQC_MASK),
 	PORT_PCR_MUX(1),
 	2,
 	{ 2, 4 }
 };
+
+static const PortConfig portDPinInterrupts =
+{
+	PORTD_BASE_PTR,
+	~(PORT_PCR_IRQC_MASK),
+	PORT_PCR_IRQC(0x0a),		// falling edge interrupt
+	1,
+	{ 2 }
+};
+
+static volatile uint8_t touchScreenIntFlag = 0;
+
+void PORTC_PORTD_IRQHandler()
+{
+	uint32_t portCISFR = PORTC_ISFR;
+	uint32_t portDISFR = PORTD_ISFR;
+
+	if (portDISFR & (1 << 2)) {
+		touchScreenIntFlag++;
+	}
+
+	if (portCISFR) {
+		PORTC_ISFR = portCISFR;
+	}
+
+	if (portDISFR) {
+		PORTD_ISFR = portDISFR;
+	}
+}
 
 void touchScreenGetSamples(uint8_t cmd1, uint8_t cmd2, uint16_t* buffer, uint16_t count)
 {
@@ -66,33 +96,108 @@ void touchScreenGetSamples(uint8_t cmd1, uint8_t cmd2, uint16_t* buffer, uint16_
 void touchScreenInit()
 {
 	portInitialise(&portDPins);
+	portInitialise(&portDPinInterrupts);
 	FGPIOD_PDDR &= ~(1 << 2);
 	FGPIOD_PDDR |= (1 << 4);
 	FGPIOD_PSOR = (1 << 4);
+	NVIC_EnableIRQ(PORTC_PORTD_IRQn);
 }
 
 void touchScreenTest()
 {
-	int touch_count = 5;
+}
 
-	while(touch_count > 0) {
-		printf("Waiting for touch...\n");
-		uint32_t port_data;
-		do {
-			port_data = FGPIOD_PDIR;
-		} while (port_data & (1 << 2));
+static void waitForTouch()
+{
+	PORTD_ISFR = 1 << 2;
+	touchScreenIntFlag = 0;
+	uint8_t lastIntFlag = 0;
+	do {
+		lastIntFlag = touchScreenIntFlag;
+	} while (!lastIntFlag);
 
-		touch_count--;
+	uint8_t nextIntFlag = lastIntFlag;
+	do {
+		lastIntFlag = nextIntFlag;
+		sysTickDelayMs(8);
+		nextIntFlag = touchScreenIntFlag;
+	} while (nextIntFlag != lastIntFlag);
+}
 
-		uint16_t x_buffer[6], y_buffer[6];
+static void getRawTouch(uint16_t* touchData, uint16_t sampleCount)
+{
+	NVIC_DisableIRQ(PORTC_PORTD_IRQn);
+	FGPIOD_PCOR = (1 << 4);
+	touchScreenGetSamples(TS_GETX_1, TS_GETX_2, touchData, sampleCount);
+	touchScreenGetSamples(TS_GETY_1, TS_GETY_2, touchData + sampleCount, sampleCount);
+	FGPIOD_PSOR = (1 << 4);
+	touchScreenIntFlag = 0;
+	// Ensure no pending interrupt
+	PORTD_ISFR = 1 << 2;
+	NVIC_EnableIRQ(PORTC_PORTD_IRQn);
+}
 
-		FGPIOD_PCOR = (1 << 4);
-		touchScreenGetSamples(TS_GETX_1, TS_GETX_2, x_buffer, 6);
-		touchScreenGetSamples(TS_GETY_1, TS_GETY_2, y_buffer, 6);
-		FGPIOD_PSOR = (1 << 4);
-
-		printf("Touch!\n");
-		printf("%d %d %d %d %d %d: %d %d %d %d %d %d\n", x_buffer[0], x_buffer[1], x_buffer[2], x_buffer[3], x_buffer[4], x_buffer[5],
-											  	  	     y_buffer[0], y_buffer[1], y_buffer[2], y_buffer[3], y_buffer[4], y_buffer[5]);
+static void renderCross(uint16_t x, uint16_t y, uint16_t size, uint16_t colour)
+{
+	int xclip = x - (size / 2);
+	if (xclip < 0) {
+		rendererDrawHLine(0, y, size + xclip, colour);
 	}
+	else {
+		rendererDrawHLine(x - size / 2, y, size, colour);
+	}
+
+	int yclip = y - (size / 2);
+	if (yclip < 0) {
+		rendererDrawVLine(x, 0, size + yclip, colour);
+	}
+	else {
+		rendererDrawVLine(x, y - size / 2, size, colour);
+	}
+}
+
+void touchScreenCalibrate()
+{
+	uint16_t touchData[12];
+	uint32_t port_data;
+
+	rendererClearScreen();
+	rendererNewDrawList();
+	renderCross(7, 7, 15, 0xffff);
+	rendererRenderDrawList();
+
+	waitForTouch();
+	getRawTouch(touchData, 6);
+
+	rendererClearScreen();
+	rendererNewDrawList();
+	renderCross(SCREEN_WIDTH - 8, 7, 15, 0xffff);
+	rendererRenderDrawList();
+
+	waitForTouch();
+	getRawTouch(touchData, 6);
+
+	rendererClearScreen();
+	rendererNewDrawList();
+	renderCross(SCREEN_WIDTH - 8, SCREEN_HEIGHT - 8, 15, 0xffff);
+	rendererRenderDrawList();
+
+	waitForTouch();
+	getRawTouch(touchData, 6);
+
+	rendererClearScreen();
+	rendererNewDrawList();
+	renderCross(7, SCREEN_HEIGHT - 8, 15, 0xffff);
+	rendererRenderDrawList();
+
+	waitForTouch();
+	getRawTouch(touchData, 6);
+
+	rendererClearScreen();
+	rendererNewDrawList();
+	renderCross(SCREEN_WIDTH/2, SCREEN_HEIGHT/2, 15, 0xffff);
+	rendererRenderDrawList();
+
+	waitForTouch();
+	getRawTouch(touchData, 6);
 }

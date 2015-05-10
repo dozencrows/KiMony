@@ -8,9 +8,6 @@
 #include <string.h>
 #include "lcd.h"
 
-#define SCREEN_WIDTH	240
-#define SCREEN_HEIGHT	320
-
 #define DRAWLIST_BUFFER_SIZE	1024
 
 #define DLE_FLAG_ACTIVE_MASK	0x01
@@ -173,13 +170,21 @@ static void renderScanLine(uint16_t y)
 	}
 }
 
-void rendererInit() {
+void rendererInit()
+{
+	rendererClearScreen();
+	rendererNewDrawList();
+}
+
+void rendererClearScreen()
+{
 	tftStartBlit(0, 0, SCREEN_WIDTH, SCREEN_HEIGHT);
 	tftClear(SCREEN_WIDTH * SCREEN_HEIGHT);
 	tftEndBlit();
 }
 
-void rendererNewDrawList() {
+void rendererNewDrawList()
+{
 	drawListEnd = 0;
 	drawListMinX = SCREEN_WIDTH;
 	drawListMinY = SCREEN_HEIGHT;
