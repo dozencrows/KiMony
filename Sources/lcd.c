@@ -758,13 +758,25 @@ void tftBlit(uint16_t* buffer, size_t pixels)
 {
 	uint8_t* pixel_ptr = (uint8_t*)buffer;
 
-	for (int x = 0; x < pixels; x++, pixel_ptr += 2) {
+	for (size_t x = 0; x < pixels; x++, pixel_ptr += 2) {
 		FGPIO_PCOR_REG(FGPIOA) = TFT_WR_MASK;
 		FGPIO_PDOR_REG(FGPIOC) = ((uint32_t)*(pixel_ptr+1) << 4) & 0xff0U;
 		FGPIO_PSOR_REG(FGPIOA) = TFT_WR_MASK;
 
 		FGPIO_PCOR_REG(FGPIOA) = TFT_WR_MASK;
 		FGPIO_PDOR_REG(FGPIOC) = ((uint32_t)(*pixel_ptr+0) << 4) & 0xff0U;;
+		FGPIO_PSOR_REG(FGPIOA) = TFT_WR_MASK;
+	}
+}
+
+void tftClear(size_t pixels)
+{
+	FGPIO_PDOR_REG(FGPIOC) = 0;
+	for (size_t x = 0; x < pixels; x++) {
+		FGPIO_PCOR_REG(FGPIOA) = TFT_WR_MASK;
+		FGPIO_PSOR_REG(FGPIOA) = TFT_WR_MASK;
+
+		FGPIO_PCOR_REG(FGPIOA) = TFT_WR_MASK;
 		FGPIO_PSOR_REG(FGPIOA) = TFT_WR_MASK;
 	}
 }

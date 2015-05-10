@@ -72,6 +72,7 @@ int main(void)
 	tftInit();
 	tftSetBacklight(1);
 	flashInit();
+	rendererInit();
 
 	irTest();
 	//flashTest();

@@ -8,6 +8,7 @@
 #ifndef RENDERER_H_
 #define RENDERER_H_
 
+extern void rendererInit();
 extern void rendererTest();
 
 #endif /* RENDERER_H_ */

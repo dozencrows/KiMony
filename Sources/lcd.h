@@ -14,6 +14,7 @@ extern void tftInit();
 extern void tftSetBacklight(int status);
 extern void tftStartBlit(int x, int y, int width, int height);
 extern void tftBlit(uint16_t* buffer, size_t pixels);
+extern void tftClear(size_t pixels);
 extern void tftEndBlit();
 
 extern void drawTestRect_PEInline_FGPIO(uint16_t colour);
