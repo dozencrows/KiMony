@@ -114,6 +114,13 @@ static void renderScanLine(uint16_t y)
 						}
 						break;
 					}
+					case DLE_TYPE_RECT: {
+						Rect* rect = (Rect*)dle;
+						if (y == rect->y) {
+							dle->flags |= DLE_FLAG_ACTIVE_MASK;
+						}
+						break;
+					}
 					default: {
 						break;
 					}
@@ -140,6 +147,19 @@ static void renderScanLine(uint16_t y)
 						}
 						dle->flags &= ~DLE_FLAG_ACTIVE_MASK;
 						dle->flags |= DLE_FLAG_DRAWN_MASK;
+						break;
+					}
+					case DLE_TYPE_RECT: {
+						Rect* rect = (Rect*)dle;
+						if (y == rect->y + rect->height) {
+							dle->flags &= ~DLE_FLAG_ACTIVE_MASK;
+							dle->flags |= DLE_FLAG_DRAWN_MASK;
+						}
+						else {
+							for (uint16_t x = 0; x < rect->width; x++) {
+								pixelBuffer[rect->x - drawListMinX + x] = rect->colour;
+							}
+						}
 						break;
 					}
 					default: {
@@ -197,6 +217,22 @@ void rendererDrawHLine(uint16_t x, uint16_t y, uint16_t length, uint16_t colour)
 	}
 }
 
+void rendererDrawRect(uint16_t x, uint16_t y, uint16_t width, uint16_t height, uint16_t colour)
+{
+	Rect* rect = (Rect*) allocDrawListEntry(sizeof(Rect));
+
+	if (rect) {
+		rect->dle.flags 	= DLE_TYPE_RECT;
+		rect->x				= x;
+		rect->y				= y;
+		rect->width			= width;
+		rect->height		= height;
+		rect->colour		= colour;
+
+		updateDrawListBounds(x, y, x + width, y + height);
+	}
+}
+
 void rendererRenderDrawList() {
 	if (drawListMaxX > drawListMinX) {
 		tftStartBlit(drawListMinX, drawListMinY, drawListMaxX - drawListMinX, drawListMaxY - drawListMinY);
@@ -213,10 +249,11 @@ void rendererRenderDrawList() {
 void rendererTest()
 {
 	rendererNewDrawList();
-	rendererDrawVLine(0, 0, 320, 0x1ff8);
-	rendererDrawVLine(120, 32, 256, 0xf81f);
+	rendererDrawVLine(0, 32, 256, 0xffff);
+	rendererDrawVLine(119, 32, 256, 0xffff);
 	rendererDrawHLine(0, 32, 120, 0xffff);
-	rendererDrawHLine(0, 288, 120, 0xffff);
+	rendererDrawHLine(0, 287, 120, 0xffff);
+	rendererDrawRect(1, 33, 118, 254, 0xfa00);
 	rendererRenderDrawList();
 }
 
