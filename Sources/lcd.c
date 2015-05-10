@@ -65,17 +65,17 @@ static const PortConfig portDPins =
 #define ILI9341_PTLON   0x12
 #define ILI9341_NORON   0x13
 
-#define ILI9341_RDMODE  0x0A
-#define ILI9341_RDMADCTL  0x0B
-#define ILI9341_RDPIXFMT  0x0C
-#define ILI9341_RDIMGFMT  0x0A
+#define ILI9341_RDMODE  	0x0A
+#define ILI9341_RDMADCTL  	0x0B
+#define ILI9341_RDPIXFMT  	0x0C
+#define ILI9341_RDIMGFMT  	0x0A
 #define ILI9341_RDSELFDIAG  0x0F
 
-#define ILI9341_INVOFF  0x20
-#define ILI9341_INVON   0x21
-#define ILI9341_GAMMASET 0x26
-#define ILI9341_DISPOFF 0x28
-#define ILI9341_DISPON  0x29
+#define ILI9341_INVOFF  	0x20
+#define ILI9341_INVON   	0x21
+#define ILI9341_GAMMASET 	0x26
+#define ILI9341_DISPOFF 	0x28
+#define ILI9341_DISPON  	0x29
 
 #define ILI9341_CASET   0x2A
 #define ILI9341_PASET   0x2B
@@ -192,7 +192,7 @@ void tftReset()
 	tftWriteData(0x86);  //--
 
 	tftWriteCmd(ILI9341_MADCTL);    // Memory Access Control
-	tftWriteData(0x48);
+	tftWriteData(0x88);				// x -> x, y -> h - y
 
 	tftWriteCmd(ILI9341_PIXFMT);
 	tftWriteData(0x55);
