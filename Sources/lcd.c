@@ -733,3 +733,43 @@ void tftSetBacklight(int status)
 	}
 }
 
+void tftStartBlit(int x, int y, int width, int height)
+{
+	int x1 = x + width - 1;
+	int y1 = y + height - 1;
+
+	tftWriteCmd(ILI9341_CASET); // Column addr set
+	tftWriteData(x >> 8);
+	tftWriteData(x & 0xFF);     // XSTART
+	tftWriteData(x1 >> 8);
+	tftWriteData(x1 & 0xFF);     // XEND
+
+	tftWriteCmd(ILI9341_PASET); // Row addr set
+	tftWriteData(y>>8);
+	tftWriteData(y);     // YSTART
+	tftWriteData(y1>>8);
+	tftWriteData(y1);     // YEND
+
+	tftWriteCmd(ILI9341_RAMWR); // write to RAM
+	FGPIO_PCOR_REG(FGPIOA) = TFT_CS_MASK;
+}
+
+void tftBlit(uint16_t* buffer, size_t pixels)
+{
+	uint8_t* pixel_ptr = (uint8_t*)buffer;
+
+	for (int x = 0; x < pixels; x++, pixel_ptr += 2) {
+		FGPIO_PCOR_REG(FGPIOA) = TFT_WR_MASK;
+		FGPIO_PDOR_REG(FGPIOC) = ((uint32_t)*(pixel_ptr+1) << 4) & 0xff0U;
+		FGPIO_PSOR_REG(FGPIOA) = TFT_WR_MASK;
+
+		FGPIO_PCOR_REG(FGPIOA) = TFT_WR_MASK;
+		FGPIO_PDOR_REG(FGPIOC) = ((uint32_t)(*pixel_ptr+0) << 4) & 0xff0U;;
+		FGPIO_PSOR_REG(FGPIOA) = TFT_WR_MASK;
+	}
+}
+
+void tftEndBlit()
+{
+	FGPIO_PSOR_REG(FGPIOA) = TFT_CS_MASK;
+}
