@@ -228,23 +228,26 @@ void touchScreenTest()
 {
 	uint16_t touchData[10];
 
+	rendererClearScreen();
 	spiSetBitRate(3, 8);	// Should be 2MHz for 48MHz system clock
 
 	while(1) {
-		//waitForTouch();
-		getRawTouch(touchData, 5);
-		uint16_t touchPt[2];
-		uint16_t screenPt[2];
+		if (!(FGPIOD_PDIR & (1 << 2))) {
+			getRawTouch(touchData, 5);
+			uint16_t touchPt[2];
+			uint16_t screenPt[2];
 
-		touchPt[0] = fastMedian5(touchData);
-		touchPt[1] = fastMedian5(touchData + 5);
+			touchPt[0] = fastMedian5(touchData);
+			touchPt[1] = fastMedian5(touchData + 5);
 
-		getCalibratedPoint(touchPt, screenPt);
-		//printf("(%d, %d) -> (%d, %d)\n", touchPt[0], touchPt[1], screenPt[0], screenPt[1]);
+			getCalibratedPoint(touchPt, screenPt);
+			//printf("(%d, %d) -> (%d, %d)\n", touchPt[0], touchPt[1], screenPt[0], screenPt[1]);
 
-		rendererClearScreen();
-		rendererNewDrawList();
-		renderCross(screenPt[0], screenPt[1], 15, 0xffff);
-		rendererRenderDrawList();
+			//rendererClearScreen();
+			rendererNewDrawList();
+			//renderCross(screenPt[0], screenPt[1], 15, 0xffff);
+			rendererDrawHLine(screenPt[0], screenPt[1], 1, 0xffff);
+			rendererRenderDrawList();
+		}
 	}
 }

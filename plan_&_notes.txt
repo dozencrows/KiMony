@@ -1,7 +1,7 @@
 Plan
 ====
-* Touch screen smoothing, calibration
-* Scanline renderer for rectangles
+* Reliable touchscreen interrupt detection
+* Touchscreen coordinate averaging
 * Scanline renderer for text
 * Interrupt-driven button reading.
 * Interrupt-driven touchscreen reading
@@ -87,6 +87,8 @@ Done
 * Switch to dedicated, non-PE project
 * Implemented RC6 encoding for LIRC remote data
 * Implemented Sony remote encoding function for LIRC remote data
+* Implemented scanline renderer for: horizontal lines, vertical lines and rectangles
+* Implemented touch screen median filter, calibration, SPI rate control
   
 Notes
 =====
