@@ -76,8 +76,8 @@ int main(void)
 	irTest();
 	//flashTest();
 	//testKeyMatrix();
-	//touchScreenTest();
-	touchScreenCalibrate();
+	touchScreenTest();
+	//touchScreenCalibrate();
 	rendererTest();
 
 //	int frames = 0;

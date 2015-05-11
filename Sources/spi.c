@@ -8,6 +8,7 @@
 
 #include "MKL26Z4.h"
 #include "ports.h"
+#include "mathutil.h"
 
 // Pins to initialise
 // PTD: 5 (SCLK)
@@ -62,3 +63,11 @@ uint8_t spiRead()
 	return SPI_DL_REG(SPI1);
 }
 
+void spiSetBitRate(int prescaler, int divider)
+{
+	prescaler = MIN(MAX(0, prescaler - 1), 7);
+	divider = 30 - __builtin_clz(divider);
+	divider = MIN(MAX(0, divider), 8);
+
+	SPI1_BR = SPI_BR_SPPR(prescaler) | SPI_BR_SPR(divider);
+}

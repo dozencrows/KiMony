@@ -7,6 +7,7 @@
 #include "renderer.h"
 #include <string.h>
 #include "lcd.h"
+#include "mathutil.h"
 
 #define DRAWLIST_BUFFER_SIZE	1024
 
@@ -60,10 +61,6 @@ static DrawListEntry* allocDrawListEntry(size_t bytes)
 		return NULL;
 	}
 }
-
-#define SWAPNUM(a, b) a = a ^ b; b = a ^ b; a = a ^ b
-#define MIN(a, b) ((a) > (b) ? (b) : (a))
-#define MAX(a, b) ((a) > (b) ? (a) : (b))
 
 static void updateDrawListBounds(uint16_t x0, uint16_t y0, uint16_t x1, uint16_t y1)
 {
