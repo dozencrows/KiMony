@@ -1,7 +1,6 @@
 Plan
 ====
-* Reliable touchscreen interrupt detection
-* Touchscreen coordinate averaging
+* Basic button framework with rendering, hit testing and button actions
 * Scanline renderer for text
 * Interrupt-driven button reading.
 * Interrupt-driven touchscreen reading
@@ -89,6 +88,7 @@ Done
 * Implemented Sony remote encoding function for LIRC remote data
 * Implemented scanline renderer for: horizontal lines, vertical lines and rectangles
 * Implemented touch screen median filter, calibration, SPI rate control
+* Implemented touchscreen pressure approximation and use in filtering detection
   
 Notes
 =====

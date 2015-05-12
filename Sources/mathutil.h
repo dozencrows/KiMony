@@ -12,4 +12,9 @@
 #define MIN(a, b) ((a) > (b) ? (b) : (a))
 #define MAX(a, b) ((a) > (b) ? (a) : (b))
 
+typedef struct _Point {
+	uint16_t	x;
+	uint16_t	y;
+} Point;
+
 #endif /* MATHUTIL_H_ */

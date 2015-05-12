@@ -16,6 +16,12 @@
 #include "mathutil.h"
 #include "systick.h"
 
+// 3 and 8 are 2MHz, 4 and 8 are 1.5MHz, 5 and 8 are 1.2MHz, 6 and 8 are 1MHz
+#define SPI_BR_PRESCALE	3
+#define SPI_BR_DIVISOR	8
+
+#define MIN_PRESSURE_THRESHOLD	500
+
 // Pins to initialise
 // PTD: 2 (Interrupt)
 //		4 (Chip Select)
@@ -85,15 +91,21 @@ void touchScreenGetSamples(uint8_t cmd1, uint8_t cmd2, uint16_t* buffer, uint16_
 #define XPT2046_START		0x80
 #define XPT2046_ADDR_X		0x10
 #define XPT2046_ADDR_Y		0x50
+#define XPT2046_ADDR_Z1		0x30
+#define XPT2046_ADDR_Z2		0x40
 #define XPT2046_MODE_12BIT	0x00
 #define XPT2046_MODE_8BIT	0x08
 #define XPT2046_PD1			0x02
 #define XPT2046_PD0			0x01
 
-#define TS_GETX_1	(XPT2046_START|XPT2046_ADDR_X|XPT2046_MODE_12BIT|XPT2046_PD1|XPT2046_PD0)
-#define TS_GETX_2	(XPT2046_START|XPT2046_ADDR_X|XPT2046_MODE_12BIT|XPT2046_PD1|XPT2046_PD0)
-#define TS_GETY_1	(XPT2046_START|XPT2046_ADDR_Y|XPT2046_MODE_12BIT|XPT2046_PD1|XPT2046_PD0)
+#define TS_GETX_1	(XPT2046_START|XPT2046_ADDR_X|XPT2046_MODE_12BIT|XPT2046_PD0)
+#define TS_GETX_2	(XPT2046_START|XPT2046_ADDR_X|XPT2046_MODE_12BIT|XPT2046_PD0)
+#define TS_GETY_1	(XPT2046_START|XPT2046_ADDR_Y|XPT2046_MODE_12BIT|XPT2046_PD0)
 #define TS_GETY_2	(XPT2046_START|XPT2046_ADDR_Y|XPT2046_MODE_12BIT)
+#define TS_GETZ1_1	(XPT2046_START|XPT2046_ADDR_Z1|XPT2046_MODE_12BIT|XPT2046_PD0)
+#define TS_GETZ1_2	(XPT2046_START|XPT2046_ADDR_Z1|XPT2046_MODE_12BIT|XPT2046_PD0)
+#define TS_GETZ2_1	(XPT2046_START|XPT2046_ADDR_Z2|XPT2046_MODE_12BIT|XPT2046_PD0)
+#define TS_GETZ2_2	(XPT2046_START|XPT2046_ADDR_Z2|XPT2046_MODE_12BIT|XPT2046_PD0)
 
 void touchScreenInit()
 {
@@ -122,10 +134,12 @@ static void waitForTouch()
 	} while (nextIntFlag != lastIntFlag);
 }
 
-static void getRawTouch(uint16_t* touchData, uint16_t sampleCount)
+static void getRawTouch(uint16_t* touchData, uint16_t* pressureData, uint16_t sampleCount)
 {
 	NVIC_DisableIRQ(PORTC_PORTD_IRQn);
 	FGPIOD_PCOR = (1 << 4);
+	touchScreenGetSamples(TS_GETZ1_1, TS_GETZ1_2, pressureData, sampleCount);
+	touchScreenGetSamples(TS_GETZ2_1, TS_GETZ2_2, pressureData + sampleCount, sampleCount);
 	touchScreenGetSamples(TS_GETX_1, TS_GETX_2, touchData, sampleCount);
 	touchScreenGetSamples(TS_GETY_1, TS_GETY_2, touchData + sampleCount, sampleCount);
 	FGPIOD_PSOR = (1 << 4);
@@ -185,8 +199,9 @@ CalibrationSample calibrationSamples[CALIBRATION_SAMPLE_COUNT] = {
 void touchScreenCalibrate()
 {
 	uint16_t touchData[10];
+	uint16_t pressureData[10];
 
-	spiSetBitRate(3, 8);	// Should be 2MHz for 48MHz system clock
+	spiSetBitRate(SPI_BR_PRESCALE, SPI_BR_DIVISOR);
 
 	for (int i = 0; i < CALIBRATION_SAMPLE_COUNT; i++) {
 		rendererClearScreen();
@@ -194,7 +209,7 @@ void touchScreenCalibrate()
 		renderCross(calibrationSamples[i].screenX, calibrationSamples[i].screenY, 15, 0xffff);
 		rendererRenderDrawList();
 		waitForTouch();
-		getRawTouch(touchData, 5);
+		getRawTouch(touchData, pressureData, 5);
 		calibrationSamples[i].touchX = fastMedian5(touchData);
 		calibrationSamples[i].touchY = fastMedian5(touchData + 5);
 
@@ -224,30 +239,41 @@ static void getCalibratedPoint(uint16_t* pIn, uint16_t* pOut)
 	pOut[1] = (uint16_t)(MAX(rY + deltaY, 0));
 }
 
-void touchScreenTest()
+int touchScreenGetCoordinates(Point* p)
 {
 	uint16_t touchData[10];
+	uint16_t pressureData[10];
+	uint16_t touchPt[2];
+	uint16_t touchZ[2];
+
+	getRawTouch(touchData, pressureData, 5);
+
+	touchPt[0] = fastMedian5(touchData);
+	touchPt[1] = fastMedian5(touchData + 5);
+	touchZ[0] = MAX(fastMedian5(pressureData), 1);
+	touchZ[1] = fastMedian5(pressureData + 5);
+
+	getCalibratedPoint(touchPt, &p->x);
+	// Approximate pressure measure for noise filtering
+	int pressure = 4096 - (touchZ[1] - touchZ[0]);
+
+	return !(FGPIOD_PDIR & (1 << 2)) && pressure > MIN_PRESSURE_THRESHOLD;
+}
+
+void touchScreenTest()
+{
+	Point touch;
 
 	rendererClearScreen();
-	spiSetBitRate(3, 8);	// Should be 2MHz for 48MHz system clock
+	spiSetBitRate(SPI_BR_PRESCALE, SPI_BR_DIVISOR);
 
 	while(1) {
 		if (!(FGPIOD_PDIR & (1 << 2))) {
-			getRawTouch(touchData, 5);
-			uint16_t touchPt[2];
-			uint16_t screenPt[2];
-
-			touchPt[0] = fastMedian5(touchData);
-			touchPt[1] = fastMedian5(touchData + 5);
-
-			getCalibratedPoint(touchPt, screenPt);
-			//printf("(%d, %d) -> (%d, %d)\n", touchPt[0], touchPt[1], screenPt[0], screenPt[1]);
-
-			//rendererClearScreen();
-			rendererNewDrawList();
-			//renderCross(screenPt[0], screenPt[1], 15, 0xffff);
-			rendererDrawHLine(screenPt[0], screenPt[1], 1, 0xffff);
-			rendererRenderDrawList();
+			if (touchScreenGetCoordinates(&touch)) {
+				rendererNewDrawList();
+				rendererDrawHLine(touch.x, touch.y, 1, 0xffff);
+				rendererRenderDrawList();
+			}
 		}
 	}
 }
