@@ -10,6 +10,7 @@
 #include "i2c.h"
 #include "systick.h"
 #include "ports.h"
+#include "interrupts.h"
 
 #define MCP23008_IODIR      0x00
 #define MCP23008_IPOL       0x01
@@ -23,8 +24,11 @@
 #define MCP23008_GPIO       0x09
 #define MCP23008_OLAT       0x0A
 
-#define MCP23008_RESET_MASK			(1<<20)
-#define MCP23008_INT_MASK			(1<<12)
+#define MCP23008_PORTE_PIN	20
+#define MCP23008_PORTA_PIN	12
+
+#define MCP23008_RESET_MASK	(1<<MCP23008_PORTE_PIN)
+#define MCP23008_INT_MASK	(1<<MCP23008_PORTA_PIN)
 
 #define MCP_I2C_ADDR  		0x20
 
@@ -34,22 +38,33 @@
 #define MCP_GPIO_POLL_COL3  0xb0
 #define MCP_GPIO_POLL_COL4  0x70
 
+#define PORTA_KEY0			4
+#define PORTB_KEY0			0
+#define PORTE_KEY0			21
+#define PORTE_KEY1			22
+#define PORTE_KEY2			23
+#define PORTE_KEY3			30
+
+#define PORTA_KEYBITS		((1<<PORTA_KEY0))
+#define PORTB_KEYBITS		((1<<PORTB_KEY0))
+#define PORTE_KEYBITS		((1<<PORTE_KEY0)|(1<<PORTE_KEY1)|(1<<PORTE_KEY2)|(1<<PORTE_KEY3))
+
 static const PortConfig portAButtons1 =
 {
 	PORTA_BASE_PTR,
 	~(PORT_PCR_ISF_MASK | PORT_PCR_MUX_MASK),
 	PORT_PCR_MUX(1) | PORT_PCR_PS_MASK | PORT_PCR_PE_MASK,
 	1,
-	{ 4 }
+	{ PORTA_KEY0 }
 };
 
 static const PortConfig portAButtons2 =
 {
 	PORTA_BASE_PTR,
-	~(PORT_PCR_ISF_MASK | PORT_PCR_MUX_MASK),
-	PORT_PCR_MUX(1),
+	~(PORT_PCR_ISF_MASK | PORT_PCR_MUX_MASK | PORT_PCR_IRQC_MASK),
+	PORT_PCR_MUX(1) | PORT_PCR_IRQC(0x0a),
 	1,
-	{ 12 }
+	{ MCP23008_PORTA_PIN }
 };
 
 static const PortConfig portBButtons =
@@ -58,7 +73,7 @@ static const PortConfig portBButtons =
 	~(PORT_PCR_ISF_MASK | PORT_PCR_MUX_MASK),
 	PORT_PCR_MUX(1) | PORT_PCR_PS_MASK | PORT_PCR_PE_MASK,
 	1,
-	{ 0 }
+	{ PORTB_KEY0 }
 };
 
 static const PortConfig portEButtons =
@@ -67,8 +82,17 @@ static const PortConfig portEButtons =
 	~(PORT_PCR_ISF_MASK | PORT_PCR_MUX_MASK),
 	PORT_PCR_MUX(1) | PORT_PCR_PS_MASK | PORT_PCR_PE_MASK,
 	4,
-	{ 21, 22, 23, 30 }
+	{ PORTE_KEY0, PORTE_KEY1, PORTE_KEY2, PORTE_KEY3 }
 };
+
+static volatile uint8_t keyMatrixIntFlag = 0;
+
+static void irqHandlerPortA(uint32_t portAISFR)
+{
+	if (portAISFR & MCP23008_INT_MASK) {
+		keyMatrixIntFlag++;
+	}
+}
 
 void keyMatrixInit()
 {
@@ -86,9 +110,9 @@ void keyMatrixInit()
 	portInitialise(&portBButtons);
 	portInitialise(&portEButtons);
 
-	FGPIOA_PDDR &= ~((1<<4)|MCP23008_INT_MASK);
-	FGPIOB_PDDR &= ~1;
-	FGPIOE_PDDR &= ~((1<<21)|(1<<22)|(1<<23)|(1<<30));
+	FGPIOA_PDDR &= ~(PORTA_KEYBITS|MCP23008_INT_MASK);
+	FGPIOB_PDDR &= ~(PORTB_KEYBITS);
+	FGPIOE_PDDR &= ~(PORTE_KEYBITS);
 
 	// PTE20: MCP23008 reset
 	PORTE_PCR20 = (uint32_t)((PORTE_PCR20 & (uint32_t)~(uint32_t)(
@@ -106,12 +130,30 @@ void keyMatrixInit()
 	i2cSendByte(MCP_I2C_ADDR, MCP23008_IODIR, MCP_GPIO_SETUP_MASK);
 	i2cSendByte(MCP_I2C_ADDR, MCP23008_GPPU, MCP_GPIO_SETUP_MASK);
 	i2cSendByte(MCP_I2C_ADDR, MCP23008_IPOL, MCP_GPIO_SETUP_MASK);
+	i2cSendByte(MCP_I2C_ADDR, MCP23008_GPIO, 0);
+	i2cSendByte(MCP_I2C_ADDR, MCP23008_GPINTEN, MCP_GPIO_SETUP_MASK);
+
+	interruptRegisterPortAIRQHandler(irqHandlerPortA);
+	NVIC_EnableIRQ(PORTA_IRQn);
+}
+
+void keyMatrixClearInterrupt()
+{
+	i2cReadByte(MCP_I2C_ADDR, MCP23008_GPIO);
+	PORTA_ISFR = MCP23008_INT_MASK;
+	keyMatrixIntFlag = 0;
+}
+
+int keyMatrixCheckInterrupt()
+{
+	return keyMatrixIntFlag;
 }
 
 uint32_t keyMatrixPoll()
 {
 	uint32_t key_data;
 
+	i2cSendByte(MCP_I2C_ADDR, MCP23008_GPINTEN, 0);
 	i2cSendByte(MCP_I2C_ADDR, MCP23008_GPIO, MCP_GPIO_POLL_COL1);
 	key_data = i2cReadByte(MCP_I2C_ADDR, MCP23008_GPIO) & 0x0f;
 
@@ -124,14 +166,23 @@ uint32_t keyMatrixPoll()
 	i2cSendByte(MCP_I2C_ADDR, MCP23008_GPIO, MCP_GPIO_POLL_COL4);
 	key_data = key_data | (i2cReadByte(MCP_I2C_ADDR, MCP23008_GPIO) & 0x0f) << 12;
 
+	i2cSendByte(MCP_I2C_ADDR, MCP23008_GPIO, 0);
+	i2cSendByte(MCP_I2C_ADDR, MCP23008_GPINTEN, MCP_GPIO_SETUP_MASK);
+    return key_data;
+}
+
+uint32_t keyNonMatrixPoll()
+{
+	uint32_t key_data;
+
 	uint32_t portAKeyState = FGPIOA_PDIR;
 	uint32_t portBKeyState = FGPIOB_PDIR;
 	uint32_t portEKeyState = FGPIOE_PDIR;
 
-	key_data |= ((~portAKeyState & (1<<4)) << 12);
-	key_data |= ((~portBKeyState & (1<<0)) << 17);
-	key_data |= ((~portEKeyState & ((1<<21)|(1<<22)|(1<<23))) >> 3);
-	key_data |= ((~portEKeyState & (1<<30)) >> 9);
+	key_data  = ((~portAKeyState & PORTA_KEYBITS) << 12);
+	key_data |= ((~portBKeyState & PORTB_KEYBITS) << 17);
+	key_data |= ((~portEKeyState & ((1<<PORTE_KEY0)|(1<<PORTE_KEY1)|(1<<PORTE_KEY2))) >> 3);
+	key_data |= ((~portEKeyState & (1<<PORTE_KEY3)) >> 9);
 
     return key_data;
 }

@@ -12,6 +12,7 @@
 
 #include "spi.h"
 #include "ports.h"
+#include "interrupts.h"
 #include "renderer.h"
 #include "mathutil.h"
 #include "systick.h"
@@ -46,25 +47,14 @@ static const PortConfig portDPinInterrupts =
 
 static volatile uint8_t touchScreenIntFlag = 0;
 
-void PORTC_PORTD_IRQHandler()
+static void irqHandlerPortCD(uint32_t portCISFR, uint32_t portDISFR)
 {
-	uint32_t portCISFR = PORTC_ISFR;
-	uint32_t portDISFR = PORTD_ISFR;
-
 	if (portDISFR & (1 << 2)) {
 		touchScreenIntFlag++;
 	}
-
-	if (portCISFR) {
-		PORTC_ISFR = portCISFR;
-	}
-
-	if (portDISFR) {
-		PORTD_ISFR = portDISFR;
-	}
 }
 
-void touchScreenGetSamples(uint8_t cmd1, uint8_t cmd2, uint16_t* buffer, uint16_t count)
+static void touchScreenGetSamples(uint8_t cmd1, uint8_t cmd2, uint16_t* buffer, uint16_t count)
 {
 	uint8_t data[2];
 
@@ -114,13 +104,24 @@ void touchScreenInit()
 	FGPIOD_PDDR &= ~(1 << 2);
 	FGPIOD_PDDR |= (1 << 4);
 	FGPIOD_PSOR = (1 << 4);
+	interruptRegisterPortCDIRQHandler(irqHandlerPortCD);
 	NVIC_EnableIRQ(PORTC_PORTD_IRQn);
+}
+
+void touchScreenClearInterrupt()
+{
+	PORTD_ISFR = 1 << 2;
+	touchScreenIntFlag = 0;
+}
+
+int touchScreenCheckInterrupt()
+{
+	return touchScreenIntFlag;
 }
 
 static void waitForTouch()
 {
-	PORTD_ISFR = 1 << 2;
-	touchScreenIntFlag = 0;
+	touchScreenClearInterrupt();
 	uint8_t lastIntFlag = 0;
 	do {
 		lastIntFlag = touchScreenIntFlag;
@@ -246,6 +247,7 @@ int touchScreenGetCoordinates(Point* p)
 	uint16_t touchPt[2];
 	uint16_t touchZ[2];
 
+	spiSetBitRate(SPI_BR_PRESCALE, SPI_BR_DIVISOR);
 	getRawTouch(touchData, pressureData, 5);
 
 	touchPt[0] = fastMedian5(touchData);

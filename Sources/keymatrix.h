@@ -10,8 +10,14 @@
 
 #include <stdint.h>
 
+#define KEY_MATRIX_MASK		0x0000ffff
+#define KEY_NONMATRIX_MASK	0xffff0000
+
 extern void keyMatrixInit();
+extern void keyMatrixClearInterrupt();
+extern int keyMatrixCheckInterrupt();
 extern uint32_t keyMatrixPoll();
+extern uint32_t keyNonMatrixPoll();
 extern void testKeyMatrix();
 
 

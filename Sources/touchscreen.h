@@ -14,5 +14,7 @@ extern void touchScreenInit();
 extern void touchScreenCalibrate();
 extern void touchScreenTest();
 extern int	touchScreenGetCoordinates(Point* p);
+extern void touchScreenClearInterrupt();
+extern int touchScreenCheckInterrupt();
 
 #endif /* TOUCHSCREEN_H_ */

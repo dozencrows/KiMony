@@ -39,6 +39,8 @@
 #include "ir.h"
 #include "flash.h"
 #include "renderer.h"
+#include "mathutil.h"
+#include "interrupts.h"
 
 void waitForButton()
 {
@@ -57,6 +59,69 @@ void waitForButton()
 	}
 }
 
+static volatile uint8_t pitIrqCount = 0;
+
+static void pitIrqHandler()
+{
+	pitIrqCount++;
+}
+
+void mainLoop()
+{
+	uint16_t keyColourM = 0xf81f;
+	uint16_t keyColourNM = 0xf81f;
+
+	// Periodic timer for polling non-matrix keys
+	SIM_SCGC6   |= SIM_SCGC6_PIT_MASK;
+	PIT_MCR 	= PIT_MCR_FRZ_MASK;
+	PIT_LDVAL0	= DEFAULT_SYSTEM_CLOCK / 200;				// 100Hz (uses bus clock, which is half system clock)
+	PIT_TCTRL0	= PIT_TCTRL_TIE_MASK | PIT_TCTRL_TEN_MASK;
+	interruptRegisterPITIRQHandler(pitIrqHandler);
+	NVIC_EnableIRQ(PIT_IRQn);
+
+	uint32_t keypadState = keyMatrixPoll() | keyNonMatrixPoll();
+
+	keyMatrixClearInterrupt();
+	touchScreenClearInterrupt();
+
+	while (1) {
+		__asm("wfi");
+
+		rendererNewDrawList();
+
+		if (touchScreenCheckInterrupt()) {
+			Point touch;
+			if (touchScreenGetCoordinates(&touch)) {
+				rendererDrawHLine(touch.x, touch.y, 1, 0xffff);
+			}
+			touchScreenClearInterrupt();
+		}
+
+		if (keyMatrixCheckInterrupt()) {
+			uint32_t keypadVal = keyMatrixPoll() | (keypadState & KEY_NONMATRIX_MASK);
+			keyMatrixClearInterrupt();
+
+			if (keypadVal != keypadState) {
+				rendererDrawRect(119, 159, 2, 2, keyColourM);
+				keyColourM ^= 0xffff;
+				keypadState = keypadVal;
+			}
+		}
+
+		if (pitIrqCount) {
+			uint32_t keypadVal = keyNonMatrixPoll() | (keypadState & KEY_MATRIX_MASK);
+			pitIrqCount = 0;
+			if (keypadVal != keypadState) {
+				rendererDrawRect(119, 161, 2, 2, keyColourNM);
+				keyColourNM ^= 0xffff;
+				keypadState = keypadVal;
+			}
+		}
+
+		rendererRenderDrawList();
+	}
+}
+
 int main(void)
 {
 	SystemCoreClockUpdate();
@@ -67,18 +132,23 @@ int main(void)
 	i2cInit();
 	spiInit();
 
-	keyMatrixInit();
-	touchScreenInit();
 	tftInit();
 	tftSetBacklight(1);
+	rendererInit();
+	rendererClearScreen();
+
+	touchScreenInit();
+	keyMatrixInit();
 	flashInit();
 
-	irTest();
+	mainLoop();
+
+	//irTest();
 	//flashTest();
-	testKeyMatrix();
-	touchScreenTest();
+	//testKeyMatrix();
+	//touchScreenTest();
 	//touchScreenCalibrate();
-	rendererTest();
+	//rendererTest();
 
 //	int frames = 0;
 //	sysTickEventInMs(1000);
@@ -168,9 +238,9 @@ int main(void)
 //	}
 //
 //	printf("FGPIO Flash %d\n", frames);
-
-	for(;;) {
-	}
+//
+//	for(;;) {
+//	}
 
     return 0;
 }
