@@ -174,11 +174,9 @@ Available for GPIO:
 	PTE30, PTE23, PTE22, PTE21, PTE20
 	
 	Uses for these:
-		* Backlight control.
 		* Switch matrix interrupt
 		* Dedicated buttons
 		* Power switching?
-		* Flash SPI Chip
 
 Image conversions
 =================

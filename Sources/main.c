@@ -75,7 +75,7 @@ int main(void)
 
 	irTest();
 	//flashTest();
-	//testKeyMatrix();
+	testKeyMatrix();
 	touchScreenTest();
 	//touchScreenCalibrate();
 	rendererTest();
