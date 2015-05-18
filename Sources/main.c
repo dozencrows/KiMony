@@ -50,6 +50,7 @@ typedef struct _IrCode {
 	unsigned int encoding:4;
 	unsigned int bits:5;
 	unsigned int code:23;
+	uint32_t toggleMask;
 } IrCode;
 
 typedef struct _IrAction {
@@ -57,33 +58,85 @@ typedef struct _IrAction {
 	IrCode	codes[];
 } IrAction;
 
+typedef struct _ButtonMapping {
+	uint32_t		buttonMask;
+	const IrAction*	action;
+} ButtonMapping;
+
 static const IrAction powerOnOff =
 {
 	4,
 	{
-		{ IRCODE_RC6, 	21,	0xFFB38 },
-		{ IRCODE_RC6,	21,	0xEFB38 },
-		{ IRCODE_NOP,	0,	250 	},
-		{ IRCODE_SIRC, 	12,	0xA90 	}
+		{ IRCODE_RC6, 	21,	0xFFB38,	0 	},
+		{ IRCODE_RC6,	21,	0xEFB38,	0 	},
+		{ IRCODE_NOP,	0,	250, 		0 	},
+		{ IRCODE_SIRC, 	12,	0xA90, 		0	}
 	}
 };
+
+static const IrAction numeric1 = { 1, { IRCODE_SIRC, 12, 0x010, 0 } };
+static const IrAction numeric2 = { 1, { IRCODE_SIRC, 12, 0x810, 0 } };
+static const IrAction numeric3 = { 1, { IRCODE_SIRC, 12, 0x410, 0 } };
+static const IrAction numeric4 = { 1, { IRCODE_SIRC, 12, 0xC10, 0 } };
+static const IrAction numeric5 = { 1, { IRCODE_SIRC, 12, 0x210, 0 } };
+static const IrAction numeric6 = { 1, { IRCODE_SIRC, 12, 0xA10, 0 } };
+static const IrAction numeric7 = { 1, { IRCODE_SIRC, 12, 0x610, 0 } };
+static const IrAction numeric8 = { 1, { IRCODE_SIRC, 12, 0xE10, 0 } };
+static const IrAction numeric9 = { 1, { IRCODE_SIRC, 12, 0x110, 0 } };
+static const IrAction numeric0 = { 1, { IRCODE_SIRC, 12, 0x910, 0 } };
+
+static const IrAction volumeUp 		= { 1, { IRCODE_RC6, 21, 0xEEFEF, 0x10000 } };
+static const IrAction volumeDown 	= { 1, { IRCODE_RC6, 21, 0xEEFEE, 0x10000 } };
+static const IrAction mute 			= { 1, { IRCODE_RC6, 21, 0xEEFF2, 0x10000 } };
+static const IrAction surround		= { 1, { IRCODE_RC6, 21, 0xEEFAD, 0x10000 } };
+
+static const IrAction channelUp 	= { 1, { IRCODE_SIRC, 12, 0x090, 0 } };
+static const IrAction channelDown	= { 1, { IRCODE_SIRC, 12, 0x890, 0 } };
+static const IrAction info			= { 1, { IRCODE_SIRC, 12, 0x5D0, 0 } };
+
+static const ButtonMapping buttonMappings[] =
+{
+	{ 0x020000, &powerOnOff },
+	{ 0x008000, &numeric1 },
+	{ 0x000800, &numeric2 },
+	{ 0x000080, &numeric3 },
+	{ 0x004000, &numeric4 },
+	{ 0x000400, &numeric5 },
+	{ 0x000040, &numeric6 },
+	{ 0x002000, &numeric7 },
+	{ 0x000200, &numeric8 },
+	{ 0x000020, &numeric9 },
+	{ 0x000100, &numeric0 },
+	{ 0x000008, &volumeUp },
+	{ 0x000004, &volumeDown },
+	{ 0x000002, &channelUp },
+	{ 0x000001, &channelDown },
+	{ 0x000010, &mute },
+	{ 0x001000, &surround },
+	{ 0x200000, &info },
+};
+
+static uint32_t toggleBit = 0;
 
 void performIrAction(const IrAction* action)
 {
 	const IrCode* code = action->codes;
 
 	for (int i = 0; i < action->codeCount; i++, code++) {
+		if (code->toggleMask) {
+			toggleBit ^= code->toggleMask;
+		}
 		switch (code->encoding) {
 			case IRCODE_NOP: {
 				sysTickDelayMs(code->code);
 				break;
 			}
 			case IRCODE_RC6: {
-				irSendRC6Code(code->code, code->bits);
+				irSendRC6Code(code->code|toggleBit, code->bits);
 				break;
 			}
 			case IRCODE_SIRC: {
-				irSendSIRCCode(code->code, code->bits);
+				irSendSIRCCode(code->code|toggleBit, code->bits);
 				break;
 			}
 		}
@@ -136,6 +189,7 @@ void mainLoop()
 		__asm("wfi");
 
 		uint32_t keypadNewState = keypadState;
+		const IrAction* action = NULL;
 
 		rendererNewDrawList();
 
@@ -160,16 +214,27 @@ void mainLoop()
 		uint32_t keypadChange = keypadState ^ keypadNewState;
 
 		if (keypadChange) {
-			if (keypadNewState & keypadChange) {
+			uint32_t keypadNewOn = keypadNewState & keypadChange;
+			if (keypadNewOn) {
 				rendererDrawRect(119, 161, 2, 2, keyColourNM);
 				keyColourNM ^= 0xffff;
-				performIrAction(&powerOnOff);
+
+				for (size_t i = 0; i < sizeof(buttonMappings) / sizeof(buttonMappings[0]); i++) {
+					if (buttonMappings[i].buttonMask == keypadNewOn) {
+						action = buttonMappings[i].action;
+						break;
+					}
+				}
 			}
 
 			keypadState = keypadNewState;
 		}
 
 		rendererRenderDrawList();
+
+		if (action) {
+			performIrAction(action);
+		}
 	}
 }
 
