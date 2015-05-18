@@ -42,6 +42,54 @@
 #include "mathutil.h"
 #include "interrupts.h"
 
+#define IRCODE_NOP	0
+#define IRCODE_RC6	1
+#define IRCODE_SIRC	2
+
+typedef struct _IrCode {
+	unsigned int encoding:4;
+	unsigned int bits:5;
+	unsigned int code:23;
+} IrCode;
+
+typedef struct _IrAction {
+	int		codeCount;
+	IrCode	codes[];
+} IrAction;
+
+static const IrAction powerOnOff =
+{
+	4,
+	{
+		{ IRCODE_RC6, 	21,	0xFFB38 },
+		{ IRCODE_RC6,	21,	0xEFB38 },
+		{ IRCODE_NOP,	0,	250 	},
+		{ IRCODE_SIRC, 	12,	0xA90 	}
+	}
+};
+
+void performIrAction(const IrAction* action)
+{
+	const IrCode* code = action->codes;
+
+	for (int i = 0; i < action->codeCount; i++, code++) {
+		switch (code->encoding) {
+			case IRCODE_NOP: {
+				sysTickDelayMs(code->code);
+				break;
+			}
+			case IRCODE_RC6: {
+				irSendRC6Code(code->code, code->bits);
+				break;
+			}
+			case IRCODE_SIRC: {
+				irSendSIRCCode(code->code, code->bits);
+				break;
+			}
+		}
+	}
+}
+
 void waitForButton()
 {
 	uint32_t lastKeys = keyMatrixPoll();
@@ -87,6 +135,8 @@ void mainLoop()
 	while (1) {
 		__asm("wfi");
 
+		uint32_t keypadNewState = keypadState;
+
 		rendererNewDrawList();
 
 		if (touchScreenCheckInterrupt()) {
@@ -98,24 +148,25 @@ void mainLoop()
 		}
 
 		if (keyMatrixCheckInterrupt()) {
-			uint32_t keypadVal = keyMatrixPoll() | (keypadState & KEY_NONMATRIX_MASK);
+			keypadNewState = keyMatrixPoll() | (keypadNewState & KEY_NONMATRIX_MASK);
 			keyMatrixClearInterrupt();
-
-			if (keypadVal != keypadState) {
-				rendererDrawRect(119, 159, 2, 2, keyColourM);
-				keyColourM ^= 0xffff;
-				keypadState = keypadVal;
-			}
 		}
 
 		if (pitIrqCount) {
-			uint32_t keypadVal = keyNonMatrixPoll() | (keypadState & KEY_MATRIX_MASK);
+			keypadNewState = keyNonMatrixPoll() | (keypadNewState & KEY_MATRIX_MASK);
 			pitIrqCount = 0;
-			if (keypadVal != keypadState) {
+		}
+
+		uint32_t keypadChange = keypadState ^ keypadNewState;
+
+		if (keypadChange) {
+			if (keypadNewState & keypadChange) {
 				rendererDrawRect(119, 161, 2, 2, keyColourNM);
 				keyColourNM ^= 0xffff;
-				keypadState = keypadVal;
+				performIrAction(&powerOnOff);
 			}
+
+			keypadState = keypadNewState;
 		}
 
 		rendererRenderDrawList();

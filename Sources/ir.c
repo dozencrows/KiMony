@@ -224,6 +224,18 @@ static void sendIrPacketAndWait(IrPacket* packet, uint32_t endDelayUs)
 
 IrPacket irPacket;
 
+void irSendRC6Code(uint32_t data, int bitCount)
+{
+	irEncodeRC6(&irPacket, data, bitCount);
+	sendIrPacketAndWait(&irPacket, 74000);
+}
+
+void irSendSIRCCode(uint32_t data, int bitCount)
+{
+	irEncodeSIRC(&irPacket, data, bitCount);
+	sendIrPacketAndWait(&irPacket, 45000);
+}
+
 void irTest()
 {
 //	irPacket.header.start			= 1;
