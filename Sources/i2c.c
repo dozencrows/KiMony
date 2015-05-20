@@ -103,12 +103,14 @@ uint8_t i2cReadByte(uint8_t address, uint8_t reg)
 	I2C1_S |= I2C_S_IICIF_MASK;
 
 	I2C1_C1 &= ~I2C_C1_TX_MASK;					// Switch to receive
+	I2C1_C1 |= I2C_C1_TXAK_MASK;
 	uint8_t dummy_read = I2C1_D;				// Trigger read of next byte
 
 	while (!(I2C1_S & I2C_S_IICIF_MASK));
 	I2C1_S |= I2C_S_IICIF_MASK;
-	uint8_t	data = I2C1_D;
 	I2C1_C1 &= ~I2C_C1_MST_MASK;
+	uint8_t	data = I2C1_D;
+	I2C1_C1 &= ~I2C_C1_TXAK_MASK;
 	return data;
 }
 
