@@ -272,12 +272,12 @@ int main(void)
 	keyMatrixInit();
 	flashInit();
 
-	mainLoop();
+	//mainLoop();
 
 	//flashTest();
 	//touchScreenTest();
 	//touchScreenCalibrate();
-	//rendererTest();
+	rendererTest();
 
 //	int frames = 0;
 //	sysTickEventInMs(1000);
@@ -368,8 +368,8 @@ int main(void)
 //
 //	printf("FGPIO Flash %d\n", frames);
 //
-//	for(;;) {
-//	}
+	for(;;) {
+	}
 
     return 0;
 }

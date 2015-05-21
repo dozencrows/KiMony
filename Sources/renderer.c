@@ -8,6 +8,7 @@
 #include <string.h>
 #include "lcd.h"
 #include "mathutil.h"
+#include "fontdata.h"
 
 #define DRAWLIST_BUFFER_SIZE	2048
 
@@ -18,6 +19,7 @@
 #define DLE_TYPE_VLINE	0x10
 #define DLE_TYPE_HLINE	0x20
 #define DLE_TYPE_RECT	0x30
+#define DLE_TYPE_TXTCH	0x40
 
 typedef struct _DrawListEntry {
 	uint8_t		flags;
@@ -40,6 +42,14 @@ typedef struct _Rect {
 	uint16_t		height;
 	uint16_t		colour;
 } Rect;
+
+typedef struct _TextChar {
+	DrawListEntry	dle;
+	uint16_t		x;
+	uint16_t		y;
+	const Glyph*	glyph;
+	uint16_t		colour;
+} TextChar;
 
 uint8_t		drawListBuffer[DRAWLIST_BUFFER_SIZE];
 size_t		drawListEnd = 0;
@@ -115,6 +125,12 @@ static void renderScanLine(uint16_t y)
 						}
 						break;
 					}
+					case DLE_TYPE_TXTCH: {
+						TextChar* textChar = (TextChar*)dle;
+						if (y == textChar->y) {
+							dle->flags |= DLE_FLAG_ACTIVE_MASK;
+						}
+					}
 					default: {
 						break;
 					}
@@ -155,6 +171,21 @@ static void renderScanLine(uint16_t y)
 							}
 						}
 						break;
+					}
+					case DLE_TYPE_TXTCH: {
+						TextChar* textChar = (TextChar*)dle;
+						if (y == textChar->y + textChar->glyph->height) {
+							dle->flags &= ~DLE_FLAG_ACTIVE_MASK;
+							dle->flags |= DLE_FLAG_DRAWN_MASK;
+						}
+						else {
+							const uint8_t* char_row = textChar->glyph->data + (y - textChar->y) * textChar->glyph->width;
+							for (uint16_t x = 0; x < textChar->glyph->width; x++) {
+								if (!char_row[x]) {
+									pixelBuffer[textChar->x - drawListMinX + x] = textChar->colour;
+								}
+							}
+						}
 					}
 					default: {
 						break;
@@ -235,6 +266,37 @@ void rendererDrawRect(uint16_t x, uint16_t y, uint16_t width, uint16_t height, u
 	}
 }
 
+void rendererDrawChar(char c, uint16_t x, uint16_t y, const Font* font, uint16_t colour)
+{
+	if (c >= font->chars[0].code && c <= font->chars[font->length - 1].code) {
+		const Glyph* glyph = NULL;
+
+		for (int i = 0; i < font->length; i++) {
+			if (font->chars[i].code == c) {
+				glyph = font->chars[i].image;
+				break;
+			}
+			if (font->chars[i].code > c) {
+				break;
+			}
+		}
+
+		if (glyph) {
+			TextChar* textChar = (TextChar*) allocDrawListEntry(sizeof(TextChar));
+
+			if (textChar) {
+				textChar->dle.flags	= DLE_TYPE_TXTCH;
+				textChar->x			= x;
+				textChar->y			= y;
+				textChar->colour	= colour;
+				textChar->glyph		= glyph;
+
+				updateDrawListBounds(x, y, x + glyph->width, y + glyph->height);
+			}
+		}
+	}
+}
+
 void rendererRenderDrawList() {
 	if (drawListMaxX > drawListMinX) {
 		tftStartBlit(drawListMinX, drawListMinY, drawListMaxX - drawListMinX, drawListMaxY - drawListMinY);
@@ -248,6 +310,8 @@ void rendererRenderDrawList() {
 	}
 }
 
+extern const Font KiMony;
+
 void rendererTest()
 {
 	rendererNewDrawList();
@@ -256,6 +320,8 @@ void rendererTest()
 	rendererDrawHLine(0, 32, 120, 0xffff);
 	rendererDrawHLine(0, 287, 120, 0xffff);
 	rendererDrawRect(1, 33, 118, 254, 0xfa00);
+	rendererDrawChar('A', 10, 40, &KiMony, 0xffff);
+	rendererDrawChar('c', 21, 40, &KiMony, 0x1ff8);
 	rendererRenderDrawList();
 }
 

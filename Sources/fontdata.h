@@ -10,18 +10,18 @@
 
 #include <stdint.h>
 
-typedef struct {
+typedef struct _Glyph {
 	const uint8_t *data;
 	uint8_t width;
 	uint8_t height;
 } Glyph;
 
-typedef struct {
+typedef struct _Character {
 	long int code;
 	const Glyph *image;
 } Character;
 
-typedef struct {
+typedef struct _Font {
 	int length;
 	const Character *chars;
 } Font;
