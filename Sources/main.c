@@ -32,6 +32,8 @@
 #include "systick.h"
 #include "i2c.h"
 #include "spi.h"
+#include "interrupts.h"
+#include "mathutil.h"
 
 #include "keymatrix.h"
 #include "lcd.h"
@@ -39,16 +41,10 @@
 #include "ir.h"
 #include "flash.h"
 #include "renderer.h"
-#include "mathutil.h"
-#include "interrupts.h"
+#include "buttons.h"
 
 // Time until backlight turns off when idle, in hundredths of a second
 #define BACKLIGHT_OFF_TIMEOUT	500
-
-typedef struct _ButtonMapping {
-	uint32_t		buttonMask;
-	const IrAction*	action;
-} ButtonMapping;
 
 static const IrAction powerOnOff =
 {
@@ -146,7 +142,9 @@ static void backlightOn()
 
 void mainLoop()
 {
-	uint16_t keyColourM = 0xf81f;
+	buttonsInit();
+	buttonsSetActiveMapping(buttonMappings, sizeof(buttonMappings) / sizeof(buttonMappings[0]));
+
 	uint16_t keyColourNM = 0xf81f;
 
 	// Periodic timer for polling non-matrix keys
@@ -157,15 +155,12 @@ void mainLoop()
 	interruptRegisterPITIRQHandler(pitIrqHandler);
 	NVIC_EnableIRQ(PIT_IRQn);
 
-	uint32_t keypadState = keyMatrixPoll() | keyNonMatrixPoll();
-
 	keyMatrixClearInterrupt();
 	touchScreenClearInterrupt();
 
 	while (1) {
 		__asm("wfi");
 
-		uint32_t keypadNewState = keypadState;
 		const IrAction* action = NULL;
 
 		rendererNewDrawList();
@@ -180,12 +175,12 @@ void mainLoop()
 		}
 
 		if (keyMatrixCheckInterrupt()) {
-			keypadNewState = keyMatrixPoll() | (keypadNewState & KEY_NONMATRIX_MASK);
+			buttonsPollState();
 			keyMatrixClearInterrupt();
 		}
 
 		if (pitIrqCount) {
-			keypadNewState = keyNonMatrixPoll() | (keypadNewState & KEY_MATRIX_MASK);
+			buttonsPollState();
 			pitIrqCount = 0;
 
 			backlightCounter++;
@@ -195,30 +190,17 @@ void mainLoop()
 			}
 		}
 
-		uint32_t keypadChange = keypadState ^ keypadNewState;
-
-		if (keypadChange) {
-			uint32_t keypadNewOn = keypadNewState & keypadChange;
-			backlightOn();
-			if (keypadNewOn) {
-				rendererDrawRect(119, 161, 2, 2, keyColourNM);
-				keyColourNM ^= 0xffff;
-
-				for (size_t i = 0; i < sizeof(buttonMappings) / sizeof(buttonMappings[0]); i++) {
-					if (buttonMappings[i].buttonMask == keypadNewOn) {
-						action = buttonMappings[i].action;
-						break;
-					}
-				}
-			}
-
-			keypadState = keypadNewState;
-		}
-
-		rendererRenderDrawList();
+		buttonsUpdate(&action);
 
 		if (action) {
+			backlightOn();
+			rendererDrawRect(119, 161, 2, 2, keyColourNM);
+			rendererRenderDrawList();
+			keyColourNM ^= 0xffff;
 			irDoAction(action);
+		}
+		else {
+			rendererRenderDrawList();
 		}
 	}
 }
@@ -245,7 +227,6 @@ int main(void)
 	mainLoop();
 
 	//flashTest();
-	//testKeyMatrix();
 	//touchScreenTest();
 	//touchScreenCalibrate();
 	//rendererTest();

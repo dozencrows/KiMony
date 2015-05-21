@@ -186,18 +186,3 @@ uint32_t keyNonMatrixPoll()
 
     return key_data;
 }
-
-void testKeyMatrix()
-{
-	uint32_t keypadLast = keyMatrixPoll();
-
-	while (keypadLast != 0x1111) {
-		uint32_t keypadVal = keyMatrixPoll();
-		if (keypadVal != keypadLast) {
-			keypadLast = keypadVal;
-			printf("Keypad: %08x\n", keypadVal);
-		}
-
-		sysTickDelayMs(50);
-	}
-}
