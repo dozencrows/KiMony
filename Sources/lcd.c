@@ -46,6 +46,8 @@ static const PortConfig portDPins =
 	{ 3 }
 };
 
+static int backlightState = 0;
+
 #define TFT_DC_MASK 0x2U
 #define TFT_RS_MASK 0x4U
 #define TFT_BL_MASK 0x8U
@@ -715,6 +717,7 @@ void tftInit()
 	FGPIOA_PDDR |= TFT_CS_MASK | TFT_WR_MASK | TFT_DC_MASK | TFT_RS_MASK;
 	FGPIOC_PDDR |= 0xffU << 4;
 	FGPIOD_PDDR |= TFT_BL_MASK;
+	backlightState = 1;
 
 	FGPIO_PSOR_REG(FGPIOA) = TFT_CS_MASK | TFT_WR_MASK | TFT_DC_MASK | TFT_RS_MASK;
 	sysTickDelayMs(5);
@@ -731,6 +734,13 @@ void tftSetBacklight(int status)
 	else {
 		FGPIO_PCOR_REG(FGPIOD) = TFT_BL_MASK;
 	}
+
+	backlightState = status;
+}
+
+int tftGetBacklight()
+{
+	return backlightState;
 }
 
 void tftStartBlit(int x, int y, int width, int height)

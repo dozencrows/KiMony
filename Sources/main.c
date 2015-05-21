@@ -42,6 +42,7 @@
 #include "flash.h"
 #include "renderer.h"
 #include "buttons.h"
+#include "touchbuttons.h"
 
 // Time until backlight turns off when idle, in hundredths of a second
 #define BACKLIGHT_OFF_TIMEOUT	500
@@ -82,6 +83,11 @@ static const IrAction yellow 	= { 1, { IRCODE_SIRC, 15, 0x72E9, 0 } };
 static const IrAction green 	= { 1, { IRCODE_SIRC, 15, 0x32E9, 0 } };
 static const IrAction blue	 	= { 1, { IRCODE_SIRC, 15, 0x12E9, 0 } };
 
+static const IrAction guide 		= { 1, { IRCODE_SIRC, 15, 0x6D25, 0 } };
+static const IrAction enter 		= { 1, { IRCODE_SIRC, 12, 0xA70, 0 } };
+static const IrAction back 			= { 1, { IRCODE_SIRC, 12, 0xC70, 0 } };
+static const IrAction home 			= { 1, { IRCODE_SIRC, 12, 0x070, 0 } };
+
 static const ButtonMapping buttonMappings[] =
 {
 	{ 0x200000, &info },
@@ -106,6 +112,20 @@ static const ButtonMapping buttonMappings[] =
 	{ 0x000100, &numeric0 },
 	{ 0x000010, &mute },
 	{ 0x000001, &channelDown },
+};
+
+#define BUTTON_COLUMNS	4
+#define BUTTON_ROWS		6
+
+#define BUTTON_WIDTH	(SCREEN_WIDTH/BUTTON_COLUMNS)
+#define BUTTON_HEIGHT	(SCREEN_HEIGHT/BUTTON_ROWS)
+
+static const TouchButton touchButtons[] =
+{
+	{ &guide,   		   0, 0, BUTTON_WIDTH, BUTTON_HEIGHT, 0xf9e0 },
+	{ &enter,   BUTTON_WIDTH, 0, BUTTON_WIDTH, BUTTON_HEIGHT, 0xf9e0 },
+	{ &back,  2*BUTTON_WIDTH, 0, BUTTON_WIDTH, BUTTON_HEIGHT, 0xf9e0 },
+	{ &home,  3*BUTTON_WIDTH, 0, BUTTON_WIDTH, BUTTON_HEIGHT, 0xf9e0 },
 };
 
 void waitForButton()
@@ -145,7 +165,8 @@ void mainLoop()
 	buttonsInit();
 	buttonsSetActiveMapping(buttonMappings, sizeof(buttonMappings) / sizeof(buttonMappings[0]));
 
-	uint16_t keyColourNM = 0xf81f;
+	touchbuttonsInit();
+	touchbuttonsSetActive(touchButtons, sizeof(touchButtons) / sizeof(touchButtons[0]));
 
 	// Periodic timer for polling non-matrix keys
 	SIM_SCGC6   |= SIM_SCGC6_PIT_MASK;
@@ -168,8 +189,10 @@ void mainLoop()
 		if (touchScreenCheckInterrupt()) {
 			Point touch;
 			if (touchScreenGetCoordinates(&touch)) {
+				if (tftGetBacklight()) {
+					touchbuttonsProcessTouch(&touch, &action);
+				}
 				backlightOn();
-				rendererDrawHLine(touch.x, touch.y, 1, 0xffff);
 			}
 			touchScreenClearInterrupt();
 		}
@@ -181,6 +204,7 @@ void mainLoop()
 
 		if (pitIrqCount) {
 			buttonsPollState();
+			touchButtonsUpdate();
 			pitIrqCount = 0;
 
 			backlightCounter++;
@@ -191,12 +215,11 @@ void mainLoop()
 		}
 
 		buttonsUpdate(&action);
+		touchbuttonsRender();
 
 		if (action) {
 			backlightOn();
-			rendererDrawRect(119, 161, 2, 2, keyColourNM);
 			rendererRenderDrawList();
-			keyColourNM ^= 0xffff;
 			irDoAction(action);
 		}
 		else {
