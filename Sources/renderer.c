@@ -9,7 +9,7 @@
 #include "lcd.h"
 #include "mathutil.h"
 
-#define DRAWLIST_BUFFER_SIZE	1024
+#define DRAWLIST_BUFFER_SIZE	2048
 
 #define DLE_FLAG_ACTIVE_MASK	0x01
 #define DLE_FLAG_DRAWN_MASK		0x02
