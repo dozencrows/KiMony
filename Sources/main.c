@@ -81,26 +81,35 @@ static const IrAction channelUp 	= { 1, { IRCODE_SIRC, 12, 0x090, 0 } };
 static const IrAction channelDown	= { 1, { IRCODE_SIRC, 12, 0x890, 0 } };
 static const IrAction info			= { 1, { IRCODE_SIRC, 12, 0x5D0, 0 } };
 
+static const IrAction red 		= { 1, { IRCODE_SIRC, 15, 0x52E9, 0 } };
+static const IrAction yellow 	= { 1, { IRCODE_SIRC, 15, 0x72E9, 0 } };
+static const IrAction green 	= { 1, { IRCODE_SIRC, 15, 0x32E9, 0 } };
+static const IrAction blue	 	= { 1, { IRCODE_SIRC, 15, 0x12E9, 0 } };
+
 static const ButtonMapping buttonMappings[] =
 {
+	{ 0x200000, &info },
+	{ 0x100000, &blue },
+	{ 0x080000, &green },
+	{ 0x040000, &yellow },
 	{ 0x020000, &powerOnOff },
+	{ 0x010000, &red },
 	{ 0x008000, &numeric1 },
 	{ 0x000800, &numeric2 },
 	{ 0x000080, &numeric3 },
+	{ 0x000008, &volumeUp },
 	{ 0x004000, &numeric4 },
 	{ 0x000400, &numeric5 },
 	{ 0x000040, &numeric6 },
+	{ 0x000004, &volumeDown },
 	{ 0x002000, &numeric7 },
 	{ 0x000200, &numeric8 },
 	{ 0x000020, &numeric9 },
-	{ 0x000100, &numeric0 },
-	{ 0x000008, &volumeUp },
-	{ 0x000004, &volumeDown },
 	{ 0x000002, &channelUp },
-	{ 0x000001, &channelDown },
-	{ 0x000010, &mute },
 	{ 0x001000, &surround },
-	{ 0x200000, &info },
+	{ 0x000100, &numeric0 },
+	{ 0x000010, &mute },
+	{ 0x000001, &channelDown },
 };
 
 void waitForButton()
