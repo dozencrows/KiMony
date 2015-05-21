@@ -42,6 +42,9 @@
 #include "mathutil.h"
 #include "interrupts.h"
 
+// Time until backlight turns off when idle, in hundredths of a second
+#define BACKLIGHT_OFF_TIMEOUT	500
+
 #define IRCODE_NOP	0
 #define IRCODE_RC6	1
 #define IRCODE_SIRC	2
@@ -167,6 +170,14 @@ static void pitIrqHandler()
 	pitIrqCount++;
 }
 
+static uint32_t backlightCounter = 0;
+
+static void backlightOn()
+{
+	backlightCounter = 0;
+	tftSetBacklight(1);
+}
+
 void mainLoop()
 {
 	uint16_t keyColourM = 0xf81f;
@@ -196,6 +207,7 @@ void mainLoop()
 		if (touchScreenCheckInterrupt()) {
 			Point touch;
 			if (touchScreenGetCoordinates(&touch)) {
+				backlightOn();
 				rendererDrawHLine(touch.x, touch.y, 1, 0xffff);
 			}
 			touchScreenClearInterrupt();
@@ -209,12 +221,19 @@ void mainLoop()
 		if (pitIrqCount) {
 			keypadNewState = keyNonMatrixPoll() | (keypadNewState & KEY_MATRIX_MASK);
 			pitIrqCount = 0;
+
+			backlightCounter++;
+			if (backlightCounter > BACKLIGHT_OFF_TIMEOUT) {
+				tftSetBacklight(0);
+				backlightCounter = 0;
+			}
 		}
 
 		uint32_t keypadChange = keypadState ^ keypadNewState;
 
 		if (keypadChange) {
 			uint32_t keypadNewOn = keypadNewState & keypadChange;
+			backlightOn();
 			if (keypadNewOn) {
 				rendererDrawRect(119, 161, 2, 2, keyColourNM);
 				keyColourNM ^= 0xffff;
