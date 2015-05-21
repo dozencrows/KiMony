@@ -9,9 +9,22 @@
 #define IR_H_
 #include <stdint.h>
 
-extern void irTest();
+#define IRCODE_NOP	0
+#define IRCODE_RC6	1
+#define IRCODE_SIRC	2
 
-extern void irSendRC6Code(uint32_t data, int bitCount);
-extern void irSendSIRCCode(uint32_t data, int bitCount);
+typedef struct _IrCode {
+	unsigned int encoding:4;
+	unsigned int bits:5;
+	unsigned int code:23;
+	uint32_t toggleMask;
+} IrCode;
+
+typedef struct _IrAction {
+	int		codeCount;
+	IrCode	codes[];
+} IrAction;
+
+extern void irDoAction(const IrAction* action);
 
 #endif /* IR_H_ */

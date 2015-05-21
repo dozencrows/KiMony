@@ -13,18 +13,10 @@
 #include "i2c.h"
 #include "systick.h"
 
-static const uint16_t powerCode1a[] = { 2691, 854, 467, 832, 467, 416, 467, 416, 467, 832, 934, 416, 467, 416, 467, 416, 467, 416, 467, 416, 934, 832, 467, 416, 934, 416, 467, 832, 467, 416, 467, 416, 934, 416, 467, 416, 467, 649 };
-
-static const uint16_t powerCode1b[] = { 2691, 854, 467, 832, 467, 416, 467, 416, 1401, 1248, 467, 416, 467, 416, 467, 416, 467, 416, 934, 832, 467, 416, 934, 416, 467, 832, 467, 416, 467, 416, 934, 416, 467, 416, 467 };
-
-static const uint16_t powerCode2[] = { 2440, 568, 1223, 565, 626, 565, 1223, 565, 626, 565, 1223, 565, 626, 565, 626, 565, 1223, 565, 626, 565, 626, 565, 626, 565, 626, 646 };
-
 #define IR_I2C_ADDRESS	0x70
 #define IR_STAGE_COUNT  64
 #define IR_PACKET_SIZE(packet) (sizeof(packet->header) + sizeof(uint16_t) * packet->header.length)
 #define IR_MAX_DURATION	65535
-
-#define END_DELAY_US	100000
 
 typedef struct _IrPacketHeader {
 	uint8_t		start;
@@ -222,56 +214,43 @@ static void sendIrPacketAndWait(IrPacket* packet, uint32_t endDelayUs)
 	sysTickDelayMs(totalMs);
 }
 
-IrPacket irPacket;
+static IrPacket irPacket;
 
-void irSendRC6Code(uint32_t data, int bitCount)
+static void irSendRC6Code(uint32_t data, int bitCount)
 {
 	irEncodeRC6(&irPacket, data, bitCount);
 	sendIrPacketAndWait(&irPacket, 74000);
 }
 
-void irSendSIRCCode(uint32_t data, int bitCount)
+static void irSendSIRCCode(uint32_t data, int bitCount)
 {
 	irEncodeSIRC(&irPacket, data, bitCount);
 	sendIrPacketAndWait(&irPacket, 45000);
 }
 
-void irTest()
+static uint32_t toggleBit = 0;
+
+void irDoAction(const IrAction* action)
 {
-//	irPacket.header.start			= 1;
-//	irPacket.header.repeats			= 1;
-//	irPacket.header.repeat_delay	= 1;
-//
-//	irPacket.header.length		 	= sizeof(powerCode1a) / sizeof(uint16_t);
-//	memcpy(irPacket.timing, powerCode1a, sizeof(powerCode1a));
-//
-//	sendIrPacketAndWait(&irPacket, 74000);
-//
-//	irPacket.header.length		 	= sizeof(powerCode1b) / sizeof(uint16_t);
-//	memcpy(irPacket.timing, powerCode1b, sizeof(powerCode1b));
-//
-//	sendIrPacketAndWait(&irPacket, 74000);
+	const IrCode* code = action->codes;
 
-	// Need to encode pre-data (0x77) and toggle bit
-
-	irEncodeRC6(&irPacket, 0xFFB38, 21);
-	sendIrPacketAndWait(&irPacket, 74000);
-
-	irEncodeRC6(&irPacket, 0xEFB38, 21);
-	sendIrPacketAndWait(&irPacket, 74000);
-
-	sysTickDelayMs(1000);
-
-	irEncodeSIRC(&irPacket, 0xA90, 12);
-	sendIrPacketAndWait(&irPacket, 45000);
-
-
-//	//int result = irEncodeRC6(&irPacket, 0xFFB38, 21);
-//	int result = irEncodeRC6(&irPacket, 0xEFB38, 21);
-//
-//	printf("%d: %d\n", result, irPacket.header.length);
-//
-//	for (int i = 0; i < irPacket.header.length; i++) {
-//		printf("%d\n", irPacket.timing[i]);
-//	}
+	for (int i = 0; i < action->codeCount; i++, code++) {
+		if (code->toggleMask) {
+			toggleBit ^= code->toggleMask;
+		}
+		switch (code->encoding) {
+			case IRCODE_NOP: {
+				sysTickDelayMs(code->code);
+				break;
+			}
+			case IRCODE_RC6: {
+				irSendRC6Code(code->code|toggleBit, code->bits);
+				break;
+			}
+			case IRCODE_SIRC: {
+				irSendSIRCCode(code->code|toggleBit, code->bits);
+				break;
+			}
+		}
+	}
 }

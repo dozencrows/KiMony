@@ -45,22 +45,6 @@
 // Time until backlight turns off when idle, in hundredths of a second
 #define BACKLIGHT_OFF_TIMEOUT	500
 
-#define IRCODE_NOP	0
-#define IRCODE_RC6	1
-#define IRCODE_SIRC	2
-
-typedef struct _IrCode {
-	unsigned int encoding:4;
-	unsigned int bits:5;
-	unsigned int code:23;
-	uint32_t toggleMask;
-} IrCode;
-
-typedef struct _IrAction {
-	int		codeCount;
-	IrCode	codes[];
-} IrAction;
-
 typedef struct _ButtonMapping {
 	uint32_t		buttonMask;
 	const IrAction*	action;
@@ -118,33 +102,6 @@ static const ButtonMapping buttonMappings[] =
 	{ 0x001000, &surround },
 	{ 0x200000, &info },
 };
-
-static uint32_t toggleBit = 0;
-
-void performIrAction(const IrAction* action)
-{
-	const IrCode* code = action->codes;
-
-	for (int i = 0; i < action->codeCount; i++, code++) {
-		if (code->toggleMask) {
-			toggleBit ^= code->toggleMask;
-		}
-		switch (code->encoding) {
-			case IRCODE_NOP: {
-				sysTickDelayMs(code->code);
-				break;
-			}
-			case IRCODE_RC6: {
-				irSendRC6Code(code->code|toggleBit, code->bits);
-				break;
-			}
-			case IRCODE_SIRC: {
-				irSendSIRCCode(code->code|toggleBit, code->bits);
-				break;
-			}
-		}
-	}
-}
 
 void waitForButton()
 {
@@ -252,7 +209,7 @@ void mainLoop()
 		rendererRenderDrawList();
 
 		if (action) {
-			performIrAction(action);
+			irDoAction(action);
 		}
 	}
 }
@@ -278,7 +235,6 @@ int main(void)
 
 	mainLoop();
 
-	//irTest();
 	//flashTest();
 	//testKeyMatrix();
 	//touchScreenTest();
