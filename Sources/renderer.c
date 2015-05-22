@@ -201,8 +201,30 @@ static void renderScanLine(uint16_t y)
 					dle->next = dle;
 				}
 				else {
-					for (uint16_t x = 0; x < rect->width; x++) {
-						pixelBuffer[rect->x - drawListMinX + x] = rect->colour;
+					int width = rect->width;
+					uint16_t* pixptr = pixelBuffer + rect->x - drawListMinX;
+					if (((uint32_t)pixptr) & 3) {
+						*pixptr++ = rect->colour;
+						width--;
+					}
+
+					if (width >= 2) {
+						uint32_t  pixduo = (uint32_t)rect->colour | ((uint32_t)rect->colour << 16);
+						uint32_t* pixptrduo = (uint32_t*)pixptr;
+						while(width > 3) {
+							*(pixptrduo++) = pixduo;
+							*(pixptrduo++) = pixduo;
+							width -= 4;
+						}
+						while(width > 1) {
+							*(pixptrduo++) = pixduo;
+							width -= 2;
+						}
+						pixptr = (uint16_t*)pixptrduo;
+					}
+
+					while (width--) {
+						*pixptr++ = rect->colour;
 					}
 				}
 				PROFILE_EXIT(rect);
@@ -427,6 +449,20 @@ void rendererTest()
 	rendererDrawChar('A', 10, 40, &KiMony, 0xffff);
 	rendererDrawChar('c', 21, 40, &KiMony, 0x1ff8);
 	rendererDrawString("Hello", 10, 52, &KiMony, 0xf81f);
+
+	rendererDrawRect(8, 80, 1, 1, 0xffff);
+	rendererDrawRect(9, 81, 1, 1, 0xffff);
+	rendererDrawRect(8, 82, 2, 1, 0xffff);
+	rendererDrawRect(9, 83, 2, 1, 0xffff);
+	rendererDrawRect(8, 84, 3, 1, 0xffff);
+	rendererDrawRect(9, 85, 3, 1, 0xffff);
+	rendererDrawRect(8, 86, 4, 1, 0xffff);
+	rendererDrawRect(9, 87, 4, 1, 0xffff);
+	rendererDrawRect(8, 88, 5, 1, 0xffff);
+	rendererDrawRect(9, 89, 5, 1, 0xffff);
+	rendererDrawRect(8, 90, 6, 1, 0xffff);
+	rendererDrawRect(9, 91, 6, 1, 0xffff);
+
 	rendererRenderDrawList();
 }
 
