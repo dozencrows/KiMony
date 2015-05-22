@@ -9,6 +9,7 @@
 #include "mathutil.h"
 #include "renderer.h"
 #include "fontdata.h"
+#include "profiler.h"
 
 #define MAX_BUTTONS				24
 
@@ -56,6 +57,7 @@ void touchbuttonsSetActive(const TouchButton* buttons, int count)
 
 void touchbuttonsRender()
 {
+	//PROFILE_ENTER(drawlist);
 	for(int i = 0; i < activeTouchButtonsCount; i++) {
 		if (buttonState[i].dirty) {
 			const TouchButton* button = buttonState[i].button;
@@ -63,6 +65,7 @@ void touchbuttonsRender()
 			buttonState[i].dirty = 0;
 		}
 	}
+	//PROFILE_EXIT(drawlist);
 }
 
 void touchButtonsUpdate()
@@ -81,6 +84,7 @@ void touchButtonsUpdate()
 int touchbuttonsProcessTouch(const Point* touch, const IrAction** action)
 {
 	int result = TOUCHBUTTON_EVENT_NONE;
+
 
 	for(int i = 0; i < activeTouchButtonsCount; i++) {
 		const TouchButton* button = buttonState[i].button;
