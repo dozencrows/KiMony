@@ -137,18 +137,18 @@ static void updateDrawListBounds(uint16_t x0, uint16_t y0, uint16_t x1, uint16_t
 
 static void renderScanLine(uint16_t y)
 {
-	PROFILE_ENTER(scanline);
+	//PROFILE_ENTER(scanline);
 
 	size_t drawListIndex = 0;
 
-	PROFILE_ENTER(clearline);
+	//PROFILE_ENTER(clearline);
 	memset(pixelBuffer, 0, (drawListMaxX - drawListMinX)*2);
-	PROFILE_EXIT(clearline);
+	//PROFILE_EXIT(clearline);
 
 	while (drawListIndex < drawListEnd) {
 		DrawListEntry* dle = (DrawListEntry*) (drawListBuffer + drawListIndex);
 		if (!(dle->flags & DLE_FLAG_DRAWN_MASK)) {
-			PROFILE_ENTER(activationCheck);
+			//PROFILE_ENTER(activationCheck);
 			if (!(dle->flags & DLE_FLAG_ACTIVE_MASK)) {
 				switch(dle->flags & DLE_TYPE_MASK) {
 					case DLE_TYPE_VLINE:
@@ -177,13 +177,13 @@ static void renderScanLine(uint16_t y)
 					}
 				}
 			}
-			PROFILE_EXIT(activationCheck);
+			//PROFILE_EXIT(activationCheck);
 
-			PROFILE_ENTER(rendering);
+			//PROFILE_ENTER(rendering);
 			if (dle->flags & DLE_FLAG_ACTIVE_MASK) {
 				switch(dle->flags & DLE_TYPE_MASK) {
 					case DLE_TYPE_VLINE: {
-						PROFILE_ENTER(vline);
+						//PROFILE_ENTER(vline);
 						Line* vLine = (Line*)dle;
 						if (y == vLine->y + vLine->length) {
 							dle->flags &= ~DLE_FLAG_ACTIVE_MASK;
@@ -192,22 +192,22 @@ static void renderScanLine(uint16_t y)
 						else {
 							pixelBuffer[vLine->x - drawListMinX] = vLine->colour;
 						}
-						PROFILE_EXIT(vline);
+						//PROFILE_EXIT(vline);
 						break;
 					}
 					case DLE_TYPE_HLINE: {
-						PROFILE_ENTER(hline);
+						//PROFILE_ENTER(hline);
 						Line* hLine = (Line*)dle;
 						for (uint16_t x = 0; x < hLine->length; x++) {
 							pixelBuffer[hLine->x - drawListMinX + x] = hLine->colour;
 						}
 						dle->flags &= ~DLE_FLAG_ACTIVE_MASK;
 						dle->flags |= DLE_FLAG_DRAWN_MASK;
-						PROFILE_EXIT(hline);
+						//PROFILE_EXIT(hline);
 						break;
 					}
 					case DLE_TYPE_RECT: {
-						PROFILE_ENTER(rect);
+						//PROFILE_ENTER(rect);
 						Rect* rect = (Rect*)dle;
 						if (y == rect->y + rect->height) {
 							dle->flags &= ~DLE_FLAG_ACTIVE_MASK;
@@ -218,11 +218,11 @@ static void renderScanLine(uint16_t y)
 								pixelBuffer[rect->x - drawListMinX + x] = rect->colour;
 							}
 						}
-						PROFILE_EXIT(rect);
+						//PROFILE_EXIT(rect);
 						break;
 					}
 					case DLE_TYPE_TXTCH: {
-						PROFILE_ENTER(text);
+						//PROFILE_ENTER(text);
 						TextChar* textChar = (TextChar*)dle;
 						if (y == textChar->y + textChar->glyph->height) {
 							dle->flags &= ~DLE_FLAG_ACTIVE_MASK;
@@ -236,20 +236,20 @@ static void renderScanLine(uint16_t y)
 								}
 							}
 						}
-						PROFILE_EXIT(text);
+						//PROFILE_EXIT(text);
 					}
 					default: {
 						break;
 					}
 				}
 			}
-			PROFILE_EXIT(rendering);
+			//PROFILE_EXIT(rendering);
 		}
 
 		drawListIndex += dle->size;
 	}
 
-	PROFILE_EXIT(scanline);
+	//PROFILE_EXIT(scanline);
 }
 
 void rendererInit()
@@ -383,17 +383,17 @@ void rendererDrawString(char* s, uint16_t x, uint16_t y, const Font* font, uint1
 
 void rendererRenderDrawList() {
 	if (drawListMaxX > drawListMinX) {
+		tftStartBlit(drawListMinX, drawListMinY, drawListMaxX - drawListMinX, drawListMaxY - drawListMinY);
 		PROFILE_BEGIN;
 		PROFILE_ENTER(overall);
-		//tftStartBlit(drawListMinX, drawListMinY, drawListMaxX - drawListMinX, drawListMaxY - drawListMinY);
 
 		for(uint16_t y = drawListMinY; y < drawListMaxY; y++) {
 			renderScanLine(y);
-			//tftBlit(pixelBuffer, drawListMaxX - drawListMinX);
+			tftBlit(pixelBuffer, drawListMaxX - drawListMinX);
 		}
 
-		//tftEndBlit();
 		PROFILE_EXIT(overall);
+		tftEndBlit();
 
 		PROFILE_ENTER(profileOuter);
 		PROFILE_ENTER(profileInner);
