@@ -137,10 +137,6 @@ static void renderScanLine(uint16_t y)
 
 	size_t undrawnCount = 0;
 
-	//PROFILE_ENTER(clearline);
-	memset(pixelBuffer, 0, (drawListMaxX - drawListMinX)*2);
-	//PROFILE_EXIT(clearline);
-
 	DrawListEntry** lastDle = &pendingDLEs;
 	DrawListEntry* dle = pendingDLEs;
 
