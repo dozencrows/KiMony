@@ -11,23 +11,7 @@
 #include "systick.h"
 #include "mathutil.h"
 #include "fontdata.h"
-
-#define PROFILING
-
-#ifdef PROFILING
-#define PROFILE_CATEGORY_OVERHEAD 69
-#define PROFILE_CATEGORY(category) uint32_t ctr_##category; uint32_t calls_##category
-#define PROFILE_BEGIN memset(&renderMetrics, 0, sizeof(renderMetrics)); sysTickStartCycleCount()
-#define PROFILE_ENTER(category) uint32_t profileMark_##category = sysTickGetCycleCount()
-#define PROFILE_EXIT(category) renderMetrics.ctr_##category += sysTickGetCycleCount() - profileMark_##category; renderMetrics.calls_##category++
-#define PROFILE_END sysTickStopCycleCount()
-#define PROFILE_REPORT(category) printf("%s: %d, %d\n", #category, renderMetrics.ctr_##category, renderMetrics.calls_##category)
-#else
-#define PROFILE_BEGIN
-#define PROFILE_ENTER(category)
-#define PROFILE_EXIT(category)
-#define PROFILE_END
-#endif
+#include "profiler.h"
 
 #define DRAWLIST_BUFFER_SIZE	4096
 #define DLE_FLAG_ACTIVE_MASK	0x01
@@ -38,25 +22,6 @@
 #define DLE_TYPE_HLINE	0x20
 #define DLE_TYPE_RECT	0x30
 #define DLE_TYPE_TXTCH	0x40
-
-#ifdef PROFILING
-typedef struct _RenderMetrics {
-	PROFILE_CATEGORY(overall);
-	PROFILE_CATEGORY(scanline);
-	PROFILE_CATEGORY(clearline);
-	PROFILE_CATEGORY(activationCheck);
-	PROFILE_CATEGORY(rendering);
-	PROFILE_CATEGORY(hline);
-	PROFILE_CATEGORY(vline);
-	PROFILE_CATEGORY(rect);
-	PROFILE_CATEGORY(text);
-	PROFILE_CATEGORY(profileOuter);
-	PROFILE_CATEGORY(profileInner);
-	PROFILE_CATEGORY(blit);
-} RenderMetrics;
-
-static RenderMetrics renderMetrics;
-#endif
 
 typedef struct _DrawListEntry {
 	struct _DrawListEntry*	next;
@@ -199,7 +164,7 @@ static void renderScanLine(uint16_t y)
 	lastDle = &activeDLEs;
 	dle = activeDLEs;
 
-	//PROFILE_ENTER(rendering);
+	//PROFILE_ENTER(primitives);
 	while(dle) {
 		DrawListEntry* nextDle = dle->next;
 
@@ -273,7 +238,7 @@ static void renderScanLine(uint16_t y)
 		}
 		dle = nextDle;
 	}
-	//PROFILE_EXIT(rendering);
+	//PROFILE_EXIT(primitives);
 	//PROFILE_EXIT(scanline);
 }
 
@@ -301,6 +266,7 @@ void rendererNewDrawList()
 	drawListMinY = SCREEN_HEIGHT;
 	drawListMaxX = 0;
 	drawListMaxY = 0;
+	PROFILE_BEGIN;
 }
 
 void rendererDrawVLine(uint16_t x, uint16_t y, uint16_t length, uint16_t colour)
@@ -417,8 +383,7 @@ void rendererDrawString(char* s, uint16_t x, uint16_t y, const Font* font, uint1
 void rendererRenderDrawList() {
 	if (drawListMaxX > drawListMinX) {
 		tftStartBlit(drawListMinX, drawListMinY, drawListMaxX - drawListMinX, drawListMaxY - drawListMinY);
-		PROFILE_BEGIN;
-		PROFILE_ENTER(overall);
+		PROFILE_ENTER(render);
 
 		for(uint16_t y = drawListMinY; y < drawListMaxY; y++) {
 			renderScanLine(y);
@@ -427,7 +392,7 @@ void rendererRenderDrawList() {
 			//PROFILE_EXIT(blit);
 		}
 
-		PROFILE_EXIT(overall);
+		PROFILE_EXIT(render);
 		tftEndBlit();
 
 		PROFILE_ENTER(profileOuter);
@@ -436,11 +401,12 @@ void rendererRenderDrawList() {
 		PROFILE_EXIT(profileOuter);
 
 		PROFILE_END;
-		PROFILE_REPORT(overall);
+		PROFILE_REPORT(drawlist);
+		PROFILE_REPORT(render);
 		PROFILE_REPORT(scanline);
 		PROFILE_REPORT(clearline);
 		PROFILE_REPORT(activationCheck);
-		PROFILE_REPORT(rendering);
+		PROFILE_REPORT(primitives);
 		PROFILE_REPORT(hline);
 		PROFILE_REPORT(vline);
 		PROFILE_REPORT(rect);
