@@ -193,6 +193,17 @@ void mainLoop()
 	touchbuttonsInit();
 	touchbuttonsSetActive(touchButtons, sizeof(touchButtons) / sizeof(touchButtons[0]));
 
+//	int frames = 0;
+//	sysTickEventInMs(1000);
+//	while (!sysTickCheckEvent()) {
+//		rendererNewDrawList();
+//		touchbuttonsRender();
+//		rendererRenderDrawList();
+//		frames++;
+//	}
+//
+//	printf("TouchButtons %d\n", frames);
+
 	// Periodic timer for polling non-matrix keys
 	SIM_SCGC6   |= SIM_SCGC6_PIT_MASK;
 	PIT_MCR 	= PIT_MCR_FRZ_MASK;
