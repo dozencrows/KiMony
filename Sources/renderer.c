@@ -107,12 +107,34 @@ static DrawListEntry* allocDrawListEntry(size_t bytes)
 		dle->size = bytes;
 		dle->next = NULL;
 		drawListEnd += bytes;
-		*pendingDLETail = dle;
-		pendingDLETail = &dle->next;
 		return dle;
 	}
 	else {
 		return NULL;
+	}
+}
+
+void insertPendingDrawListEntry(DrawListEntry* dle)
+{
+	if (pendingDLEs == NULL) {
+		*pendingDLETail = dle;
+		pendingDLETail = &dle->next;
+	}
+	else {
+		DrawListEntry* candidateDLE = pendingDLEs;
+		DrawListEntry** candidateDLELink = &pendingDLEs;
+
+		while (candidateDLE && dle->y >= candidateDLE->y) {
+			candidateDLELink = &candidateDLE->next;
+			candidateDLE = candidateDLE->next;
+		}
+
+		*candidateDLELink = dle;
+		dle->next = candidateDLE;
+
+		if (!candidateDLE) {
+			pendingDLETail = &dle->next;
+		}
 	}
 }
 
@@ -157,7 +179,7 @@ static void renderScanLine(uint16_t y)
 	DrawListEntry* dle = pendingDLEs;
 
 	//PROFILE_ENTER(activationCheck);
-	while(dle) {
+	while(dle && y == dle->y) {
 		DrawListEntry* nextDle = dle->next;
 
 		if (y == dle->y) {
@@ -292,6 +314,7 @@ void rendererDrawVLine(uint16_t x, uint16_t y, uint16_t length, uint16_t colour)
 		vLine->length		= length;
 		vLine->colour		= colour;
 
+		insertPendingDrawListEntry(&vLine->dle);
 		updateDrawListBounds(x, y, x + 1, y + length);
 	}
 }
@@ -307,6 +330,7 @@ void rendererDrawHLine(uint16_t x, uint16_t y, uint16_t length, uint16_t colour)
 		vLine->length		= length;
 		vLine->colour		= colour;
 
+		insertPendingDrawListEntry(&vLine->dle);
 		updateDrawListBounds(x, y, x + length, y + 1);
 	}
 }
@@ -323,6 +347,7 @@ void rendererDrawRect(uint16_t x, uint16_t y, uint16_t width, uint16_t height, u
 		rect->height		= height;
 		rect->colour		= colour;
 
+		insertPendingDrawListEntry(&rect->dle);
 		updateDrawListBounds(x, y, x + width, y + height);
 	}
 }
@@ -357,6 +382,7 @@ void rendererDrawGlyph(const Glyph* glyph, uint16_t x, uint16_t y, uint16_t colo
 		textChar->colour	= colour;
 		textChar->glyph		= glyph;
 
+		insertPendingDrawListEntry(&textChar->dle);
 		updateDrawListBounds(x, y, x + glyph->width, y + glyph->height);
 	}
 }
