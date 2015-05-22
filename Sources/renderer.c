@@ -170,7 +170,7 @@ static void renderScanLine(uint16_t y)
 
 		switch(dle->flags & DLE_TYPE_MASK) {
 			case DLE_TYPE_VLINE: {
-				//PROFILE_ENTER(vline);
+				PROFILE_ENTER(vline);
 				Line* vLine = (Line*)dle;
 				if (y == dle->y + vLine->length) {
 					*lastDle = nextDle;
@@ -179,22 +179,22 @@ static void renderScanLine(uint16_t y)
 				else {
 					pixelBuffer[vLine->x - drawListMinX] = vLine->colour;
 				}
-				//PROFILE_EXIT(vline);
+				PROFILE_EXIT(vline);
 				break;
 			}
 			case DLE_TYPE_HLINE: {
-				//PROFILE_ENTER(hline);
+				PROFILE_ENTER(hline);
 				Line* hLine = (Line*)dle;
 				for (uint16_t x = 0; x < hLine->length; x++) {
 					pixelBuffer[hLine->x - drawListMinX + x] = hLine->colour;
 				}
 				*lastDle = nextDle;
 				dle->next = dle;
-				//PROFILE_EXIT(hline);
+				PROFILE_EXIT(hline);
 				break;
 			}
 			case DLE_TYPE_RECT: {
-				//PROFILE_ENTER(rect);
+				PROFILE_ENTER(rect);
 				Rect* rect = (Rect*)dle;
 				if (y == dle->y + rect->height) {
 					*lastDle = nextDle;
@@ -205,11 +205,11 @@ static void renderScanLine(uint16_t y)
 						pixelBuffer[rect->x - drawListMinX + x] = rect->colour;
 					}
 				}
-				//PROFILE_EXIT(rect);
+				PROFILE_EXIT(rect);
 				break;
 			}
 			case DLE_TYPE_TXTCH: {
-				//PROFILE_ENTER(text);
+				PROFILE_ENTER(text);
 				TextChar* textChar = (TextChar*)dle;
 				if (y == dle->y + textChar->glyph->height) {
 					*lastDle = nextDle;
@@ -223,7 +223,7 @@ static void renderScanLine(uint16_t y)
 						}
 					}
 				}
-				//PROFILE_EXIT(text);
+				PROFILE_EXIT(text);
 			}
 			default: {
 				break;

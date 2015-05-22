@@ -57,7 +57,7 @@ void touchbuttonsSetActive(const TouchButton* buttons, int count)
 
 void touchbuttonsRender()
 {
-	PROFILE_ENTER(drawlist);
+	//PROFILE_ENTER(drawlist);
 	for(int i = 0; i < activeTouchButtonsCount; i++) {
 		if (buttonState[i].dirty) {
 			const TouchButton* button = buttonState[i].button;
@@ -65,7 +65,7 @@ void touchbuttonsRender()
 			buttonState[i].dirty = 0;
 		}
 	}
-	PROFILE_EXIT(drawlist);
+	//PROFILE_EXIT(drawlist);
 }
 
 void touchButtonsUpdate()
