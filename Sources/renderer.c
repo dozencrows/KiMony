@@ -29,7 +29,7 @@
 #define PROFILE_END
 #endif
 
-#define DRAWLIST_BUFFER_SIZE	3072
+#define DRAWLIST_BUFFER_SIZE	4096
 #define DLE_FLAG_ACTIVE_MASK	0x01
 #define DLE_FLAG_DRAWN_MASK		0x02
 #define DLE_TYPE_MASK			0xf0
@@ -52,14 +52,16 @@ typedef struct _RenderMetrics {
 	PROFILE_CATEGORY(text);
 	PROFILE_CATEGORY(profileOuter);
 	PROFILE_CATEGORY(profileInner);
+	PROFILE_CATEGORY(blit);
 } RenderMetrics;
 
 static RenderMetrics renderMetrics;
 #endif
 
 typedef struct _DrawListEntry {
-	uint8_t		flags;
-	uint8_t		size;
+	struct _DrawListEntry*	next;
+	uint8_t					flags;
+	uint8_t					size;
 } DrawListEntry;
 
 typedef struct _Line {
@@ -88,6 +90,11 @@ typedef struct _TextChar {
 } TextChar;
 
 uint8_t		drawListBuffer[DRAWLIST_BUFFER_SIZE];
+DrawListEntry* 	activeDLEs = NULL;
+DrawListEntry** activeDLETail = &activeDLEs;
+DrawListEntry* 	pendingDLEs = NULL;
+DrawListEntry** pendingDLETail = &pendingDLEs;
+
 size_t		drawListEnd = 0;
 uint16_t	drawListMinX = SCREEN_WIDTH;
 uint16_t	drawListMinY = SCREEN_HEIGHT;
@@ -100,7 +107,10 @@ static DrawListEntry* allocDrawListEntry(size_t bytes)
 	if (drawListEnd + bytes < DRAWLIST_BUFFER_SIZE) {
 		DrawListEntry* dle = (DrawListEntry*) (drawListBuffer + drawListEnd);
 		dle->size = bytes;
+		dle->next = NULL;
 		drawListEnd += bytes;
+		*pendingDLETail = dle;
+		pendingDLETail = &dle->next;
 		return dle;
 	}
 	else {
@@ -137,119 +147,143 @@ static void updateDrawListBounds(uint16_t x0, uint16_t y0, uint16_t x1, uint16_t
 
 static void renderScanLine(uint16_t y)
 {
-	PROFILE_ENTER(scanline);
+	//PROFILE_ENTER(scanline);
 
-	size_t drawListIndex = 0;
+	size_t undrawnCount = 0;
 
-	PROFILE_ENTER(clearline);
+	//PROFILE_ENTER(clearline);
 	memset(pixelBuffer, 0, (drawListMaxX - drawListMinX)*2);
-	PROFILE_EXIT(clearline);
+	//PROFILE_EXIT(clearline);
 
-	while (drawListIndex < drawListEnd) {
-		DrawListEntry* dle = (DrawListEntry*) (drawListBuffer + drawListIndex);
-		if (!(dle->flags & DLE_FLAG_DRAWN_MASK)) {
-			PROFILE_ENTER(activationCheck);
-			if (!(dle->flags & DLE_FLAG_ACTIVE_MASK)) {
-				switch(dle->flags & DLE_TYPE_MASK) {
-					case DLE_TYPE_VLINE:
-					case DLE_TYPE_HLINE: {
-						Line* line = (Line*)dle;
-						if (y == line->y) {
-							dle->flags |= DLE_FLAG_ACTIVE_MASK;
-						}
-						break;
-					}
-					case DLE_TYPE_RECT: {
-						Rect* rect = (Rect*)dle;
-						if (y == rect->y) {
-							dle->flags |= DLE_FLAG_ACTIVE_MASK;
-						}
-						break;
-					}
-					case DLE_TYPE_TXTCH: {
-						TextChar* textChar = (TextChar*)dle;
-						if (y == textChar->y) {
-							dle->flags |= DLE_FLAG_ACTIVE_MASK;
-						}
-					}
-					default: {
-						break;
-					}
+	DrawListEntry** lastDle = &pendingDLEs;
+	DrawListEntry* dle = pendingDLEs;
+
+	//PROFILE_ENTER(activationCheck);
+	while(dle) {
+		DrawListEntry* nextDle = dle->next;
+
+		switch(dle->flags & DLE_TYPE_MASK) {
+			case DLE_TYPE_VLINE:
+			case DLE_TYPE_HLINE: {
+				Line* line = (Line*)dle;
+				if (y == line->y) {
+					*lastDle = nextDle;
+					dle->next = NULL;
+					*activeDLETail = dle;
+					activeDLETail = &dle->next;
+				}
+				break;
+			}
+			case DLE_TYPE_RECT: {
+				Rect* rect = (Rect*)dle;
+				if (y == rect->y) {
+					*lastDle = nextDle;
+					dle->next = NULL;
+					*activeDLETail = dle;
+					activeDLETail = &dle->next;
+				}
+				break;
+			}
+			case DLE_TYPE_TXTCH: {
+				TextChar* textChar = (TextChar*)dle;
+				if (y == textChar->y) {
+					*lastDle = nextDle;
+					dle->next = NULL;
+					*activeDLETail = dle;
+					activeDLETail = &dle->next;
 				}
 			}
-			PROFILE_EXIT(activationCheck);
-
-			PROFILE_ENTER(rendering);
-			if (dle->flags & DLE_FLAG_ACTIVE_MASK) {
-				switch(dle->flags & DLE_TYPE_MASK) {
-					case DLE_TYPE_VLINE: {
-						PROFILE_ENTER(vline);
-						Line* vLine = (Line*)dle;
-						if (y == vLine->y + vLine->length) {
-							dle->flags &= ~DLE_FLAG_ACTIVE_MASK;
-							dle->flags |= DLE_FLAG_DRAWN_MASK;
-						}
-						else {
-							pixelBuffer[vLine->x - drawListMinX] = vLine->colour;
-						}
-						PROFILE_EXIT(vline);
-						break;
-					}
-					case DLE_TYPE_HLINE: {
-						PROFILE_ENTER(hline);
-						Line* hLine = (Line*)dle;
-						for (uint16_t x = 0; x < hLine->length; x++) {
-							pixelBuffer[hLine->x - drawListMinX + x] = hLine->colour;
-						}
-						dle->flags &= ~DLE_FLAG_ACTIVE_MASK;
-						dle->flags |= DLE_FLAG_DRAWN_MASK;
-						PROFILE_EXIT(hline);
-						break;
-					}
-					case DLE_TYPE_RECT: {
-						PROFILE_ENTER(rect);
-						Rect* rect = (Rect*)dle;
-						if (y == rect->y + rect->height) {
-							dle->flags &= ~DLE_FLAG_ACTIVE_MASK;
-							dle->flags |= DLE_FLAG_DRAWN_MASK;
-						}
-						else {
-							for (uint16_t x = 0; x < rect->width; x++) {
-								pixelBuffer[rect->x - drawListMinX + x] = rect->colour;
-							}
-						}
-						PROFILE_EXIT(rect);
-						break;
-					}
-					case DLE_TYPE_TXTCH: {
-						PROFILE_ENTER(text);
-						TextChar* textChar = (TextChar*)dle;
-						if (y == textChar->y + textChar->glyph->height) {
-							dle->flags &= ~DLE_FLAG_ACTIVE_MASK;
-							dle->flags |= DLE_FLAG_DRAWN_MASK;
-						}
-						else {
-							const uint8_t* char_row = textChar->glyph->data + (y - textChar->y) * textChar->glyph->width;
-							for (uint16_t x = 0; x < textChar->glyph->width; x++) {
-								if (!char_row[x]) {
-									pixelBuffer[textChar->x - drawListMinX + x] = textChar->colour;
-								}
-							}
-						}
-						PROFILE_EXIT(text);
-					}
-					default: {
-						break;
-					}
-				}
+			default: {
+				break;
 			}
-			PROFILE_EXIT(rendering);
 		}
 
-		drawListIndex += dle->size;
+		if (dle->next == nextDle) {
+			lastDle = &dle->next;
+		}
+		dle = nextDle;
 	}
+	//PROFILE_EXIT(activationCheck);
 
-	PROFILE_EXIT(scanline);
+	lastDle = &activeDLEs;
+	dle = activeDLEs;
+
+	//PROFILE_ENTER(rendering);
+	while(dle) {
+		DrawListEntry* nextDle = dle->next;
+
+		switch(dle->flags & DLE_TYPE_MASK) {
+			case DLE_TYPE_VLINE: {
+				//PROFILE_ENTER(vline);
+				Line* vLine = (Line*)dle;
+				if (y == vLine->y + vLine->length) {
+					*lastDle = nextDle;
+					dle->next = dle;
+				}
+				else {
+					pixelBuffer[vLine->x - drawListMinX] = vLine->colour;
+				}
+				//PROFILE_EXIT(vline);
+				break;
+			}
+			case DLE_TYPE_HLINE: {
+				//PROFILE_ENTER(hline);
+				Line* hLine = (Line*)dle;
+				for (uint16_t x = 0; x < hLine->length; x++) {
+					pixelBuffer[hLine->x - drawListMinX + x] = hLine->colour;
+				}
+				*lastDle = nextDle;
+				dle->next = dle;
+				//PROFILE_EXIT(hline);
+				break;
+			}
+			case DLE_TYPE_RECT: {
+				//PROFILE_ENTER(rect);
+				Rect* rect = (Rect*)dle;
+				if (y == rect->y + rect->height) {
+					*lastDle = nextDle;
+					dle->next = dle;
+				}
+				else {
+					for (uint16_t x = 0; x < rect->width; x++) {
+						pixelBuffer[rect->x - drawListMinX + x] = rect->colour;
+					}
+				}
+				//PROFILE_EXIT(rect);
+				break;
+			}
+			case DLE_TYPE_TXTCH: {
+				//PROFILE_ENTER(text);
+				TextChar* textChar = (TextChar*)dle;
+				if (y == textChar->y + textChar->glyph->height) {
+					*lastDle = nextDle;
+					dle->next = dle;
+				}
+				else {
+					const uint8_t* char_row = textChar->glyph->data + (y - textChar->y) * textChar->glyph->width;
+					for (uint16_t x = 0; x < textChar->glyph->width; x++) {
+						if (!char_row[x]) {
+							pixelBuffer[textChar->x - drawListMinX + x] = textChar->colour;
+						}
+					}
+				}
+				//PROFILE_EXIT(text);
+			}
+			default: {
+				break;
+			}
+		}
+
+		if (dle->next == nextDle) {
+			lastDle = &dle->next;
+		}
+		else if (nextDle == NULL) {
+			activeDLETail = lastDle;
+		}
+		dle = nextDle;
+	}
+	//PROFILE_EXIT(rendering);
+	//PROFILE_EXIT(scanline);
 }
 
 void rendererInit()
@@ -267,6 +301,10 @@ void rendererClearScreen()
 
 void rendererNewDrawList()
 {
+	activeDLEs = NULL;
+	activeDLETail = &activeDLEs;
+	pendingDLEs	= NULL;
+	pendingDLETail = &pendingDLEs;
 	drawListEnd = 0;
 	drawListMinX = SCREEN_WIDTH;
 	drawListMinY = SCREEN_HEIGHT;
@@ -383,17 +421,19 @@ void rendererDrawString(char* s, uint16_t x, uint16_t y, const Font* font, uint1
 
 void rendererRenderDrawList() {
 	if (drawListMaxX > drawListMinX) {
+		tftStartBlit(drawListMinX, drawListMinY, drawListMaxX - drawListMinX, drawListMaxY - drawListMinY);
 		PROFILE_BEGIN;
 		PROFILE_ENTER(overall);
-		//tftStartBlit(drawListMinX, drawListMinY, drawListMaxX - drawListMinX, drawListMaxY - drawListMinY);
 
 		for(uint16_t y = drawListMinY; y < drawListMaxY; y++) {
 			renderScanLine(y);
-			//tftBlit(pixelBuffer, drawListMaxX - drawListMinX);
+			//PROFILE_ENTER(blit);
+			tftBlit(pixelBuffer, drawListMaxX - drawListMinX);
+			//PROFILE_EXIT(blit);
 		}
 
-		//tftEndBlit();
 		PROFILE_EXIT(overall);
+		tftEndBlit();
 
 		PROFILE_ENTER(profileOuter);
 		PROFILE_ENTER(profileInner);
@@ -410,6 +450,7 @@ void rendererRenderDrawList() {
 		PROFILE_REPORT(vline);
 		PROFILE_REPORT(rect);
 		PROFILE_REPORT(text);
+		PROFILE_REPORT(blit);
 		PROFILE_REPORT(profileOuter);
 	}
 }
