@@ -15,6 +15,7 @@ extern void sysTickDelayMs(unsigned int delayMs);
 extern void sysTickEventInMs(unsigned int delayMs);
 extern int sysTickCheckEvent();
 extern void sysTickStartCycleCount();
+extern uint32_t sysTickGetCycleCount();
 extern uint32_t sysTickStopCycleCount();
 
 #endif /* SYSTICK_H_ */

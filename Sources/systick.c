@@ -83,6 +83,11 @@ void sysTickStartCycleCount()
 	SysTick->CTRL = 0x07;
 }
 
+uint32_t sysTickGetCycleCount()
+{
+	return (sysTickCounter << 24) | (sysTickMax + 1 - SysTick->VAL);
+}
+
 uint32_t sysTickStopCycleCount()
 {
 	SysTick->CTRL = 0x00U;
