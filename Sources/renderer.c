@@ -239,9 +239,10 @@ static void renderScanLine(uint16_t y)
 				}
 				else {
 					const uint8_t* char_row = textChar->glyph->data + (y - dle->y) * textChar->glyph->width;
+					uint16_t* pixptr = pixelBuffer + textChar->x - drawListMinX;
 					for (uint16_t x = 0; x < textChar->glyph->width; x++) {
 						if (!char_row[x]) {
-							pixelBuffer[textChar->x - drawListMinX + x] = textChar->colour;
+							pixptr[x] = textChar->colour;
 						}
 					}
 				}
