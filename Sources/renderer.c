@@ -13,7 +13,7 @@
 #include "fontdata.h"
 #include "profiler.h"
 
-#define DRAWLIST_BUFFER_SIZE	4096
+#define DRAWLIST_BUFFER_SIZE	4608
 #define DLE_FLAG_ACTIVE_MASK	0x01
 #define DLE_FLAG_DRAWN_MASK		0x02
 #define DLE_TYPE_MASK			0xf0
@@ -48,8 +48,9 @@ typedef struct _Rect {
 typedef struct _TextChar {
 	DrawListEntry	dle;
 	uint16_t		x;
-	const Glyph*	glyph;
 	uint16_t		colour;
+	const Glyph*	glyph;
+	const uint8_t*	data;
 } TextChar;
 
 uint8_t		drawListBuffer[DRAWLIST_BUFFER_SIZE];
@@ -238,13 +239,17 @@ static void renderScanLine(uint16_t y)
 					dle->next = dle;
 				}
 				else {
-					const uint8_t* char_row = textChar->glyph->data + (y - dle->y) * textChar->glyph->width;
+					const uint8_t* charData = textChar->data;
 					uint16_t* pixptr = pixelBuffer + textChar->x - drawListMinX;
-					for (uint16_t x = 0; x < textChar->glyph->width; x++) {
-						if (!char_row[x]) {
-							pixptr[x] = textChar->colour;
+					uint16_t x = textChar->glyph->width;
+					while (x-- > 0) {
+						if (!(*charData)) {
+							*pixptr = textChar->colour;
 						}
+						charData++;
+						pixptr++;
 					}
+					textChar->data = charData;
 				}
 				PROFILE_EXIT(text);
 			}
@@ -370,6 +375,7 @@ void rendererDrawGlyph(const Glyph* glyph, uint16_t x, uint16_t y, uint16_t colo
 		textChar->x			= x;
 		textChar->colour	= colour;
 		textChar->glyph		= glyph;
+		textChar->data		= glyph->data;
 
 		insertPendingDrawListEntry(&textChar->dle);
 		updateDrawListBounds(x, y, x + glyph->width, y + glyph->height);
