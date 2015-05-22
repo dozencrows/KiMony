@@ -44,6 +44,7 @@ extern ProfilerMetrics profilerMetrics;
 #define PROFILE_ENTER(category)
 #define PROFILE_EXIT(category)
 #define PROFILE_END
+#define PROFILE_REPORT(category)
 
 #endif
 
