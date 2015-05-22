@@ -8,6 +8,7 @@
 #include "touchbuttons.h"
 #include "mathutil.h"
 #include "renderer.h"
+#include "fontdata.h"
 
 #define MAX_BUTTONS				24
 
@@ -33,6 +34,7 @@ static void renderTouchButton(const TouchButton* button, uint16_t colour)
 	rendererDrawVLine(button->x + button->width - 1, button->y, button->height, BUTTON_BORDER_COLOUR);
 	rendererDrawRect(button->x + 1, button->y + 1, button->width - 2, button->height - 2, colour);
 	rendererDrawHLine(button->x, button->y + button->height - 1, button->width, BUTTON_BORDER_COLOUR);
+	rendererDrawString("BTNX", button->x + 3, button->y + 3, &KiMony, 0xffff);
 }
 
 void touchbuttonsInit()

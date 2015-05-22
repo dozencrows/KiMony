@@ -26,5 +26,6 @@ typedef struct _Font {
 	const Character *chars;
 } Font;
 
+extern const Font KiMony;
 
 #endif /* FONTDATA_H_ */

@@ -266,10 +266,10 @@ void rendererDrawRect(uint16_t x, uint16_t y, uint16_t width, uint16_t height, u
 	}
 }
 
-void rendererDrawChar(char c, uint16_t x, uint16_t y, const Font* font, uint16_t colour)
+static const Glyph* findGlyph(char c, const Font* font)
 {
+	const Glyph* glyph = NULL;
 	if (c >= font->chars[0].code && c <= font->chars[font->length - 1].code) {
-		const Glyph* glyph = NULL;
 
 		for (int i = 0; i < font->length; i++) {
 			if (font->chars[i].code == c) {
@@ -280,19 +280,49 @@ void rendererDrawChar(char c, uint16_t x, uint16_t y, const Font* font, uint16_t
 				break;
 			}
 		}
+	}
+
+	return glyph;
+}
+
+void rendererDrawGlyph(const Glyph* glyph, uint16_t x, uint16_t y, uint16_t colour)
+{
+	TextChar* textChar = (TextChar*) allocDrawListEntry(sizeof(TextChar));
+
+	if (textChar) {
+		textChar->dle.flags	= DLE_TYPE_TXTCH;
+		textChar->x			= x;
+		textChar->y			= y;
+		textChar->colour	= colour;
+		textChar->glyph		= glyph;
+
+		updateDrawListBounds(x, y, x + glyph->width, y + glyph->height);
+	}
+}
+
+void rendererDrawChar(char c, uint16_t x, uint16_t y, const Font* font, uint16_t colour)
+{
+	const Glyph* glyph = findGlyph(c, font);
+
+	if (glyph) {
+		rendererDrawGlyph(glyph, x, y, colour);
+	}
+}
+
+void rendererDrawString(char* s, uint16_t x, uint16_t y, const Font* font, uint16_t colour)
+{
+	char c;
+
+	while ((c = *s++)) {
+		const Glyph* glyph = findGlyph(c, font);
+
+		if (!glyph) {
+			glyph = findGlyph('*', font);
+		}
 
 		if (glyph) {
-			TextChar* textChar = (TextChar*) allocDrawListEntry(sizeof(TextChar));
-
-			if (textChar) {
-				textChar->dle.flags	= DLE_TYPE_TXTCH;
-				textChar->x			= x;
-				textChar->y			= y;
-				textChar->colour	= colour;
-				textChar->glyph		= glyph;
-
-				updateDrawListBounds(x, y, x + glyph->width, y + glyph->height);
-			}
+			rendererDrawGlyph(glyph, x, y, colour);
+			x += glyph->width;
 		}
 	}
 }
@@ -310,8 +340,6 @@ void rendererRenderDrawList() {
 	}
 }
 
-extern const Font KiMony;
-
 void rendererTest()
 {
 	rendererNewDrawList();
@@ -322,6 +350,7 @@ void rendererTest()
 	rendererDrawRect(1, 33, 118, 254, 0xfa00);
 	rendererDrawChar('A', 10, 40, &KiMony, 0xffff);
 	rendererDrawChar('c', 21, 40, &KiMony, 0x1ff8);
+	rendererDrawString("Hello", 10, 52, &KiMony, 0xf81f);
 	rendererRenderDrawList();
 }
 

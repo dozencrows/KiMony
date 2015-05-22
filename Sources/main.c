@@ -272,12 +272,12 @@ int main(void)
 	keyMatrixInit();
 	flashInit();
 
-	//mainLoop();
+	mainLoop();
 
 	//flashTest();
 	//touchScreenTest();
 	//touchScreenCalibrate();
-	rendererTest();
+	//rendererTest();
 
 //	int frames = 0;
 //	sysTickEventInMs(1000);
