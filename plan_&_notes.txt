@@ -1,9 +1,11 @@
 Plan
 ====
-* Devices & activities structure, button mappings and initial flow.
-* Device state management.
-* Interrupt/DMA driven I2C.
-* Interrupt/DMA driven SPI. 
+* Debounce touch, and respond on release
+* Devices & state management.
+* Compiling of remote data from source form -> binary
+* Updating of remote data over USB connection
+* Power save mode
+* Wake-up via accelerometer
 
 Work-in-progress
 ================
@@ -92,6 +94,7 @@ Done
 * Implemented interrupt-driven button reading.
 * Implemented interrupt-driven touchscreen reading
 * Implemented icon rendering
+* Implemented basic activities structure, button mappings and initial flow.
   
 Notes
 =====

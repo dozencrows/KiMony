@@ -10,13 +10,19 @@
 
 #define EVENT_NONE			0
 #define EVENT_IRACTION		1
+#define EVENT_ACTIVITY		2
+#define EVENT_NEXTPAGE		3
+#define EVENT_PREVPAGE		4
+#define EVENT_HOME			5
 
 typedef struct _IrAction IrAction;
+typedef struct _Activity Activity;
 
 typedef struct _Event {
 	uint32_t	type;
 	union {
 		const IrAction* irAction;
+		const Activity* activity;
 	};
 } Event;
 

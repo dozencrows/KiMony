@@ -43,9 +43,16 @@
 #include "renderer.h"
 #include "buttons.h"
 #include "touchbuttons.h"
+#include "activity.h"
+
+#define ARRAY_LENGTH(x) (sizeof(x) / sizeof(x[0]))
 
 // Time until backlight turns off when idle, in hundredths of a second
 #define BACKLIGHT_OFF_TIMEOUT	500
+
+static const Event homeActivityEvent = { EVENT_HOME, NULL };
+static const Event nextPageEvent = { EVENT_NEXTPAGE, NULL };
+static const Event prevPageEvent = { EVENT_PREVPAGE, NULL };
 
 static const IrAction powerOnOff =
 {
@@ -120,14 +127,14 @@ static const Event homeEvent 			= { EVENT_IRACTION, &home };
 
 static const Event powerOnOffEvent 		= { EVENT_IRACTION, &powerOnOff };
 
-static const ButtonMapping buttonMappings[] =
+static const ButtonMapping testRemoteButtonMappings[] =
 {
 	{ 0x200000, &infoEvent },
-	{ 0x100000, &blueEvent },
-	{ 0x080000, &greenEvent },
-	{ 0x040000, &yellowEvent },
+	//{ 0x100000, &blueEvent },
+	//{ 0x080000, &greenEvent },
+	//{ 0x040000, &yellowEvent },
 	{ 0x020000, &powerOnOffEvent },
-	{ 0x010000, &redEvent },
+	{ 0x010000, &homeActivityEvent },
 	{ 0x008000, &numeric1Event },
 	{ 0x000800, &numeric2Event },
 	{ 0x000080, &numeric3Event },
@@ -152,17 +159,17 @@ static const ButtonMapping buttonMappings[] =
 #define BUTTON_WIDTH	(SCREEN_WIDTH/BUTTON_COLUMNS)
 #define BUTTON_HEIGHT	(SCREEN_HEIGHT/BUTTON_ROWS)
 
-static const TouchButton touchButtons[] =
+static const TouchButton testRemoteTouchButtons[] =
 {
 	{ &guideEvent,   		    0, 0, BUTTON_WIDTH, BUTTON_HEIGHT, 0xf9e0 },
 	{ &enterEvent,   BUTTON_WIDTH, 0, BUTTON_WIDTH, BUTTON_HEIGHT, 0xf9e0 },
 	{ &backEvent,  2*BUTTON_WIDTH, 0, BUTTON_WIDTH, BUTTON_HEIGHT, 0xf9e0 },
 	{ &homeEvent,  3*BUTTON_WIDTH, 0, BUTTON_WIDTH, BUTTON_HEIGHT, 0xf9e0 },
 
-	{ NULL,   	          0, BUTTON_HEIGHT, BUTTON_WIDTH, BUTTON_HEIGHT, 0xf9e0 },
-	{ NULL,    BUTTON_WIDTH, BUTTON_HEIGHT, BUTTON_WIDTH, BUTTON_HEIGHT, 0xf9e0 },
-	{ NULL,  2*BUTTON_WIDTH, BUTTON_HEIGHT, BUTTON_WIDTH, BUTTON_HEIGHT, 0xf9e0 },
-	{ NULL,  3*BUTTON_WIDTH, BUTTON_HEIGHT, BUTTON_WIDTH, BUTTON_HEIGHT, 0xf9e0 },
+	{ &redEvent,    	          0, BUTTON_HEIGHT, BUTTON_WIDTH, BUTTON_HEIGHT, 0xf800 },
+	{ &greenEvent,     BUTTON_WIDTH, BUTTON_HEIGHT, BUTTON_WIDTH, BUTTON_HEIGHT, 0x07e0 },
+	{ &yellowEvent,  2*BUTTON_WIDTH, BUTTON_HEIGHT, BUTTON_WIDTH, BUTTON_HEIGHT, 0xffe0 },
+	{ &blueEvent,    3*BUTTON_WIDTH, BUTTON_HEIGHT, BUTTON_WIDTH, BUTTON_HEIGHT, 0x001f },
 
 	{ NULL,   	          0, 2*BUTTON_HEIGHT, BUTTON_WIDTH, BUTTON_HEIGHT, 0xf9e0 },
 	{ NULL,    BUTTON_WIDTH, 2*BUTTON_HEIGHT, BUTTON_WIDTH, BUTTON_HEIGHT, 0xf9e0 },
@@ -184,6 +191,35 @@ static const TouchButton touchButtons[] =
 	{ NULL,  2*BUTTON_WIDTH, 5*BUTTON_HEIGHT, BUTTON_WIDTH, BUTTON_HEIGHT, 0xf9e0 },
 	{ NULL,  3*BUTTON_WIDTH, 5*BUTTON_HEIGHT, BUTTON_WIDTH, BUTTON_HEIGHT, 0xf9e0 },
 };
+
+static const TouchButtonPage testRemotePages = { ARRAY_LENGTH(testRemoteTouchButtons), testRemoteTouchButtons };
+static const Activity testRemote = { ARRAY_LENGTH(testRemoteButtonMappings), testRemoteButtonMappings, 1, &testRemotePages };
+
+static const ButtonMapping homeActivityButtonMappings[] =
+{
+	{ 0x010000, &prevPageEvent },
+	{ 0x040000, &nextPageEvent },
+};
+
+static const Event selectTestRemote = { EVENT_ACTIVITY, &testRemote};
+static const TouchButton homeTouchButtonsPage1[] = {
+	{ &selectTestRemote, 0, 0, 4*BUTTON_WIDTH, BUTTON_HEIGHT, 0xf9e0 }
+};
+static const TouchButton homeTouchButtonsPage2[] = {
+	{ &selectTestRemote, 0, 1*BUTTON_HEIGHT, 4*BUTTON_WIDTH, BUTTON_HEIGHT, 0xf9e0 }
+};
+static const TouchButton homeTouchButtonsPage3[] = {
+	{ &selectTestRemote, 0, 2*BUTTON_HEIGHT, 4*BUTTON_WIDTH, BUTTON_HEIGHT, 0xf9e0 }
+};
+static const TouchButtonPage homePages[] = {
+	{ ARRAY_LENGTH(homeTouchButtonsPage1), homeTouchButtonsPage1 },
+	{ ARRAY_LENGTH(homeTouchButtonsPage2), homeTouchButtonsPage2 },
+	{ ARRAY_LENGTH(homeTouchButtonsPage3), homeTouchButtonsPage3 },
+};
+static const Activity homeActivity = { ARRAY_LENGTH(homeActivityButtonMappings), homeActivityButtonMappings, ARRAY_LENGTH(homePages), homePages};
+
+static int touchPage = 0;
+static const Activity* currentActivity = NULL;
 
 void waitForButton()
 {
@@ -217,13 +253,55 @@ static void backlightOn()
 	tftSetBacklight(1);
 }
 
+void selectActivity(const Activity* activity)
+{
+	buttonsSetActiveMapping(activity->buttonMapping, activity->buttonMappingCount);
+
+	const TouchButton* touchButtons = NULL;
+	int touchButtonCount = 0;
+
+	if (activity->touchButtonPageCount) {
+		touchButtons = activity->touchButtonPages[0].touchButtons;
+		touchButtonCount = activity->touchButtonPages[0].touchButtonCount;
+	}
+
+	touchbuttonsSetActive(touchButtons, touchButtonCount);
+	rendererNewDrawList();
+	rendererClearScreen();
+	rendererRenderDrawList();
+	currentActivity = activity;
+	touchPage = 0;
+}
+
+void selectTouchPage(int page)
+{
+	if (page < 0) {
+		page = currentActivity->touchButtonPageCount - 1;
+	}
+	else if (page >= currentActivity->touchButtonPageCount) {
+		page = 0;
+	}
+
+	touchPage = page;
+
+	if (page < currentActivity->touchButtonPageCount) {
+		touchbuttonsSetActive(currentActivity->touchButtonPages[page].touchButtons, currentActivity->touchButtonPages[page].touchButtonCount);
+	}
+	else {
+		touchbuttonsSetActive(NULL, 0);
+	}
+
+	rendererNewDrawList();
+	rendererClearScreen();
+	rendererRenderDrawList();
+}
+
 void mainLoop()
 {
 	buttonsInit();
-	buttonsSetActiveMapping(buttonMappings, sizeof(buttonMappings) / sizeof(buttonMappings[0]));
-
 	touchbuttonsInit();
-	touchbuttonsSetActive(touchButtons, sizeof(touchButtons) / sizeof(touchButtons[0]));
+
+	selectActivity(&homeActivity);
 
 //	int frames = 0;
 //	sysTickEventInMs(1000);
@@ -290,6 +368,18 @@ void mainLoop()
 			rendererRenderDrawList();
 			if (event->type == EVENT_IRACTION) {
 				irDoAction(event->irAction);
+			}
+			else if (event->type == EVENT_ACTIVITY) {
+				selectActivity(event->activity);
+			}
+			else if (event->type == EVENT_HOME) {
+				selectActivity(&homeActivity);
+			}
+			else if (event->type == EVENT_NEXTPAGE) {
+				selectTouchPage(touchPage + 1);
+			}
+			else if (event->type == EVENT_PREVPAGE) {
+				selectTouchPage(touchPage - 1);
 			}
 		}
 		else {
