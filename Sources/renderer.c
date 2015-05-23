@@ -32,28 +32,28 @@ typedef struct _DrawListEntry {
 	uint16_t				y;
 } DrawListEntry;
 
-typedef struct _Line {
+typedef struct _LineDLE {
 	DrawListEntry	dle;
 	uint16_t		x;
 	uint16_t		length;
 	uint16_t		colour;
-} Line;
+} LineDLE;
 
-typedef struct _Rect {
+typedef struct _RectDLE {
 	DrawListEntry	dle;
 	uint16_t		x;
 	uint16_t		width;
 	uint16_t		height;
 	uint16_t		colour;
-} Rect;
+} RectDLE;
 
-typedef struct _TextChar {
+typedef struct _GlyphDLE {
 	DrawListEntry	dle;
 	uint16_t		x;
 	uint16_t		colour;
 	const Glyph*	glyph;
 	const uint8_t*	data;
-} TextChar;
+} GlyphDLE;
 
 typedef struct _ImageDLE {
 	DrawListEntry	dle;
@@ -177,7 +177,7 @@ static void renderScanLine(uint16_t y)
 		switch(dle->flags & DLE_TYPE_MASK) {
 			case DLE_TYPE_VLINE: {
 				//PROFILE_ENTER(vline);
-				Line* vLine = (Line*)dle;
+				LineDLE* vLine = (LineDLE*)dle;
 				if (y == dle->y + vLine->length) {
 					*lastDle = nextDle;
 					dle->next = dle;
@@ -190,7 +190,7 @@ static void renderScanLine(uint16_t y)
 			}
 			case DLE_TYPE_HLINE: {
 				//PROFILE_ENTER(hline);
-				Line* hLine = (Line*)dle;
+				LineDLE* hLine = (LineDLE*)dle;
 				for (uint16_t x = 0; x < hLine->length; x++) {
 					pixelBuffer[hLine->x - drawListMinX + x] = hLine->colour;
 				}
@@ -201,7 +201,7 @@ static void renderScanLine(uint16_t y)
 			}
 			case DLE_TYPE_RECT: {
 				//PROFILE_ENTER(rect);
-				Rect* rect = (Rect*)dle;
+				RectDLE* rect = (RectDLE*)dle;
 				if (y == dle->y + rect->height) {
 					*lastDle = nextDle;
 					dle->next = dle;
@@ -238,7 +238,7 @@ static void renderScanLine(uint16_t y)
 			}
 			case DLE_TYPE_TXTCH: {
 				//PROFILE_ENTER(text);
-				TextChar* textChar = (TextChar*)dle;
+				GlyphDLE* textChar = (GlyphDLE*)dle;
 				if (y == dle->y + textChar->glyph->height) {
 					*lastDle = nextDle;
 					dle->next = dle;
@@ -376,7 +376,7 @@ void rendererNewDrawList()
 
 void rendererDrawVLine(uint16_t x, uint16_t y, uint16_t length, uint16_t colour)
 {
-	Line* vLine = (Line*) allocDrawListEntry(sizeof(Line));
+	LineDLE* vLine = (LineDLE*) allocDrawListEntry(sizeof(LineDLE));
 
 	if (vLine) {
 		vLine->dle.flags 	= DLE_TYPE_VLINE;
@@ -392,7 +392,7 @@ void rendererDrawVLine(uint16_t x, uint16_t y, uint16_t length, uint16_t colour)
 
 void rendererDrawHLine(uint16_t x, uint16_t y, uint16_t length, uint16_t colour)
 {
-	Line* vLine = (Line*) allocDrawListEntry(sizeof(Line));
+	LineDLE* vLine = (LineDLE*) allocDrawListEntry(sizeof(LineDLE));
 
 	if (vLine) {
 		vLine->dle.flags 	= DLE_TYPE_HLINE;
@@ -408,7 +408,7 @@ void rendererDrawHLine(uint16_t x, uint16_t y, uint16_t length, uint16_t colour)
 
 void rendererDrawRect(uint16_t x, uint16_t y, uint16_t width, uint16_t height, uint16_t colour)
 {
-	Rect* rect = (Rect*) allocDrawListEntry(sizeof(Rect));
+	RectDLE* rect = (RectDLE*) allocDrawListEntry(sizeof(RectDLE));
 
 	if (rect) {
 		rect->dle.flags 	= DLE_TYPE_RECT;
@@ -444,7 +444,7 @@ static const Glyph* findGlyph(char c, const Font* font)
 
 void rendererDrawGlyph(const Glyph* glyph, uint16_t x, uint16_t y, uint16_t colour)
 {
-	TextChar* textChar = (TextChar*) allocDrawListEntry(sizeof(TextChar));
+	GlyphDLE* textChar = (GlyphDLE*) allocDrawListEntry(sizeof(GlyphDLE));
 
 	if (textChar) {
 		textChar->dle.flags	= DLE_TYPE_TXTCH;
