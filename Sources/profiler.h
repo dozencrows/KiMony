@@ -31,6 +31,7 @@ typedef struct _ProfilerMetrics {
 	PROFILE_CATEGORY(vline);
 	PROFILE_CATEGORY(rect);
 	PROFILE_CATEGORY(text);
+	PROFILE_CATEGORY(image);
 	PROFILE_CATEGORY(profileOuter);
 	PROFILE_CATEGORY(profileInner);
 	PROFILE_CATEGORY(blit);

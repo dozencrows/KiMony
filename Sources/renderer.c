@@ -11,6 +11,7 @@
 #include "systick.h"
 #include "mathutil.h"
 #include "fontdata.h"
+#include "image.h"
 #include "profiler.h"
 
 #define DRAWLIST_BUFFER_SIZE	4608
@@ -22,6 +23,7 @@
 #define DLE_TYPE_HLINE	0x20
 #define DLE_TYPE_RECT	0x30
 #define DLE_TYPE_TXTCH	0x40
+#define DLE_TYPE_IMAGE	0x50
 
 typedef struct _DrawListEntry {
 	struct _DrawListEntry*	next;
@@ -52,6 +54,13 @@ typedef struct _TextChar {
 	const Glyph*	glyph;
 	const uint8_t*	data;
 } TextChar;
+
+typedef struct _ImageDLE {
+	DrawListEntry	dle;
+	uint16_t		x;
+	const Image*	image;
+	const uint16_t*	data;
+} ImageDLE;
 
 uint8_t		drawListBuffer[DRAWLIST_BUFFER_SIZE];
 DrawListEntry* 	activeDLEs = NULL;
@@ -199,29 +208,29 @@ static void renderScanLine(uint16_t y)
 				}
 				else {
 					int width = rect->width;
-					uint16_t* pixptr = pixelBuffer + rect->x - drawListMinX;
-					if (((uint32_t)pixptr) & 3) {
-						*pixptr++ = rect->colour;
+					uint16_t* pixPtr = pixelBuffer + rect->x - drawListMinX;
+					if (((uint32_t)pixPtr) & 3) {
+						*pixPtr++ = rect->colour;
 						width--;
 					}
 
 					if (width >= 2) {
-						uint32_t  pixduo = (uint32_t)rect->colour | ((uint32_t)rect->colour << 16);
-						uint32_t* pixptrduo = (uint32_t*)pixptr;
+						uint32_t  pixDuo = (uint32_t)rect->colour | ((uint32_t)rect->colour << 16);
+						uint32_t* pixPtrDuo = (uint32_t*)pixPtr;
 						while(width > 3) {
-							*(pixptrduo++) = pixduo;
-							*(pixptrduo++) = pixduo;
+							*(pixPtrDuo++) = pixDuo;
+							*(pixPtrDuo++) = pixDuo;
 							width -= 4;
 						}
 						while(width > 1) {
-							*(pixptrduo++) = pixduo;
+							*(pixPtrDuo++) = pixDuo;
 							width -= 2;
 						}
-						pixptr = (uint16_t*)pixptrduo;
+						pixPtr = (uint16_t*)pixPtrDuo;
 					}
 
 					while (width--) {
-						*pixptr++ = rect->colour;
+						*pixPtr++ = rect->colour;
 					}
 				}
 				//PROFILE_EXIT(rect);
@@ -236,18 +245,90 @@ static void renderScanLine(uint16_t y)
 				}
 				else {
 					const uint8_t* charData = textChar->data;
-					uint16_t* pixptr = pixelBuffer + textChar->x - drawListMinX;
-					uint16_t x = textChar->glyph->width;
-					while (x-- > 0) {
+					uint16_t* pixPtr = pixelBuffer + textChar->x - drawListMinX;
+					uint16_t width = textChar->glyph->width;
+					while (width-- > 0) {
 						if (!(*charData)) {
-							*pixptr = textChar->colour;
+							*pixPtr = textChar->colour;
 						}
 						charData++;
-						pixptr++;
+						pixPtr++;
 					}
 					textChar->data = charData;
 				}
 				//PROFILE_EXIT(text);
+				break;
+			}
+			case DLE_TYPE_IMAGE: {
+				//PROFILE_ENTER(image);
+				ImageDLE* image = (ImageDLE*)dle;
+				if (y == dle->y + image->image->height) {
+					*lastDle = nextDle;
+					dle->next = dle;
+				}
+				else {
+					const uint16_t* imagePix = image->data;
+					uint16_t* pixPtr = pixelBuffer + image->x - drawListMinX;
+					uint16_t width = image->image->width;
+
+					if (((uint32_t)pixPtr) & 3) {
+						*pixPtr++ = *imagePix++;
+						width--;
+					}
+
+					if (((uint32_t)imagePix) & 3) {
+						// Destination is 32-bit aligned, but source isn't
+						uint32_t pixDuo;
+						uint32_t* pixPtrDuo = (uint32_t*)pixPtr;
+
+						while (width > 3) {
+							pixDuo = *imagePix++ | (*imagePix++ << 16);
+							*pixPtrDuo++ = pixDuo;
+							pixDuo = *imagePix++ | (*imagePix++ << 16);
+							*pixPtrDuo++ = pixDuo;
+							width -= 4;
+						}
+
+						while (width > 1) {
+							pixDuo = *imagePix++ | (*imagePix++ << 16);
+							*pixPtrDuo++ = pixDuo;
+							width -= 2;
+						}
+
+						pixPtr = (uint16_t*)pixPtrDuo;
+					}
+					else {
+						if (width >= 2) {
+							// Source and destination are 32-bit aligned
+							uint32_t* imagePixDuo = (uint32_t*)imagePix;
+							uint32_t* pixPtrDuo = (uint32_t*)pixPtr;
+
+							while(width > 3) {
+								*pixPtrDuo++ = *imagePixDuo++;
+								*pixPtrDuo++ = *imagePixDuo++;
+								width -= 4;
+							}
+							while(width > 1) {
+								*pixPtrDuo++ = *imagePixDuo++;
+								width -= 2;
+							}
+							pixPtr = (uint16_t*)pixPtrDuo;
+							imagePix = (uint16_t*)imagePixDuo;
+						}
+					}
+
+					while (width--) {
+						*pixPtr++ = *imagePix++;
+					}
+
+					if (((uint32_t)imagePix) & 3) {
+						imagePix++;
+					}
+
+					image->data = imagePix;
+				}
+				//PROFILE_EXIT(image);
+				break;
 			}
 			default: {
 				break;
@@ -405,6 +486,22 @@ void rendererDrawString(char* s, uint16_t x, uint16_t y, const Font* font, uint1
 	}
 }
 
+void rendererDrawImage(Image* i, uint16_t x, uint16_t y)
+{
+	ImageDLE* imageDle = (ImageDLE*) allocDrawListEntry(sizeof(ImageDLE));
+
+	if (imageDle) {
+		imageDle->dle.flags	= DLE_TYPE_IMAGE;
+		imageDle->dle.y		= y;
+		imageDle->x			= x;
+		imageDle->image		= i;
+		imageDle->data		= i->data;
+
+		insertPendingDrawListEntry(&imageDle->dle);
+		updateDrawListBounds(x, y, x + i->width, y + i->height);
+	}
+}
+
 void rendererRenderDrawList() {
 	if (drawListMaxX > drawListMinX) {
 		tftStartBlit(drawListMinX, drawListMinY, drawListMaxX - drawListMinX, drawListMaxY - drawListMinY);
@@ -436,10 +533,13 @@ void rendererRenderDrawList() {
 		PROFILE_REPORT(vline);
 		PROFILE_REPORT(rect);
 		PROFILE_REPORT(text);
+		PROFILE_REPORT(image);
 		PROFILE_REPORT(blit);
 		PROFILE_REPORT(profileOuter);
 	}
 }
+
+extern Image PlayButton;
 
 void rendererTest()
 {
@@ -465,6 +565,9 @@ void rendererTest()
 	rendererDrawRect(9, 89, 5, 1, 0xffff);
 	rendererDrawRect(8, 90, 6, 1, 0xffff);
 	rendererDrawRect(9, 91, 6, 1, 0xffff);
+
+//	rendererDrawImage(&PlayButton, 32, 126);
+	rendererDrawImage(&PlayButton, 33, 190);
 
 	rendererRenderDrawList();
 }

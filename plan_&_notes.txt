@@ -1,9 +1,7 @@
 Plan
 ====
-* Basic button framework with rendering, hit testing and button actions
-* Scanline renderer for text
-* Interrupt-driven button reading.
-* Interrupt-driven touchscreen reading
+* Devices & activities structure, button mappings and initial flow.
+* Device state management.
 * Interrupt/DMA driven I2C.
 * Interrupt/DMA driven SPI. 
 
@@ -89,6 +87,11 @@ Done
 * Implemented scanline renderer for: horizontal lines, vertical lines and rectangles
 * Implemented touch screen median filter, calibration, SPI rate control
 * Implemented touchscreen pressure approximation and use in filtering detection
+* Implemented basic button framework with rendering, hit testing and button actions
+* Implemented scanline renderer for text
+* Implemented interrupt-driven button reading.
+* Implemented interrupt-driven touchscreen reading
+* Implemented icon rendering
   
 Notes
 =====
