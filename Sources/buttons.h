@@ -9,20 +9,16 @@
 #define BUTTONS_H_
 
 #include <stdint.h>
-
-typedef struct _IrAction IrAction;
+#include "event.h"
 
 typedef struct _ButtonMapping {
 	uint32_t		buttonMask;
-	const IrAction*	action;
+	const Event*	event;
 } ButtonMapping;
-
-#define BUTTON_EVENT_NONE		0
-#define BUTTON_EVENT_IRACTION	1
 
 extern void buttonsInit();
 extern void buttonsSetActiveMapping(const ButtonMapping* mapping, int count);
 extern void buttonsPollState();
-extern int buttonsUpdate(const IrAction** action);
+extern int buttonsUpdate(const Event** action);
 
 #endif /* BUTTONS_H_ */

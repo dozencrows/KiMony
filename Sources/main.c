@@ -88,30 +88,62 @@ static const IrAction enter 		= { 1, { IRCODE_SIRC, 12, 0xA70, 0 } };
 static const IrAction back 			= { 1, { IRCODE_SIRC, 12, 0xC70, 0 } };
 static const IrAction home 			= { 1, { IRCODE_SIRC, 12, 0x070, 0 } };
 
+static const Event numeric1Event 		= { EVENT_IRACTION, &numeric1 };
+static const Event numeric2Event 		= { EVENT_IRACTION, &numeric2 };
+static const Event numeric3Event 		= { EVENT_IRACTION, &numeric3 };
+static const Event numeric4Event 		= { EVENT_IRACTION, &numeric4 };
+static const Event numeric5Event 		= { EVENT_IRACTION, &numeric5 };
+static const Event numeric6Event 		= { EVENT_IRACTION, &numeric6 };
+static const Event numeric7Event 		= { EVENT_IRACTION, &numeric7 };
+static const Event numeric8Event 		= { EVENT_IRACTION, &numeric8 };
+static const Event numeric9Event 		= { EVENT_IRACTION, &numeric9 };
+static const Event numeric0Event 		= { EVENT_IRACTION, &numeric0 };
+
+static const Event volumeUpEvent 		= { EVENT_IRACTION, &volumeUp };
+static const Event volumeDownEvent 		= { EVENT_IRACTION, &volumeDown };
+static const Event muteEvent 			= { EVENT_IRACTION, &mute };
+static const Event surroundEvent		= { EVENT_IRACTION, &surround };
+
+static const Event channelUpEvent 		= { EVENT_IRACTION, &channelUp };
+static const Event channelDownEvent		= { EVENT_IRACTION, &channelDown };
+static const Event infoEvent			= { EVENT_IRACTION, &info };
+
+static const Event redEvent 			= { EVENT_IRACTION, &red };
+static const Event yellowEvent 			= { EVENT_IRACTION, &yellow };
+static const Event greenEvent 			= { EVENT_IRACTION, &green };
+static const Event blueEvent	 		= { EVENT_IRACTION, &blue };
+
+static const Event guideEvent 			= { EVENT_IRACTION, &guide };
+static const Event enterEvent 			= { EVENT_IRACTION, &enter };
+static const Event backEvent 			= { EVENT_IRACTION, &back };
+static const Event homeEvent 			= { EVENT_IRACTION, &home };
+
+static const Event powerOnOffEvent 		= { EVENT_IRACTION, &powerOnOff };
+
 static const ButtonMapping buttonMappings[] =
 {
-	{ 0x200000, &info },
-	{ 0x100000, &blue },
-	{ 0x080000, &green },
-	{ 0x040000, &yellow },
-	{ 0x020000, &powerOnOff },
-	{ 0x010000, &red },
-	{ 0x008000, &numeric1 },
-	{ 0x000800, &numeric2 },
-	{ 0x000080, &numeric3 },
-	{ 0x000008, &volumeUp },
-	{ 0x004000, &numeric4 },
-	{ 0x000400, &numeric5 },
-	{ 0x000040, &numeric6 },
-	{ 0x000004, &volumeDown },
-	{ 0x002000, &numeric7 },
-	{ 0x000200, &numeric8 },
-	{ 0x000020, &numeric9 },
-	{ 0x000002, &channelUp },
-	{ 0x001000, &surround },
-	{ 0x000100, &numeric0 },
-	{ 0x000010, &mute },
-	{ 0x000001, &channelDown },
+	{ 0x200000, &infoEvent },
+	{ 0x100000, &blueEvent },
+	{ 0x080000, &greenEvent },
+	{ 0x040000, &yellowEvent },
+	{ 0x020000, &powerOnOffEvent },
+	{ 0x010000, &redEvent },
+	{ 0x008000, &numeric1Event },
+	{ 0x000800, &numeric2Event },
+	{ 0x000080, &numeric3Event },
+	{ 0x000008, &volumeUpEvent },
+	{ 0x004000, &numeric4Event },
+	{ 0x000400, &numeric5Event },
+	{ 0x000040, &numeric6Event },
+	{ 0x000004, &volumeDownEvent },
+	{ 0x002000, &numeric7Event },
+	{ 0x000200, &numeric8Event },
+	{ 0x000020, &numeric9Event },
+	{ 0x000002, &channelUpEvent },
+	{ 0x001000, &surroundEvent },
+	{ 0x000100, &numeric0Event },
+	{ 0x000010, &muteEvent },
+	{ 0x000001, &channelDownEvent },
 };
 
 #define BUTTON_COLUMNS	4
@@ -122,10 +154,10 @@ static const ButtonMapping buttonMappings[] =
 
 static const TouchButton touchButtons[] =
 {
-	{ &guide,   		   0, 0, BUTTON_WIDTH, BUTTON_HEIGHT, 0xf9e0 },
-	{ &enter,   BUTTON_WIDTH, 0, BUTTON_WIDTH, BUTTON_HEIGHT, 0xf9e0 },
-	{ &back,  2*BUTTON_WIDTH, 0, BUTTON_WIDTH, BUTTON_HEIGHT, 0xf9e0 },
-	{ &home,  3*BUTTON_WIDTH, 0, BUTTON_WIDTH, BUTTON_HEIGHT, 0xf9e0 },
+	{ &guideEvent,   		    0, 0, BUTTON_WIDTH, BUTTON_HEIGHT, 0xf9e0 },
+	{ &enterEvent,   BUTTON_WIDTH, 0, BUTTON_WIDTH, BUTTON_HEIGHT, 0xf9e0 },
+	{ &backEvent,  2*BUTTON_WIDTH, 0, BUTTON_WIDTH, BUTTON_HEIGHT, 0xf9e0 },
+	{ &homeEvent,  3*BUTTON_WIDTH, 0, BUTTON_WIDTH, BUTTON_HEIGHT, 0xf9e0 },
 
 	{ NULL,   	          0, BUTTON_HEIGHT, BUTTON_WIDTH, BUTTON_HEIGHT, 0xf9e0 },
 	{ NULL,    BUTTON_WIDTH, BUTTON_HEIGHT, BUTTON_WIDTH, BUTTON_HEIGHT, 0xf9e0 },
@@ -218,7 +250,7 @@ void mainLoop()
 	while (1) {
 		__asm("wfi");
 
-		const IrAction* action = NULL;
+		const Event* event = NULL;
 
 		rendererNewDrawList();
 
@@ -226,7 +258,7 @@ void mainLoop()
 			Point touch;
 			if (touchScreenGetCoordinates(&touch)) {
 				if (tftGetBacklight()) {
-					touchbuttonsProcessTouch(&touch, &action);
+					touchbuttonsProcessTouch(&touch, &event);
 				}
 				backlightOn();
 			}
@@ -250,13 +282,15 @@ void mainLoop()
 			}
 		}
 
-		buttonsUpdate(&action);
+		buttonsUpdate(&event);
 		touchbuttonsRender();
 
-		if (action) {
+		if (event) {
 			backlightOn();
 			rendererRenderDrawList();
-			irDoAction(action);
+			if (event->type == EVENT_IRACTION) {
+				irDoAction(event->irAction);
+			}
 		}
 		else {
 			rendererRenderDrawList();

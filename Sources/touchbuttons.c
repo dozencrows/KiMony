@@ -81,9 +81,9 @@ void touchButtonsUpdate()
 	}
 }
 
-int touchbuttonsProcessTouch(const Point* touch, const IrAction** action)
+int touchbuttonsProcessTouch(const Point* touch, const Event** event)
 {
-	int result = TOUCHBUTTON_EVENT_NONE;
+	int result = EVENT_NONE;
 
 
 	for(int i = 0; i < activeTouchButtonsCount; i++) {
@@ -91,8 +91,8 @@ int touchbuttonsProcessTouch(const Point* touch, const IrAction** action)
 
 		if (touch->x >= button->x && button->width > touch->x - button->x) {
 			if (touch->y >= button->y && button->height > touch->y - button->y) {
-				result = TOUCHBUTTON_EVENT_IRACTION;
-				*action = button->action;
+				result = button->event->type;
+				*event = button->event;
 				buttonState[i].pressed = 1;
 				buttonState[i].dirty = 1;
 				buttonState[i].counter = BUTTON_FLASH_COUNT;

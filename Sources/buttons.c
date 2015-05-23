@@ -30,9 +30,9 @@ void buttonsPollState()
 	buttonsNewState = keyMatrixPoll() | keyNonMatrixPoll();
 }
 
-int buttonsUpdate(const IrAction** action)
+int buttonsUpdate(const Event** event)
 {
-	int result = BUTTON_EVENT_NONE;
+	int result = EVENT_NONE;
 	uint32_t buttonChange = buttonsState ^ buttonsNewState;
 
 	if (buttonChange) {
@@ -41,8 +41,8 @@ int buttonsUpdate(const IrAction** action)
 		if (buttonsNewOn) {
 			for (size_t i = 0; i < activeMappingCount; i++) {
 				if (activeMapping[i].buttonMask == buttonsNewOn) {
-					*action = activeMapping[i].action;
-					result = BUTTON_EVENT_IRACTION;
+					*event = activeMapping[i].event;
+					result = (*event)->type;
 					break;
 				}
 			}
