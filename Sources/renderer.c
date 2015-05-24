@@ -539,6 +539,26 @@ void rendererRenderDrawList() {
 	}
 }
 
+void rendererGetStringBounds(char* s, const Font* font, uint16_t* width, uint16_t* height)
+{
+	char c;
+	*width = 0;
+	*height = 0;
+
+	while ((c = *s++)) {
+		const Glyph* glyph = findGlyph(c, font);
+
+		if (!glyph) {
+			glyph = findGlyph('*', font);
+		}
+
+		if (glyph) {
+			*width += glyph->width;
+			*height = MAX(*height, glyph->height);
+		}
+	}
+}
+
 extern Image PlayButton;
 
 void rendererTest()

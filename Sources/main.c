@@ -161,10 +161,10 @@ static const ButtonMapping testRemoteButtonMappings[] =
 
 static const TouchButton testRemoteTouchButtons[] =
 {
-	{ &guideEvent, "Guide",  		    0, 0, BUTTON_WIDTH, BUTTON_HEIGHT, 0xf9e0, TB_PRESS_ACTIVATE },
-	{ &enterEvent, "Enter",  BUTTON_WIDTH, 0, BUTTON_WIDTH, BUTTON_HEIGHT, 0xf9e0, TB_PRESS_ACTIVATE },
-	{ &backEvent,  "Back", 2*BUTTON_WIDTH, 0, BUTTON_WIDTH, BUTTON_HEIGHT, 0xf9e0, TB_PRESS_ACTIVATE },
-	{ &homeEvent,  "Home", 3*BUTTON_WIDTH, 0, BUTTON_WIDTH, BUTTON_HEIGHT, 0xf9e0, TB_PRESS_ACTIVATE },
+	{ &guideEvent, "Guide",  		    0, 0, BUTTON_WIDTH, BUTTON_HEIGHT, 0xf9e0, TB_PRESS_ACTIVATE|TB_CENTRE_TEXT },
+	{ &enterEvent, "Enter",  BUTTON_WIDTH, 0, BUTTON_WIDTH, BUTTON_HEIGHT, 0xf9e0, TB_PRESS_ACTIVATE|TB_CENTRE_TEXT },
+	{ &backEvent,  "Back", 2*BUTTON_WIDTH, 0, BUTTON_WIDTH, BUTTON_HEIGHT, 0xf9e0, TB_PRESS_ACTIVATE|TB_CENTRE_TEXT },
+	{ &homeEvent,  "Home", 3*BUTTON_WIDTH, 0, BUTTON_WIDTH, BUTTON_HEIGHT, 0xf9e0, TB_PRESS_ACTIVATE|TB_CENTRE_TEXT },
 
 	{ &redEvent,    NULL,  	           0, BUTTON_HEIGHT, BUTTON_WIDTH, BUTTON_HEIGHT, 0xf800, TB_PRESS_ACTIVATE },
 	{ &greenEvent,  NULL,   BUTTON_WIDTH, BUTTON_HEIGHT, BUTTON_WIDTH, BUTTON_HEIGHT, 0x07e0, TB_PRESS_ACTIVATE },
@@ -203,13 +203,13 @@ static const ButtonMapping homeActivityButtonMappings[] =
 
 static const Event selectTestRemote = { EVENT_ACTIVITY, &testRemote};
 static const TouchButton homeTouchButtonsPage1[] = {
-	{ &selectTestRemote, "Test 1", 0, 0, 4*BUTTON_WIDTH, BUTTON_HEIGHT, 0xf9e0, 0 }
+	{ &selectTestRemote, "Test 1", 0, 0, 4*BUTTON_WIDTH, BUTTON_HEIGHT, 0xf9e0, TB_CENTRE_TEXT }
 };
 static const TouchButton homeTouchButtonsPage2[] = {
-	{ &selectTestRemote, "Test 2", 0, 1*BUTTON_HEIGHT, 4*BUTTON_WIDTH, BUTTON_HEIGHT, 0xf9e0, 0 }
+	{ &selectTestRemote, "Test 2", 0, 1*BUTTON_HEIGHT, 4*BUTTON_WIDTH, BUTTON_HEIGHT, 0xf9e0, TB_CENTRE_TEXT }
 };
 static const TouchButton homeTouchButtonsPage3[] = {
-	{ &selectTestRemote, "Test 3", 0, 2*BUTTON_HEIGHT, 4*BUTTON_WIDTH, BUTTON_HEIGHT, 0xf9e0, 0 }
+	{ &selectTestRemote, "Test 3", 0, 2*BUTTON_HEIGHT, 4*BUTTON_WIDTH, BUTTON_HEIGHT, 0xf9e0, TB_CENTRE_TEXT }
 };
 static const TouchButtonPage homePages[] = {
 	{ ARRAY_LENGTH(homeTouchButtonsPage1), homeTouchButtonsPage1 },

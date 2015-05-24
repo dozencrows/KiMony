@@ -38,14 +38,25 @@ static int touchState = TOUCH_STATE_IDLE;
 static int touchStateCounter = 0;
 static int currentTouchButton = NULL;
 
-static void renderTouchButton(const TouchButton* button, uint16_t colour)
+static void renderTouchButton(const TouchButton* button, uint16_t colour, uint16_t textColour)
 {
 	rendererDrawHLine(button->x, button->y, button->width, BUTTON_BORDER_COLOUR);
 	rendererDrawVLine(button->x, button->y, button->height, BUTTON_BORDER_COLOUR);
 	rendererDrawVLine(button->x + button->width - 1, button->y, button->height, BUTTON_BORDER_COLOUR);
 	rendererDrawRect(button->x + 1, button->y + 1, button->width - 2, button->height - 2, colour);
 	rendererDrawHLine(button->x, button->y + button->height - 1, button->width, BUTTON_BORDER_COLOUR);
-	rendererDrawString("BTNX", button->x + 3, button->y + 3, &KiMony, 0xffff);
+	if (button->text) {
+		uint16_t textWidth, textHeight;
+		rendererGetStringBounds(button->text, &KiMony, &textWidth, &textHeight);
+
+		if (button->flags & TB_CENTRE_TEXT) {
+			rendererDrawString(button->text, button->x + (button->width / 2) - (textWidth / 2),
+											 button->y + (button->height / 2) - (textHeight / 2), &KiMony, textColour);
+		}
+		else {
+			rendererDrawString(button->text, button->x + 3, button->y + 3, &KiMony, textColour);
+		}
+	}
 }
 
 static int hitTestTouchButtons(const Point* touch)
@@ -94,7 +105,8 @@ void touchbuttonsRender()
 	for(int i = 0; i < activeTouchButtonsCount; i++) {
 		if (buttonState[i].dirty) {
 			const TouchButton* button = buttonState[i].button;
-			renderTouchButton(button, buttonState[i].pressed ? BUTTON_FLASH_COLOUR : button->colour);
+			renderTouchButton(button, buttonState[i].pressed ? BUTTON_FLASH_COLOUR : button->colour,
+									  buttonState[i].pressed ? 0x0000 : 0xffff);
 			buttonState[i].dirty = 0;
 		}
 	}
