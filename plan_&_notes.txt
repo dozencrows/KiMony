@@ -1,6 +1,5 @@
 Plan
 ====
-* Debounce touch, and respond on release
 * Devices & state management.
 * Compiling of remote data from source form -> binary
 * Updating of remote data over USB connection
@@ -95,6 +94,8 @@ Done
 * Implemented interrupt-driven touchscreen reading
 * Implemented icon rendering
 * Implemented basic activities structure, button mappings and initial flow.
+* Implemented debounce touch, and respond on release
+* Implemented per-touch button text
   
 Notes
 =====
