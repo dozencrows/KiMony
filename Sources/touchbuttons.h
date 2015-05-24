@@ -14,17 +14,22 @@
 typedef struct _IrAction IrAction;
 typedef struct _Point Point;
 
+#define TB_PRESS_ACTIVATE	0x01
+#define TB_CENTRE_TEXT		0x02
+
 typedef struct _TouchButton {
 	const Event*	event;
+	const char*		text;
 	uint16_t		x, y;
 	uint16_t		width, height;
 	uint16_t		colour;
+	uint8_t			flags;
 } TouchButton;
 
 extern void touchbuttonsInit();
 extern void touchbuttonsSetActive(const TouchButton* buttons, int count);
 extern void touchbuttonsRender();
-extern int touchbuttonsProcessTouch(const Point* touch, const Event** event);
-extern void touchButtonsUpdate();
+extern void touchbuttonsProcessTouch(const Point* touch);
+extern int touchButtonsUpdate(const Event** eventTriggered);
 
 #endif /* TOUCHBUTTONS_H_ */

@@ -30,7 +30,7 @@ void buttonsPollState()
 	buttonsNewState = keyMatrixPoll() | keyNonMatrixPoll();
 }
 
-int buttonsUpdate(const Event** event)
+int buttonsUpdate(const Event** eventTriggered)
 {
 	int result = EVENT_NONE;
 	uint32_t buttonChange = buttonsState ^ buttonsNewState;
@@ -41,8 +41,8 @@ int buttonsUpdate(const Event** event)
 		if (buttonsNewOn) {
 			for (size_t i = 0; i < activeMappingCount; i++) {
 				if (activeMapping[i].buttonMask == buttonsNewOn) {
-					*event = activeMapping[i].event;
-					result = (*event)->type;
+					*eventTriggered = activeMapping[i].event;
+					result = (*eventTriggered)->type;
 					break;
 				}
 			}
