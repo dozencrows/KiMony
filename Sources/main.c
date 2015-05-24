@@ -203,13 +203,16 @@ static const ButtonMapping homeActivityButtonMappings[] =
 
 static const Event selectTestRemote = { EVENT_ACTIVITY, &testRemote};
 static const TouchButton homeTouchButtonsPage1[] = {
-	{ &selectTestRemote, "Test 1", 0, 0, 4*BUTTON_WIDTH, BUTTON_HEIGHT, 0xf9e0, TB_CENTRE_TEXT }
-};
-static const TouchButton homeTouchButtonsPage2[] = {
+	{ &selectTestRemote, "Test 1", 0, 0, 4*BUTTON_WIDTH, BUTTON_HEIGHT, 0xf9e0, TB_CENTRE_TEXT },
 	{ &selectTestRemote, "Test 2", 0, 1*BUTTON_HEIGHT, 4*BUTTON_WIDTH, BUTTON_HEIGHT, 0xf9e0, TB_CENTRE_TEXT }
 };
-static const TouchButton homeTouchButtonsPage3[] = {
+static const TouchButton homeTouchButtonsPage2[] = {
+	{ &selectTestRemote, "Test 2", 0, 1*BUTTON_HEIGHT, 4*BUTTON_WIDTH, BUTTON_HEIGHT, 0xf9e0, TB_CENTRE_TEXT },
 	{ &selectTestRemote, "Test 3", 0, 2*BUTTON_HEIGHT, 4*BUTTON_WIDTH, BUTTON_HEIGHT, 0xf9e0, TB_CENTRE_TEXT }
+};
+static const TouchButton homeTouchButtonsPage3[] = {
+	{ &selectTestRemote, "Test 3", 0, 2*BUTTON_HEIGHT, 4*BUTTON_WIDTH, BUTTON_HEIGHT, 0xf9e0, TB_CENTRE_TEXT },
+	{ &selectTestRemote, "Test 4", 0, 3*BUTTON_HEIGHT, 4*BUTTON_WIDTH, BUTTON_HEIGHT, 0xf9e0, TB_CENTRE_TEXT }
 };
 static const TouchButtonPage homePages[] = {
 	{ ARRAY_LENGTH(homeTouchButtonsPage1), homeTouchButtonsPage1 },
