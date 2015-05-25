@@ -8,6 +8,7 @@ Plan
 
 Work-in-progress
 ================
+* Saving to on-chip flash inside application
 * Reduce standard library footprint but still work with semi-host printf
   * Tried this with workaround from http://mcuoneclipse.com/2014/07/12/printf-for-the-frdm-k64f-board-and-kinetis-design-studio/
     but still only prints first character
@@ -184,6 +185,9 @@ Available for GPIO:
 		* Switch matrix interrupt
 		* Dedicated buttons
 		* Power switching?
+		
+	Note PTE20/21 can be UART0 Tx/Rx
+	Note PTE22/23 can be UART2 Tx/Rx
 
 Image conversions
 =================

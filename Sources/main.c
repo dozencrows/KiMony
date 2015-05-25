@@ -421,7 +421,7 @@ void eraseFlashSector(uint8_t* sector)
 	doFlashCommand();
 }
 
-uint8_t* copyLongWordToFlash(const uint8_t* src, uint8_t* dst)
+const uint8_t* copyLongWordToFlash(const uint8_t* src, uint8_t* dst)
 {
 	uint8_t addr1, addr2, addr3;
 
@@ -470,9 +470,9 @@ int main(void)
 	sysTickInit();
 	sysTickSetClockRate(SystemCoreClock);
 
-	eraseFlashSector(&__FlashStoreBase);
-	copyToFlash((const uint8_t*)testFlashStr, &__FlashStoreBase, strlen(testFlashStr) + 1);
-	printf("%s\n", (char*)(&__FlashStoreBase));
+//	eraseFlashSector(&__FlashStoreBase);
+//	copyToFlash((const uint8_t*)testFlashStr, &__FlashStoreBase, strlen(testFlashStr) + 1);
+//	printf("%s\n", (char*)(&__FlashStoreBase));
 
 	i2cInit();
 	spiInit();
