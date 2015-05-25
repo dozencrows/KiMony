@@ -34,6 +34,7 @@
 #include "i2c.h"
 #include "spi.h"
 #include "interrupts.h"
+#include "uart.h"
 #include "mathutil.h"
 #include "codeutil.h"
 
@@ -463,6 +464,28 @@ void copyToFlash(const uint8_t* src, uint8_t* dst, size_t count)
 
 static const char testFlashStr[] = "Gloombah!!";
 
+void testUart()
+{
+	PORTE_PCR22 = (uint32_t)((PORTE_PCR22 & (uint32_t)~(uint32_t)(
+				 PORT_PCR_ISF_MASK |
+				 PORT_PCR_MUX(0x07)
+				)) | (uint32_t)(
+				 PORT_PCR_MUX(0x04)
+				));
+	PORTE_PCR23 = (uint32_t)((PORTE_PCR23 & (uint32_t)~(uint32_t)(
+				 PORT_PCR_ISF_MASK |
+				 PORT_PCR_MUX(0x07)
+				)) | (uint32_t)(
+				 PORT_PCR_MUX(0x04)
+				));
+
+	uartInit(2, DEFAULT_SYSTEM_CLOCK / 2, 115200);
+	while (1) {
+		char ch = uartGetchar(2);
+		uartPutchar(2, ch);
+	}
+}
+
 int main(void)
 {
 	SystemCoreClockUpdate();
@@ -485,6 +508,8 @@ int main(void)
 	touchScreenInit();
 	keyMatrixInit();
 	flashInit();
+
+	testUart();
 
 	mainLoop();
 
