@@ -141,6 +141,7 @@ SECTIONS
     __data_start__ = .;      /* create a global symbol at data start */
     *(.data)                 /* .data sections */
     *(.data*)                /* .data* sections */
+    *(.ram_code)
     KEEP(*(.jcr*))
     . = ALIGN(4);
     __data_end__ = .;        /* define a global symbol at data end */
