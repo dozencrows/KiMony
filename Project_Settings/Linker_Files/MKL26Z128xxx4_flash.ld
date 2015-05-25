@@ -5,6 +5,7 @@ ENTRY(Reset_Handler)
 
 HEAP_SIZE  = DEFINED(__heap_size__)  ? __heap_size__  : 0x00000400;
 STACK_SIZE = DEFINED(__stack_size__) ? __stack_size__ : 0x00000800;
+FLASH_STORE_SIZE = DEFINED(__flash_store_size__) ? __flash_store_size__ : 0x400;
 
 /* Specify the memory areas */
 MEMORY
@@ -119,6 +120,14 @@ SECTIONS
     KEEP (*(SORT(.fini_array.*)))
     KEEP (*(.fini_array*))
     PROVIDE_HIDDEN (__fini_array_end = .);
+  } > m_text
+
+  .app_flash_store :
+  {
+    . = ALIGN(1024);
+    __FlashStoreBase = .;
+    . += FLASH_STORE_SIZE;
+    __FlashStoreLimit = .;
   } > m_text
 
   __etext = .;    /* define a global symbol at end of code */

@@ -28,12 +28,14 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 #include <stdio.h>
+#include <string.h>
 #include "MKL26Z4.h"
 #include "systick.h"
 #include "i2c.h"
 #include "spi.h"
 #include "interrupts.h"
 #include "mathutil.h"
+#include "codeutil.h"
 
 #include "keymatrix.h"
 #include "lcd.h"
@@ -391,12 +393,86 @@ void mainLoop()
 	}
 }
 
+extern uint8_t __FlashStoreBase;
+
+void RAM_FUNCTION doFlashCommand()
+{
+	// Trigger command, and wait for completion
+	FTFA->FSTAT = 0x80;
+	while(((FTFA->FSTAT)&(1UL << 7))==0x00);
+}
+
+void eraseFlashSector(uint8_t* sector)
+{
+	uint8_t addr1, addr2, addr3;
+
+	addr1 = ((int)sector & 0xff0000) >> 16;
+	addr2 = ((int)sector & 0x00ff00) >> 8;
+	addr3 = ((int)sector & 0x0000ff);
+
+	// Ensure flash no command running
+	while(((FTFA->FSTAT)&(1UL << 7))==0x00);
+
+	FTFA->FCCOB0	= 0x09;
+	FTFA->FCCOB1	= addr1;
+	FTFA->FCCOB2	= addr2;
+	FTFA->FCCOB3	= addr3;
+
+	doFlashCommand();
+}
+
+uint8_t* copyLongWordToFlash(const uint8_t* src, uint8_t* dst)
+{
+	uint8_t addr1, addr2, addr3;
+
+	addr1 = ((int)dst & 0xff0000) >> 16;
+	addr2 = ((int)dst & 0x00ff00) >> 8;
+	addr3 = ((int)dst & 0x0000ff);
+
+	// Ensure flash no command running
+	while(((FTFA->FSTAT)&(1UL << 7))==0x00);
+
+	// Clear error bits
+	if(!((FTFA->FSTAT)==0x80)) {
+		FTFA->FSTAT = 0x30;
+	}
+
+	FTFA->FCCOB0	= 0x06;
+	FTFA->FCCOB1	= addr1;
+	FTFA->FCCOB2	= addr2;
+	FTFA->FCCOB3	= addr3;
+	FTFA->FCCOB7	= *src++;
+	FTFA->FCCOB6	= *src++;
+	FTFA->FCCOB5	= *src++;
+	FTFA->FCCOB4	= *src++;
+
+	doFlashCommand();
+
+	return src;
+}
+
+void copyToFlash(const uint8_t* src, uint8_t* dst, size_t count)
+{
+	count = (count + 3) & 0xfffffffc;
+	while (count > 0) {
+		src = copyLongWordToFlash(src, dst);
+		dst += 4;
+		count -= 4;
+	}
+}
+
+static const char testFlashStr[] = "Gloombah!!";
+
 int main(void)
 {
 	SystemCoreClockUpdate();
 
 	sysTickInit();
 	sysTickSetClockRate(SystemCoreClock);
+
+	eraseFlashSector(&__FlashStoreBase);
+	copyToFlash((const uint8_t*)testFlashStr, &__FlashStoreBase, strlen(testFlashStr) + 1);
+	printf("%s\n", (char*)(&__FlashStoreBase));
 
 	i2cInit();
 	spiInit();
