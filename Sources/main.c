@@ -394,7 +394,7 @@ void mainLoop()
 	}
 }
 
-extern uint8_t __FlashStoreBase;
+extern uint8_t __FlashStoreBase[];
 
 void RAM_FUNCTION doFlashCommand()
 {
@@ -422,7 +422,7 @@ void eraseFlashSector(uint8_t* sector)
 	doFlashCommand();
 }
 
-const uint8_t* copyLongWordToFlash(const uint8_t* src, uint8_t* dst)
+uint8_t* copyLongWordToFlash(uint8_t* src, uint8_t* dst)
 {
 	uint8_t addr1, addr2, addr3;
 
@@ -452,7 +452,7 @@ const uint8_t* copyLongWordToFlash(const uint8_t* src, uint8_t* dst)
 	return src;
 }
 
-void copyToFlash(const uint8_t* src, uint8_t* dst, size_t count)
+void copyToFlash(uint8_t* src, uint8_t* dst, size_t count)
 {
 	count = (count + 3) & 0xfffffffc;
 	while (count > 0) {
@@ -480,9 +480,62 @@ void testUart()
 				));
 
 	uartInit(2, DEFAULT_SYSTEM_CLOCK / 2, 115200);
+
 	while (1) {
-		char ch = uartGetchar(2);
-		uartPutchar(2, ch);
+		printf("Waiting...\n");
+		// Wait for transfer initiation:
+		char uartCh = uartGetchar(2);
+
+		switch (uartCh) {
+			case 0x10: {
+				// Number of longwords
+				size_t transferSize = uartGetchar(2) | (uartGetchar(2) << 8);
+
+				eraseFlashSector(__FlashStoreBase);
+
+				// Indicate readiness for data
+				uartPutchar(2, 0x10);
+
+				uint8_t 	flashData[4];
+				uint8_t*	flashStore = __FlashStoreBase;
+
+				while (transferSize-- > 0) {
+					flashData[0] = uartGetchar(2);
+					flashData[1] = uartGetchar(2);
+					flashData[2] = uartGetchar(2);
+					flashData[3] = uartGetchar(2);
+
+					copyLongWordToFlash(flashData, flashStore);
+					flashStore += 4;
+				}
+
+				// Indicate transfer end
+				uartPutchar(2, 0x10);
+				break;
+			}
+
+			case 0x20: {
+				// Number of bytes
+				size_t dataSize = (uartGetchar(2) | (uartGetchar(2) << 8)) * 4;
+
+				uint8_t 	flashData;
+				uint8_t*	flashStore = __FlashStoreBase;
+				int 		errors = 0;
+
+				while (dataSize-- > 0) {
+					flashData = uartGetchar(2);
+
+					if (flashData != *flashStore++) {
+						errors++;
+					}
+				}
+
+				printf("Errors: %d\n", errors);
+				break;
+			}
+		}
+
+		printf("Done!\n");
 	}
 }
 
@@ -494,8 +547,8 @@ int main(void)
 	sysTickSetClockRate(SystemCoreClock);
 
 //	eraseFlashSector(&__FlashStoreBase);
-//	copyToFlash((const uint8_t*)testFlashStr, &__FlashStoreBase, strlen(testFlashStr) + 1);
-//	printf("%s\n", (char*)(&__FlashStoreBase));
+//	copyToFlash((const uint8_t*)testFlashStr, __FlashStoreBase, strlen(testFlashStr) + 1);
+//	printf("%s\n", (char*)(__FlashStoreBase));
 
 	i2cInit();
 	spiInit();
