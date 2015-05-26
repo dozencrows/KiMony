@@ -105,10 +105,12 @@ class Event(RemoteDataObj):
         
     def __init__(self, type, data):
         self.type = type
-        self.data = data.ref()
+        if data:
+            self.data = data.ref()
     
     def fix_up(self, offsets):
-        self.data = package.offsetof(self.data)
+        if self.data:
+            self.data = package.offsetof(self.data)
 
 #
 # Physical button mapping
