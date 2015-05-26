@@ -75,7 +75,7 @@ class IrCode(RemoteDataObj):
 # Single IR 'action' consisting of one or more codes
 #
 def IrAction(codes=None):
-    if actions:
+    if codes:
         code_count = len(codes)
     else:
         code_count = 1
