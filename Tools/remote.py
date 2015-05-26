@@ -103,12 +103,12 @@ class Event(RemoteDataObj):
         ("data", ct.c_uint32)
         ]
         
-    def __init__(self, type, data):
-        self.type = type
+    def __init__(self, t, data):
+        self.type = t
         if data:
             self.data = data.ref()
     
-    def fix_up(self, offsets):
+    def fix_up(self, package):
         if self.data:
             self.data = package.offsetof(self.data)
 
@@ -145,9 +145,13 @@ class TouchButton(RemoteDataObj):
         ]
         
     def __init__(self, event, text, x, y, width, height, colour, press_activate, centre_text):
-        self.wrapped_text = RemoteDataStr(text)
-        self.event = event.ref()
-        self.text  = self.wrapped_text.ref()
+        if text:
+            self.wrapped_text = RemoteDataStr(text)
+            self.text  = self.wrapped_text.ref()
+        else:
+            self.wrapped_text = None
+        if event:
+            self.event = event.ref()
         self.x = x
         self.y = y
         self.width = width
@@ -157,7 +161,8 @@ class TouchButton(RemoteDataObj):
         self.centre_text = centre_text
         
     def pre_pack(self, package):
-        package.append_text(self.wrapped_text)
+        if self.wrapped_text:
+            package.append_text(self.wrapped_text)
         
     def fix_up(self, package):
         self.event = package.offsetof(self.event)
@@ -219,10 +224,8 @@ class Activity(RemoteDataObj):
             package.append(x)
             
     def fix_up(self, package):
-        if len(self.button_mapping_objs):
-            self.button_mappings = package.offsetof(self.button_mappings)
-        if len(self.touch_button_pages_objs):
-            self.touch_button_pages = package.offsetof(self.touch_button_pages)
+        self.button_mappings = package.offsetof(self.button_mappings)
+        self.touch_button_pages = package.offsetof(self.touch_button_pages)
 
 #
 # Class used to bundle up and encode KiMony remote data objects into binary
@@ -241,7 +244,7 @@ class Package:
         self.offsets[obj.ref()] = self.next_offset
         self.objects.append(obj)
         self.next_offset += obj.size()
-        obj.pre_pack(package)
+        obj.pre_pack(self)
         
     def append_text(self, text):
         self.offsets[text.ref()] = self.text_offset
@@ -272,41 +275,12 @@ class Package:
         return ''.join(packed_objects)
         
     def offsetof(self, ref):
-        return self.offsets[ref]
+        if ref:
+            return self.offsets[ref]
+        else:
+            return 0
         
     def align_to(self, alignment):
         misalignment = self.next_offset % alignment
         self.next_offset += (alignment - misalignment) % alignment
-
-#
-# Example construction
-#
-
-action = IrAction([IrCode(IrEncoding_RC6, 21, 0xFFB38), IrCode(IrEncoding_RC6, 21, 0xEFB38), IrCode(IrEncoding_NOP, 0, 250), IrCode(IrEncoding_SIRC, 12, 0xA90)])
-
-print ct.sizeof(action)
-action_bin = ct.string_at(ct.addressof(action), ct.sizeof(action))
-print ':'.join(x.encode('hex') for x in action_bin)
-
-event = Event(Event_IRACTION, action)
-
-event_bin = ct.string_at(ct.addressof(event), ct.sizeof(event))
-print ':'.join(x.encode('hex') for x in event_bin)
-
-touch_button = TouchButton(event, "Power On", 0, 0, 55, 55, 0x1ff8, True, True)
-tb_bin = ct.string_at(ct.addressof(touch_button), ct.sizeof(touch_button))
-print ':'.join(x.encode('hex') for x in tb_bin)
-touch_button2 = TouchButton(event, "Power Off", 55, 0, 55, 55, 0x1ff8, True, True)
-
-touch_button_page = TouchButtonPage([touch_button, touch_button2])
-
-activity = Activity([ButtonMapping(0x1000, event), ButtonMapping(0x2000, event)], [touch_button_page])
-
-package = Package()
-package.append(activity)
-package.append(action)
-package.append(event)
-
-
-print ':'.join(x.encode('hex') for x in package.pack())
 
