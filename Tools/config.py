@@ -46,6 +46,11 @@ enter_action 		= IrAction([IrCode(IrEncoding_SIRC, 12, 0xA70)])
 back_action 		= IrAction([IrCode(IrEncoding_SIRC, 12, 0xC70)])
 home_action 		= IrAction([IrCode(IrEncoding_SIRC, 12, 0x070)])
 
+up_action 		    = IrAction([IrCode(IrEncoding_SIRC, 12, 0x2F0)])
+down_action 		= IrAction([IrCode(IrEncoding_SIRC, 12, 0xAF0)])
+left_action 		= IrAction([IrCode(IrEncoding_SIRC, 12, 0x2D0)])
+right_action 		= IrAction([IrCode(IrEncoding_SIRC, 12, 0xCD0)])
+
 # Events
 home_activity_event = Event(Event_HOME)
 next_event 		    = Event(Event_NEXTPAGE)
@@ -82,6 +87,11 @@ guide_event		    = Event(Event_IRACTION, guide_action)
 enter_event		    = Event(Event_IRACTION, enter_action)
 back_event		    = Event(Event_IRACTION, back_action)
 home_event		    = Event(Event_IRACTION, home_action)
+
+up_event		    = Event(Event_IRACTION, up_action)
+down_event		    = Event(Event_IRACTION, down_action)
+left_event		    = Event(Event_IRACTION, left_action)
+right_event		    = Event(Event_IRACTION, right_action)
 
 # Activities, button mappings and touch button pages
 test_remote_activity = Activity(
@@ -122,25 +132,30 @@ test_remote_activity = Activity(
 	        TouchButton(yellow_event, None, 2*BUTTON_WIDTH, BUTTON_HEIGHT, BUTTON_WIDTH, BUTTON_HEIGHT, 0xffe0, True, False),
 	        TouchButton(blue_event,   None, 3*BUTTON_WIDTH, BUTTON_HEIGHT, BUTTON_WIDTH, BUTTON_HEIGHT, 0x001f, True, False),
 
-	        TouchButton(None,    None,   	         0, 2*BUTTON_HEIGHT, BUTTON_WIDTH, BUTTON_HEIGHT, 0xf9e0, True, False),
-	        TouchButton(None,    None,    BUTTON_WIDTH, 2*BUTTON_HEIGHT, BUTTON_WIDTH, BUTTON_HEIGHT, 0xf9e0, True, False),
-	        TouchButton(None,    None,  2*BUTTON_WIDTH, 2*BUTTON_HEIGHT, BUTTON_WIDTH, BUTTON_HEIGHT, 0xf9e0, True, False),
-	        TouchButton(None,    None,  3*BUTTON_WIDTH, 2*BUTTON_HEIGHT, BUTTON_WIDTH, BUTTON_HEIGHT, 0xf9e0, True, False),
+	        TouchButton(up_event, "U",  (SCREEN_WIDTH - BUTTON_WIDTH) / 2, 2*BUTTON_HEIGHT, BUTTON_WIDTH, BUTTON_HEIGHT, 0xf9e0, True, True),
+	        TouchButton(down_event, "D",  (SCREEN_WIDTH - BUTTON_WIDTH) / 2, 3*BUTTON_HEIGHT, BUTTON_WIDTH, BUTTON_HEIGHT, 0xf9e0, True, True),
+	        TouchButton(left_event, "L",  (SCREEN_WIDTH - BUTTON_WIDTH) / 2 - BUTTON_WIDTH, int(2.5*BUTTON_HEIGHT), BUTTON_WIDTH, BUTTON_HEIGHT, 0xf9e0, True, True),
+	        TouchButton(right_event, "R",  (SCREEN_WIDTH - BUTTON_WIDTH) / 2 + BUTTON_WIDTH, int(2.5*BUTTON_HEIGHT), BUTTON_WIDTH, BUTTON_HEIGHT, 0xf9e0, True, True),
 
-	        TouchButton(None,    None,   	         0, 3*BUTTON_HEIGHT, BUTTON_WIDTH, BUTTON_HEIGHT, 0xf9e0, True, False),
-	        TouchButton(None,    None,    BUTTON_WIDTH, 3*BUTTON_HEIGHT, BUTTON_WIDTH, BUTTON_HEIGHT, 0xf9e0, True, False),
-	        TouchButton(None,    None,  2*BUTTON_WIDTH, 3*BUTTON_HEIGHT, BUTTON_WIDTH, BUTTON_HEIGHT, 0xf9e0, True, False),
-	        TouchButton(None,    None,  3*BUTTON_WIDTH, 3*BUTTON_HEIGHT, BUTTON_WIDTH, BUTTON_HEIGHT, 0xf9e0, True, False),
-
-	        TouchButton(None,    None,   	         0, 4*BUTTON_HEIGHT, BUTTON_WIDTH, BUTTON_HEIGHT, 0xf9e0, True, False),
-	        TouchButton(None,    None,    BUTTON_WIDTH, 4*BUTTON_HEIGHT, BUTTON_WIDTH, BUTTON_HEIGHT, 0xf9e0, True, False),
-	        TouchButton(None,    None,  2*BUTTON_WIDTH, 4*BUTTON_HEIGHT, BUTTON_WIDTH, BUTTON_HEIGHT, 0xf9e0, True, False),
-	        TouchButton(None,    None,  3*BUTTON_WIDTH, 4*BUTTON_HEIGHT, BUTTON_WIDTH, BUTTON_HEIGHT, 0xf9e0, True, False),
-
-	        TouchButton(None,    None,   	         0, 5*BUTTON_HEIGHT, BUTTON_WIDTH, BUTTON_HEIGHT, 0xf9e0, True, False),
-	        TouchButton(None,    None,    BUTTON_WIDTH, 5*BUTTON_HEIGHT, BUTTON_WIDTH, BUTTON_HEIGHT, 0xf9e0, True, False),
-	        TouchButton(None,    None,  2*BUTTON_WIDTH, 5*BUTTON_HEIGHT, BUTTON_WIDTH, BUTTON_HEIGHT, 0xf9e0, True, False),
-	        TouchButton(None,    None,  3*BUTTON_WIDTH, 5*BUTTON_HEIGHT, BUTTON_WIDTH, BUTTON_HEIGHT, 0xf9e0, True, False),
+#	        TouchButton(None,    None,   	         0, 2*BUTTON_HEIGHT, BUTTON_WIDTH, BUTTON_HEIGHT, 0xf9e0, True, False),
+#	        TouchButton(None,    None,    BUTTON_WIDTH, 2*BUTTON_HEIGHT, BUTTON_WIDTH, BUTTON_HEIGHT, 0xf9e0, True, False),
+#	        TouchButton(None,    None,  2*BUTTON_WIDTH, 2*BUTTON_HEIGHT, BUTTON_WIDTH, BUTTON_HEIGHT, 0xf9e0, True, False),
+#	        TouchButton(None,    None,  3*BUTTON_WIDTH, 2*BUTTON_HEIGHT, BUTTON_WIDTH, BUTTON_HEIGHT, 0xf9e0, True, False),
+#
+#	        TouchButton(None,    None,   	         0, 3*BUTTON_HEIGHT, BUTTON_WIDTH, BUTTON_HEIGHT, 0xf9e0, True, False),
+#	        TouchButton(None,    None,    BUTTON_WIDTH, 3*BUTTON_HEIGHT, BUTTON_WIDTH, BUTTON_HEIGHT, 0xf9e0, True, False),
+#	        TouchButton(None,    None,  2*BUTTON_WIDTH, 3*BUTTON_HEIGHT, BUTTON_WIDTH, BUTTON_HEIGHT, 0xf9e0, True, False),
+#	        TouchButton(None,    None,  3*BUTTON_WIDTH, 3*BUTTON_HEIGHT, BUTTON_WIDTH, BUTTON_HEIGHT, 0xf9e0, True, False),
+#
+#	        TouchButton(None,    None,   	         0, 4*BUTTON_HEIGHT, BUTTON_WIDTH, BUTTON_HEIGHT, 0xf9e0, True, False),
+#	        TouchButton(None,    None,    BUTTON_WIDTH, 4*BUTTON_HEIGHT, BUTTON_WIDTH, BUTTON_HEIGHT, 0xf9e0, True, False),
+#	        TouchButton(None,    None,  2*BUTTON_WIDTH, 4*BUTTON_HEIGHT, BUTTON_WIDTH, BUTTON_HEIGHT, 0xf9e0, True, False),
+#	        TouchButton(None,    None,  3*BUTTON_WIDTH, 4*BUTTON_HEIGHT, BUTTON_WIDTH, BUTTON_HEIGHT, 0xf9e0, True, False),
+#
+#	        TouchButton(None,    None,   	         0, 5*BUTTON_HEIGHT, BUTTON_WIDTH, BUTTON_HEIGHT, 0xf9e0, True, False),
+#	        TouchButton(None,    None,    BUTTON_WIDTH, 5*BUTTON_HEIGHT, BUTTON_WIDTH, BUTTON_HEIGHT, 0xf9e0, True, False),
+#	        TouchButton(None,    None,  2*BUTTON_WIDTH, 5*BUTTON_HEIGHT, BUTTON_WIDTH, BUTTON_HEIGHT, 0xf9e0, True, False),
+#	        TouchButton(None,    None,  3*BUTTON_WIDTH, 5*BUTTON_HEIGHT, BUTTON_WIDTH, BUTTON_HEIGHT, 0xf9e0, True, False),
         ])
     ])
     
@@ -202,6 +217,10 @@ package.append(guide_event)
 package.append(enter_event)
 package.append(back_event)
 package.append(home_event)
+package.append(up_event)
+package.append(down_event)
+package.append(left_event)
+package.append(right_event)
 
 package.append(power_action)
 package.append(numeric1_action)
@@ -229,6 +248,10 @@ package.append(guide_action)
 package.append(enter_action)
 package.append(back_action)
 package.append(home_action)
+package.append(up_action)
+package.append(down_action)
+package.append(left_action)
+package.append(right_action)
 
 packed_data = package.pack()
 
