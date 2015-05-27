@@ -484,15 +484,18 @@ void testUart()
 	while (1) {
 		printf("Waiting...\n");
 		// Wait for transfer initiation:
-		char uartCh = uartGetchar(2);
+		uint8_t uartCh = uartGetchar(2);
 
 		switch (uartCh) {
 			case 0x10: {
 				// Number of longwords
 				size_t transferSize = uartGetchar(2) | (uartGetchar(2) << 8);
 
+				printf("Erasing...\n");
 				eraseFlashSector(__FlashStoreBase);
+				eraseFlashSector(__FlashStoreBase + 0x400);
 
+				printf("Transferring %d words...\n", transferSize);
 				// Indicate readiness for data
 				uartPutchar(2, 0x10);
 

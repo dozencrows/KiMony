@@ -229,6 +229,4 @@ package.append(back_action)
 package.append(home_action)
 
 packed_data = package.pack()
-print ':'.join(x.encode('hex') for x in packed_data)
-print len(packed_data)
 

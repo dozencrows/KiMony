@@ -46,7 +46,7 @@ void uartInit(int channel, int sysclk, int baud)
 	}
 }
 
-char uartGetchar(int channel)
+uint8_t uartGetchar(int channel)
 {
 	if (channel > 0) {
 		UART_Type* uart = uartChannels[channel - 1];
@@ -62,7 +62,7 @@ char uartGetchar(int channel)
 	}
 }
 
-void uartPutchar(int channel, char ch)
+void uartPutchar(int channel, uint8_t ch)
 {
 	if (channel > 0) {
 		UART_Type* uart = uartChannels[channel - 1];

@@ -271,7 +271,11 @@ class Package:
 
             print "Obj", obj.ref(), "(", type(obj), ") at", self.offsets[obj.ref()], "size", len(binary_obj), "fill", fill_size
             packed_offset += len(binary_obj) + fill_size
-            
+
+        self.align_to(4)
+        fill_size = self.next_offset - packed_offset
+        packed_objects.append('\x00' * fill_size)
+                    
         return ''.join(packed_objects)
         
     def offsetof(self, ref):
@@ -283,4 +287,4 @@ class Package:
     def align_to(self, alignment):
         misalignment = self.next_offset % alignment
         self.next_offset += (alignment - misalignment) % alignment
-
+        

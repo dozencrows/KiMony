@@ -44,11 +44,11 @@
 #   aligning
 #   using offsets instead of pointers
 
+import config
 import serial
 import struct
 import time
-import array
-import random
+import sys
 
 ser = serial.Serial(
     port='/dev/ttyUSB0',
@@ -58,21 +58,22 @@ ser = serial.Serial(
     bytesize=serial.EIGHTBITS
 )
 
-flashData = array.array('b', [random.randint(-127, 127) for x in range(0,1024)])
-
-data = struct.pack("<bh", 0x10, 0x100)
+packed_data_words = len(config.packed_data) / 4
+data = struct.pack("<bh", 0x10, packed_data_words)
+#print ':'.join(x.encode('hex') for x in data)
 ser.write(data)
 response = ord(ser.read(1))
 print hex(response)
 if response == 0x10:
-    ser.write(flashData.tostring())
+    ser.write(config.packed_data)
 
     response = ser.read(1)
     print hex(ord(response))
     time.sleep(1)
 
-    data = struct.pack("<bh1024s", 0x20, 0x100, flashData.tostring())
+    data = struct.pack("<bh", 0x20, packed_data_words)
     ser.write(data)
+    ser.write(config.packed_data)
 
 ser.close()
 
