@@ -47,10 +47,11 @@ back_action 		= IrAction([IrCode(IrEncoding_SIRC, 12, 0xC70)])
 home_action 		= IrAction([IrCode(IrEncoding_SIRC, 12, 0x070)])
 
 # Events
-home_activity_event = Event(Event_HOME, None)
-next_event 		    = Event(Event_NEXTPAGE, None)
-prev_event 		    = Event(Event_PREVPAGE, None)
+home_activity_event = Event(Event_HOME)
+next_event 		    = Event(Event_NEXTPAGE)
+prev_event 		    = Event(Event_PREVPAGE)
 power_event 		= Event(Event_IRACTION, power_action)
+download_event      = Event(Event_DOWNLOAD)
 
 numeric1_event 		= Event(Event_IRACTION, numeric1_action)
 numeric2_event 		= Event(Event_IRACTION, numeric2_action)
@@ -146,7 +147,7 @@ test_remote_activity = Activity(
 test_remote_event = Event(Event_ACTIVITY, test_remote_activity)
 
 home_activity = Activity(
-    [ ButtonMapping(0x010000, prev_event), ButtonMapping(0x040000, next_event) ],
+    [ ButtonMapping(0x010000, prev_event), ButtonMapping(0x040000, next_event), ButtonMapping(0x100000, download_event) ],
     [ 
         TouchButtonPage(
         [
@@ -175,6 +176,7 @@ package.append(home_activity_event)
 package.append(next_event)
 package.append(prev_event)
 package.append(power_event)
+package.append(download_event)
 package.append(numeric1_event)
 package.append(numeric2_event)
 package.append(numeric3_event)

@@ -468,7 +468,7 @@ void rendererDrawChar(char c, uint16_t x, uint16_t y, const Font* font, uint16_t
 	}
 }
 
-void rendererDrawString(char* s, uint16_t x, uint16_t y, const Font* font, uint16_t colour)
+void rendererDrawString(const char* s, uint16_t x, uint16_t y, const Font* font, uint16_t colour)
 {
 	char c;
 
@@ -539,7 +539,7 @@ void rendererRenderDrawList() {
 	}
 }
 
-void rendererGetStringBounds(char* s, const Font* font, uint16_t* width, uint16_t* height)
+void rendererGetStringBounds(const char* s, const Font* font, uint16_t* width, uint16_t* height)
 {
 	char c;
 	*width = 0;

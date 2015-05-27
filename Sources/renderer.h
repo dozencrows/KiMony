@@ -24,10 +24,10 @@ extern void rendererDrawHLine(uint16_t x, uint16_t y, uint16_t length, uint16_t 
 extern void rendererDrawRect(uint16_t x, uint16_t y, uint16_t width, uint16_t height, uint16_t colour);
 extern void rendererDrawGlyph(const Glyph* glyph, uint16_t x, uint16_t y, uint16_t colour);
 extern void rendererDrawChar(char c, uint16_t x, uint16_t y, const Font* font, uint16_t colour);
-extern void rendererDrawString(char* s, uint16_t x, uint16_t y, const Font* font, uint16_t colour);
+extern void rendererDrawString(const char* s, uint16_t x, uint16_t y, const Font* font, uint16_t colour);
 extern void rendererDrawImage(Image* i, uint16_t x, uint16_t y);
 extern void rendererRenderDrawList();
-extern void rendererGetStringBounds(char* s, const Font* font, uint16_t* width, uint16_t* height);
+extern void rendererGetStringBounds(const char* s, const Font* font, uint16_t* width, uint16_t* height);
 
 extern void rendererTest();
 

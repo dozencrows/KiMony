@@ -53,6 +53,7 @@
 // Time until backlight turns off when idle, in hundredths of a second
 #define BACKLIGHT_OFF_TIMEOUT	500
 
+/*
 static const Event homeActivityEvent = { EVENT_HOME, NULL };
 static const Event nextPageEvent = { EVENT_NEXTPAGE, NULL };
 static const Event prevPageEvent = { EVENT_PREVPAGE, NULL };
@@ -223,6 +224,7 @@ static const TouchButtonPage homePages[] = {
 	{ ARRAY_LENGTH(homeTouchButtonsPage3), homeTouchButtonsPage3 },
 };
 static const Activity homeActivity = { ARRAY_LENGTH(homeActivityButtonMappings), homeActivityButtonMappings, ARRAY_LENGTH(homePages), homePages};
+*/
 
 static int touchPage = 0;
 static const Activity* currentActivity = NULL;
@@ -261,20 +263,19 @@ static void backlightOn()
 
 void selectActivity(const Activity* activity)
 {
-	buttonsSetActiveMapping(activity->buttonMapping, activity->buttonMappingCount);
+	buttonsSetActiveMapping((const ButtonMapping*)GET_FLASH_PTR(activity->buttonMappingOffset), activity->buttonMappingCount);
 
 	const TouchButton* touchButtons = NULL;
 	int touchButtonCount = 0;
 
 	if (activity->touchButtonPageCount) {
-		touchButtons = activity->touchButtonPages[0].touchButtons;
-		touchButtonCount = activity->touchButtonPages[0].touchButtonCount;
+		const TouchButtonPage* tbPage = (const TouchButtonPage*)GET_FLASH_PTR(activity->touchButtonPagesOffset);
+		touchButtons = (const TouchButton*)GET_FLASH_PTR(tbPage->touchButtonOffset);
+		touchButtonCount = tbPage->touchButtonCount;
 	}
 
 	touchbuttonsSetActive(touchButtons, touchButtonCount);
-	rendererNewDrawList();
 	rendererClearScreen();
-	rendererRenderDrawList();
 	currentActivity = activity;
 	touchPage = 0;
 }
@@ -291,15 +292,14 @@ void selectTouchPage(int page)
 	touchPage = page;
 
 	if (page < currentActivity->touchButtonPageCount) {
-		touchbuttonsSetActive(currentActivity->touchButtonPages[page].touchButtons, currentActivity->touchButtonPages[page].touchButtonCount);
+		const TouchButtonPage* tbPages = (const TouchButtonPage*)GET_FLASH_PTR(currentActivity->touchButtonPagesOffset);
+		touchbuttonsSetActive((const TouchButton*)GET_FLASH_PTR(tbPages[page].touchButtonOffset), tbPages->touchButtonCount);
 	}
 	else {
 		touchbuttonsSetActive(NULL, 0);
 	}
 
-	rendererNewDrawList();
 	rendererClearScreen();
-	rendererRenderDrawList();
 }
 
 void mainLoop()
@@ -307,7 +307,8 @@ void mainLoop()
 	buttonsInit();
 	touchbuttonsInit();
 
-	selectActivity(&homeActivity);
+	const Activity* homeActivity = (const Activity*)GET_FLASH_PTR(0);
+	selectActivity(homeActivity);
 
 //	int frames = 0;
 //	sysTickEventInMs(1000);
@@ -373,13 +374,13 @@ void mainLoop()
 			backlightOn();
 			rendererRenderDrawList();
 			if (event->type == EVENT_IRACTION) {
-				irDoAction(event->irAction);
+				irDoAction((const IrAction*)GET_FLASH_PTR(event->irActionOffset));
 			}
 			else if (event->type == EVENT_ACTIVITY) {
-				selectActivity(event->activity);
+				selectActivity((const Activity*)GET_FLASH_PTR(event->activityOffset));
 			}
 			else if (event->type == EVENT_HOME) {
-				selectActivity(&homeActivity);
+				selectActivity(homeActivity);
 			}
 			else if (event->type == EVENT_NEXTPAGE) {
 				selectTouchPage(touchPage + 1);
@@ -387,158 +388,14 @@ void mainLoop()
 			else if (event->type == EVENT_PREVPAGE) {
 				selectTouchPage(touchPage - 1);
 			}
+			else if (event->type == EVENT_DOWNLOAD) {
+				cpuFlashDownload();
+				selectActivity(homeActivity);
+			}
 		}
 		else {
 			rendererRenderDrawList();
 		}
-	}
-}
-
-extern uint8_t __FlashStoreBase[];
-
-void RAM_FUNCTION doFlashCommand()
-{
-	// Trigger command, and wait for completion
-	FTFA->FSTAT = 0x80;
-	while(((FTFA->FSTAT)&(1UL << 7))==0x00);
-}
-
-void eraseFlashSector(uint8_t* sector)
-{
-	uint8_t addr1, addr2, addr3;
-
-	addr1 = ((int)sector & 0xff0000) >> 16;
-	addr2 = ((int)sector & 0x00ff00) >> 8;
-	addr3 = ((int)sector & 0x0000ff);
-
-	// Ensure flash no command running
-	while(((FTFA->FSTAT)&(1UL << 7))==0x00);
-
-	FTFA->FCCOB0	= 0x09;
-	FTFA->FCCOB1	= addr1;
-	FTFA->FCCOB2	= addr2;
-	FTFA->FCCOB3	= addr3;
-
-	doFlashCommand();
-}
-
-uint8_t* copyLongWordToFlash(uint8_t* src, uint8_t* dst)
-{
-	uint8_t addr1, addr2, addr3;
-
-	addr1 = ((int)dst & 0xff0000) >> 16;
-	addr2 = ((int)dst & 0x00ff00) >> 8;
-	addr3 = ((int)dst & 0x0000ff);
-
-	// Ensure flash no command running
-	while(((FTFA->FSTAT)&(1UL << 7))==0x00);
-
-	// Clear error bits
-	if(!((FTFA->FSTAT)==0x80)) {
-		FTFA->FSTAT = 0x30;
-	}
-
-	FTFA->FCCOB0	= 0x06;
-	FTFA->FCCOB1	= addr1;
-	FTFA->FCCOB2	= addr2;
-	FTFA->FCCOB3	= addr3;
-	FTFA->FCCOB7	= *src++;
-	FTFA->FCCOB6	= *src++;
-	FTFA->FCCOB5	= *src++;
-	FTFA->FCCOB4	= *src++;
-
-	doFlashCommand();
-
-	return src;
-}
-
-void copyToFlash(uint8_t* src, uint8_t* dst, size_t count)
-{
-	count = (count + 3) & 0xfffffffc;
-	while (count > 0) {
-		src = copyLongWordToFlash(src, dst);
-		dst += 4;
-		count -= 4;
-	}
-}
-
-static const char testFlashStr[] = "Gloombah!!";
-
-void testUart()
-{
-	PORTE_PCR22 = (uint32_t)((PORTE_PCR22 & (uint32_t)~(uint32_t)(
-				 PORT_PCR_ISF_MASK |
-				 PORT_PCR_MUX(0x07)
-				)) | (uint32_t)(
-				 PORT_PCR_MUX(0x04)
-				));
-	PORTE_PCR23 = (uint32_t)((PORTE_PCR23 & (uint32_t)~(uint32_t)(
-				 PORT_PCR_ISF_MASK |
-				 PORT_PCR_MUX(0x07)
-				)) | (uint32_t)(
-				 PORT_PCR_MUX(0x04)
-				));
-
-	uartInit(2, DEFAULT_SYSTEM_CLOCK / 2, 115200);
-
-	while (1) {
-		printf("Waiting...\n");
-		// Wait for transfer initiation:
-		uint8_t uartCh = uartGetchar(2);
-
-		switch (uartCh) {
-			case 0x10: {
-				// Number of longwords
-				size_t transferSize = uartGetchar(2) | (uartGetchar(2) << 8);
-
-				printf("Erasing...\n");
-				eraseFlashSector(__FlashStoreBase);
-				eraseFlashSector(__FlashStoreBase + 0x400);
-
-				printf("Transferring %d words...\n", transferSize);
-				// Indicate readiness for data
-				uartPutchar(2, 0x10);
-
-				uint8_t 	flashData[4];
-				uint8_t*	flashStore = __FlashStoreBase;
-
-				while (transferSize-- > 0) {
-					flashData[0] = uartGetchar(2);
-					flashData[1] = uartGetchar(2);
-					flashData[2] = uartGetchar(2);
-					flashData[3] = uartGetchar(2);
-
-					copyLongWordToFlash(flashData, flashStore);
-					flashStore += 4;
-				}
-
-				// Indicate transfer end
-				uartPutchar(2, 0x10);
-				break;
-			}
-
-			case 0x20: {
-				// Number of bytes
-				size_t dataSize = (uartGetchar(2) | (uartGetchar(2) << 8)) * 4;
-
-				uint8_t 	flashData;
-				uint8_t*	flashStore = __FlashStoreBase;
-				int 		errors = 0;
-
-				while (dataSize-- > 0) {
-					flashData = uartGetchar(2);
-
-					if (flashData != *flashStore++) {
-						errors++;
-					}
-				}
-
-				printf("Errors: %d\n", errors);
-				break;
-			}
-		}
-
-		printf("Done!\n");
 	}
 }
 
@@ -548,10 +405,6 @@ int main(void)
 
 	sysTickInit();
 	sysTickSetClockRate(SystemCoreClock);
-
-//	eraseFlashSector(&__FlashStoreBase);
-//	copyToFlash((const uint8_t*)testFlashStr, __FlashStoreBase, strlen(testFlashStr) + 1);
-//	printf("%s\n", (char*)(__FlashStoreBase));
 
 	i2cInit();
 	spiInit();
@@ -563,13 +416,15 @@ int main(void)
 
 	touchScreenInit();
 	keyMatrixInit();
-	flashInit();
+	spiFlashInit();
 
-	testUart();
+	if (FLASH_DATA_HEADER->watermark != FLASH_DATA_WATERMARK) {
+		cpuFlashDownload();
+	}
 
 	mainLoop();
 
-	//flashTest();
+	//spiFlashTest();
 	//touchScreenTest();
 	//touchScreenCalibrate();
 	//rendererTest();

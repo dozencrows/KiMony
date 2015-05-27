@@ -7,6 +7,7 @@
 #include <stddef.h>
 #include "buttons.h"
 #include "keymatrix.h"
+#include "flash.h"
 
 static const ButtonMapping* activeMapping = NULL;
 static int activeMappingCount = 0;
@@ -40,8 +41,8 @@ int buttonsUpdate(const Event** eventTriggered)
 
 		if (buttonsNewOn) {
 			for (size_t i = 0; i < activeMappingCount; i++) {
-				if (activeMapping[i].buttonMask == buttonsNewOn) {
-					*eventTriggered = activeMapping[i].event;
+				if (activeMapping[i].buttonMask == buttonsNewOn && activeMapping[i].eventOffset) {
+					*eventTriggered = (const Event*)GET_FLASH_PTR(activeMapping[i].eventOffset);
 					result = (*eventTriggered)->type;
 					break;
 				}

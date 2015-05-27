@@ -9,6 +9,10 @@
 #include "spi.h"
 #include "MKL26Z4.h"
 #include "ports.h"
+#include "uart.h"
+#include "codeutil.h"
+#include "renderer.h"
+#include "fontdata.h"
 
 // Pins to initialise
 // PTB: 18 (Chip Select)
@@ -133,7 +137,7 @@ int spiFlashReadPage(unsigned int addr, unsigned char* data)
 	return 1;
 }
 
-void flashInit()
+void spiFlashInit()
 {
 	SIM_SCGC5 |= SIM_SCGC5_PORTB_MASK;
 
@@ -143,7 +147,7 @@ void flashInit()
 	FGPIOB_PSOR = (1 << 18);
 }
 
-void flashTest()
+void spiFlashTest()
 {
 	unsigned char id[5];
 	FGPIOB_PCOR = (1 << 18);
@@ -190,4 +194,183 @@ void flashTest()
 		}
 	}
 
+}
+
+void RAM_FUNCTION cpuFlashCommand()
+{
+	// Trigger command, and wait for completion
+	__disable_irq();
+	FTFA->FSTAT = 0x80;
+	while(((FTFA->FSTAT)&(1UL << 7))==0x00);
+	__enable_irq();
+}
+
+void cpuFlashEraseSector(uint8_t* sector)
+{
+	uint8_t addr1, addr2, addr3;
+
+	addr1 = ((int)sector & 0xff0000) >> 16;
+	addr2 = ((int)sector & 0x00ff00) >> 8;
+	addr3 = ((int)sector & 0x0000ff);
+
+	// Ensure flash no command running
+	while(((FTFA->FSTAT)&(1UL << 7))==0x00);
+
+	FTFA->FCCOB0	= 0x09;
+	FTFA->FCCOB1	= addr1;
+	FTFA->FCCOB2	= addr2;
+	FTFA->FCCOB3	= addr3;
+
+	cpuFlashCommand();
+}
+
+uint8_t* cpuFlashCopyLongWord(uint8_t* src, uint8_t* dst)
+{
+	uint8_t addr1, addr2, addr3;
+
+	addr1 = ((int)dst & 0xff0000) >> 16;
+	addr2 = ((int)dst & 0x00ff00) >> 8;
+	addr3 = ((int)dst & 0x0000ff);
+
+	// Ensure flash no command running
+	while(((FTFA->FSTAT)&(1UL << 7))==0x00);
+
+	// Clear error bits
+	if(!((FTFA->FSTAT)==0x80)) {
+		FTFA->FSTAT = 0x30;
+	}
+
+	FTFA->FCCOB0	= 0x06;
+	FTFA->FCCOB1	= addr1;
+	FTFA->FCCOB2	= addr2;
+	FTFA->FCCOB3	= addr3;
+	FTFA->FCCOB7	= *src++;
+	FTFA->FCCOB6	= *src++;
+	FTFA->FCCOB5	= *src++;
+	FTFA->FCCOB4	= *src++;
+
+	cpuFlashCommand();
+
+	return src;
+}
+
+static void cpuFlashCopy(uint8_t* src, uint8_t* dst, size_t count)
+{
+	count = (count + 3) & 0xfffffffc;
+	while (count > 0) {
+		src = cpuFlashCopyLongWord(src, dst);
+		dst += 4;
+		count -= 4;
+	}
+}
+
+static void renderMessage(const char* message, uint16_t colour)
+{
+	rendererClearScreen();
+	uint16_t width, height, x, y;
+
+	rendererGetStringBounds(message, &KiMony, &width, &height);
+	x = (SCREEN_WIDTH - width) / 2;
+	y = (SCREEN_HEIGHT - height) / 2;
+
+	rendererNewDrawList();
+	rendererDrawRect(x, y, width, height, 0);
+	rendererDrawString(message, x, y, &KiMony, colour);
+	rendererRenderDrawList();
+}
+
+void cpuFlashDownload()
+{
+	PORTE_PCR22 = (uint32_t)((PORTE_PCR22 & (uint32_t)~(uint32_t)(
+				 PORT_PCR_ISF_MASK |
+				 PORT_PCR_MUX(0x07)
+				)) | (uint32_t)(
+				 PORT_PCR_MUX(0x04)
+				));
+	PORTE_PCR23 = (uint32_t)((PORTE_PCR23 & (uint32_t)~(uint32_t)(
+				 PORT_PCR_ISF_MASK |
+				 PORT_PCR_MUX(0x07)
+				)) | (uint32_t)(
+				 PORT_PCR_MUX(0x04)
+				));
+
+	uartInit(2, DEFAULT_SYSTEM_CLOCK / 2, 115200);
+
+	int downloadComplete = 0;
+
+
+	renderMessage("Waiting for data...", 0xffff);
+	while (!downloadComplete) {
+		// Wait for transfer initiation:
+		uint8_t uartCh = uartGetchar(2);
+
+		switch (uartCh) {
+			case 0x10: {
+				// Number of longwords
+				size_t transferSize = uartGetchar(2) | (uartGetchar(2) << 8);
+
+				renderMessage("Downloading...", 0xffff);
+				cpuFlashEraseSector(__FlashStoreBase);
+				cpuFlashEraseSector(__FlashStoreBase + 0x400);
+
+				// Indicate readiness for data
+				uartPutchar(2, 0x10);
+
+				uint8_t 	flashData[4];
+				uint8_t*	flashStore = __FlashStoreBase;
+
+				while (transferSize-- > 0) {
+					flashData[0] = uartGetchar(2);
+					flashData[1] = uartGetchar(2);
+					flashData[2] = uartGetchar(2);
+					flashData[3] = uartGetchar(2);
+
+					cpuFlashCopyLongWord(flashData, flashStore);
+					flashStore += 4;
+				}
+
+				// Indicate transfer end
+				uartPutchar(2, 0x10);
+				break;
+			}
+
+			case 0x20: {
+				// Number of bytes
+				size_t dataSize = (uartGetchar(2) | (uartGetchar(2) << 8)) * 4;
+
+				uint8_t 	flashData;
+				uint8_t*	flashStore = __FlashStoreBase;
+				int 		errors = 0;
+
+				while (dataSize-- > 0) {
+					flashData = uartGetchar(2);
+
+					if (flashData != *flashStore++) {
+						errors++;
+					}
+				}
+
+				if (errors == 0) {
+					downloadComplete = 1;
+				}
+				else {
+					renderMessage("ERRORS!", 0xf800);
+				}
+				break;
+			}
+		}
+	}
+
+	PORTE_PCR22 = (uint32_t)((PORTE_PCR22 & (uint32_t)~(uint32_t)(
+				 PORT_PCR_ISF_MASK |
+				 PORT_PCR_MUX(0x07)
+				)) | (uint32_t)(
+				 PORT_PCR_MUX(0x01)
+				));
+	PORTE_PCR23 = (uint32_t)((PORTE_PCR23 & (uint32_t)~(uint32_t)(
+				 PORT_PCR_ISF_MASK |
+				 PORT_PCR_MUX(0x07)
+				)) | (uint32_t)(
+				 PORT_PCR_MUX(0x01)
+				));
 }

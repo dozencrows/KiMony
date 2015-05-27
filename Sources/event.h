@@ -14,6 +14,7 @@
 #define EVENT_NEXTPAGE		3
 #define EVENT_PREVPAGE		4
 #define EVENT_HOME			5
+#define EVENT_DOWNLOAD		6
 
 typedef struct _IrAction IrAction;
 typedef struct _Activity Activity;
@@ -21,8 +22,8 @@ typedef struct _Activity Activity;
 typedef struct _Event {
 	uint32_t	type;
 	union {
-		const IrAction* irAction;
-		const Activity* activity;
+		uint32_t irActionOffset;
+		uint32_t activityOffset;
 	};
 } Event;
 

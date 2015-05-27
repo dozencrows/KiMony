@@ -7,20 +7,18 @@
 
 #ifndef ACTIVITY_H_
 #define ACTIVITY_H_
-
-typedef struct _ButtonMapping ButtonMapping;
-typedef struct _TouchButton TouchButton;
+#include <stdint.h>
 
 typedef struct _TouchButtonPage {
 	int touchButtonCount;
-	const TouchButton* touchButtons;
+	uint32_t touchButtonOffset;
 } TouchButtonPage;
 
 typedef struct _Activity {
 	int buttonMappingCount;
-	const ButtonMapping* buttonMapping;
+	uint32_t buttonMappingOffset;
 	int touchButtonPageCount;
-	const TouchButtonPage* touchButtonPages;
+	uint32_t touchButtonPagesOffset;
 } Activity;
 
 #endif /* ACTIVITY_H_ */

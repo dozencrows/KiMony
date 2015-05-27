@@ -12,8 +12,8 @@
 #include "event.h"
 
 typedef struct _ButtonMapping {
-	uint32_t		buttonMask;
-	const Event*	event;
+	uint32_t	buttonMask;
+	uint32_t	eventOffset;
 } ButtonMapping;
 
 extern void buttonsInit();

@@ -3,6 +3,7 @@
 #
 
 import ctypes as ct
+import struct
 import types
 
 IrEncoding_NOP  = 0
@@ -15,6 +16,9 @@ Event_ACTIVITY  = 2
 Event_NEXTPAGE  = 3
 Event_PREVPAGE  = 4
 Event_HOME      = 5
+Event_DOWNLOAD  = 6
+
+WATERMARK       = 0xBABABEBE
 
 #
 # Base class for all KiMony remote objects
@@ -24,6 +28,9 @@ class RemoteDataObj(ct.LittleEndianStructure):
         return id(self) & 0xffffffff
         
     def pre_pack(self, package):
+        pass
+        
+    def pre_pack_trailing_children(self, package):
         pass
         
     def fix_up(self, offsets):
@@ -103,7 +110,7 @@ class Event(RemoteDataObj):
         ("data", ct.c_uint32)
         ]
         
-    def __init__(self, t, data):
+    def __init__(self, t, data = None):
         self.type = t
         if data:
             self.data = data.ref()
@@ -182,7 +189,7 @@ class TouchButtonPage(RemoteDataObj):
         self.count = len(touch_buttons)
         self.buttons = touch_buttons[0].ref()
         
-    def pre_pack(self, package):
+    def pre_pack_touch_buttons(self, package):
         for x in self.touch_buttons:
             package.append(x)
             
@@ -223,6 +230,10 @@ class Activity(RemoteDataObj):
         for x in self.touch_button_pages_objs:
             package.append(x)
             
+    def pre_pack_trailing_children(self, package):
+        for x in self.touch_button_pages_objs:
+            x.pre_pack_touch_buttons(package)
+            
     def fix_up(self, package):
         self.button_mappings = package.offsetof(self.button_mappings)
         self.touch_button_pages = package.offsetof(self.touch_button_pages)
@@ -245,6 +256,7 @@ class Package:
         self.objects.append(obj)
         self.next_offset += obj.size()
         obj.pre_pack(self)
+        obj.pre_pack_trailing_children(self)
         
     def append_text(self, text):
         self.offsets[text.ref()] = self.text_offset
@@ -252,7 +264,7 @@ class Package:
         self.text_offset += text.size()
         
     def pack(self):
-        packed_objects = []
+        packed_objects = [ struct.pack("<I", WATERMARK) ]
         packed_offset = 0
         
         for text in self.texts:

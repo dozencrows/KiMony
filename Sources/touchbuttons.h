@@ -18,12 +18,12 @@ typedef struct _Point Point;
 #define TB_CENTRE_TEXT		0x02
 
 typedef struct _TouchButton {
-	const Event*	event;
-	const char*		text;
-	uint16_t		x, y;
-	uint16_t		width, height;
-	uint16_t		colour;
-	uint8_t			flags;
+	uint32_t	eventOffset;
+	uint32_t	textOffset;
+	uint16_t	x, y;
+	uint16_t	width, height;
+	uint16_t	colour;
+	uint32_t	flags;
 } TouchButton;
 
 extern void touchbuttonsInit();

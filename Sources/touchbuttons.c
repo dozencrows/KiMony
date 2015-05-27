@@ -6,6 +6,7 @@
  */
 #include <stddef.h>
 #include "touchbuttons.h"
+#include "flash.h"
 #include "mathutil.h"
 #include "renderer.h"
 #include "fontdata.h"
@@ -45,16 +46,17 @@ static void renderTouchButton(const TouchButton* button, uint16_t colour, uint16
 	rendererDrawVLine(button->x + button->width - 1, button->y, button->height, BUTTON_BORDER_COLOUR);
 	rendererDrawRect(button->x + 1, button->y + 1, button->width - 2, button->height - 2, colour);
 	rendererDrawHLine(button->x, button->y + button->height - 1, button->width, BUTTON_BORDER_COLOUR);
-	if (button->text) {
+	if (button->textOffset) {
+		const char* text = (const char*)GET_FLASH_PTR(button->textOffset);
 		uint16_t textWidth, textHeight;
-		rendererGetStringBounds(button->text, &KiMony, &textWidth, &textHeight);
+		rendererGetStringBounds(text, &KiMony, &textWidth, &textHeight);
 
 		if (button->flags & TB_CENTRE_TEXT) {
-			rendererDrawString(button->text, button->x + (button->width / 2) - (textWidth / 2),
-											 button->y + (button->height / 2) - (textHeight / 2), &KiMony, textColour);
+			rendererDrawString(text, button->x + (button->width / 2) - (textWidth / 2),
+									 button->y + (button->height / 2) - (textHeight / 2), &KiMony, textColour);
 		}
 		else {
-			rendererDrawString(button->text, button->x + 3, button->y + 3, &KiMony, textColour);
+			rendererDrawString(text, button->x + 3, button->y + 3, &KiMony, textColour);
 		}
 	}
 }
@@ -138,9 +140,11 @@ int touchButtonsUpdate(const Event** eventTriggered)
 					int touchButton = hitTestTouchButtons(&touch);
 					if (touchButton == currentTouchButton) {
 						touchState = TOUCH_STATE_ACTIVE;
-						if (activeTouchButtons[currentTouchButton].flags & TB_PRESS_ACTIVATE) {
-							*eventTriggered = activeTouchButtons[currentTouchButton].event;
-							result = (*eventTriggered)->type;
+						if (activeTouchButtons[currentTouchButton].eventOffset) {
+							if (activeTouchButtons[currentTouchButton].flags & TB_PRESS_ACTIVATE) {
+								*eventTriggered = (const Event*)GET_FLASH_PTR(activeTouchButtons[currentTouchButton].eventOffset);
+								result = (*eventTriggered)->type;
+							}
 						}
 					}
 					else {
@@ -163,9 +167,11 @@ int touchButtonsUpdate(const Event** eventTriggered)
 				touchState = TOUCH_STATE_IDLE;
 				setCurrentButtonPressedState(0);
 				if (currentTouchButton >= 0) {
-					if (!(activeTouchButtons[currentTouchButton].flags & TB_PRESS_ACTIVATE)) {
-						*eventTriggered = activeTouchButtons[currentTouchButton].event;
-						result = (*eventTriggered)->type;
+					if (activeTouchButtons[currentTouchButton].eventOffset) {
+						if (!(activeTouchButtons[currentTouchButton].flags & TB_PRESS_ACTIVATE)) {
+							*eventTriggered = (const Event*)GET_FLASH_PTR(activeTouchButtons[currentTouchButton].eventOffset);
+							result = (*eventTriggered)->type;
+						}
 					}
 				}
 			}
