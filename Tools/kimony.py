@@ -2,47 +2,14 @@
 #
 # Tool for updating KiMony data over USB serial
 #
+import argparse
 
-#
-# KiMony structures:
-#   IrCode: 
-#       bitfield    encoding:4 bits:5 code:23
-#       uint32_t    toggleMask
-#
-#   IrAction:
-#       int         code count
-#       IrCode[]    codes
-#
-#   Event:
-#       uint32_t    type:   0 (none), 1 (IrAction), 2 (Activity), 3 (NextPage), 4 (PrevPage), 5 (Home)
-#       union       IrAction* irAction, Activity* activity
-#
-#   ButtonMapping:
-#       uint32_t    buttonMask
-#       Event*      event
-#
-#   TouchButton:
-#       Event*      event
-#       char*       text
-#       uint16_t    x, y
-#       uint16_t    width, height
-#       uint16_t    colour
-#       uint8_t     flags           bit 0: press activates, bit 1: centre text
-#
-#   TouchButtonPage:
-#       int             count
-#       TouchButtons*   buttons
-#
-#   Activity:
-#       int                 buttonMappingCount
-#       ButtonMappng*       buttonMappings
-#       int                 touchButtonPageCount
-#       TouchButtonPage*    touchButtonPages
+parser = argparse.ArgumentParser(description="Compile data for KiMony programmable remote")
+parser.add_argument("device")
+parser.add_argument("-s", "--save", action="store_true", help="save config binary data to file")
+parser.add_argument("-d", "--download", action="store_true", help="download config binary data to device")
 
-# Key aspects:
-#   bitfield packing
-#   aligning
-#   using offsets instead of pointers
+args = parser.parse_args()
 
 import config
 import serial
@@ -50,30 +17,42 @@ import struct
 import time
 import sys
 
-ser = serial.Serial(
-    port='/dev/ttyUSB0',
-    baudrate=115200,
-    parity=serial.PARITY_NONE,
-    stopbits=serial.STOPBITS_ONE,
-    bytesize=serial.EIGHTBITS
-)
+def download(device):
+    packed_data_words = len(config.packed_data) / 4
+    
+    ser = serial.Serial(
+        port=device,
+        baudrate=115200,
+        parity=serial.PARITY_NONE,
+        stopbits=serial.STOPBITS_ONE,
+        bytesize=serial.EIGHTBITS
+    )
 
-packed_data_words = len(config.packed_data) / 4
-data = struct.pack("<bh", 0x10, packed_data_words)
-#print ':'.join(x.encode('hex') for x in data)
-ser.write(data)
-response = ord(ser.read(1))
-print hex(response)
-if response == 0x10:
-    ser.write(config.packed_data)
-
-    response = ser.read(1)
-    print hex(ord(response))
-    time.sleep(1)
-
-    data = struct.pack("<bh", 0x20, packed_data_words)
+    data = struct.pack("<bh", 0x10, packed_data_words)
+    #print ':'.join(x.encode('hex') for x in data)
     ser.write(data)
-    ser.write(config.packed_data)
+    response = ord(ser.read(1))
+    print hex(response)
+    if response == 0x10:
+        ser.write(config.packed_data)
 
-ser.close()
+        response = ser.read(1)
+        print hex(ord(response))
+        time.sleep(1)
+
+        data = struct.pack("<bh", 0x20, packed_data_words)
+        ser.write(data)
+        ser.write(config.packed_data)
+
+    ser.close()
+
+def save(path):
+    f = open(path, "wb")
+    f.write(config.packed_data)
+    f.close()
+
+if args.download:
+    download(args.device)
+elif args.save:
+    save(args.device)
 

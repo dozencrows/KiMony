@@ -1,6 +1,15 @@
 Plan
 ====
+* Ensure watermark is cleared if error in download
+* Increase flash store size; adjust erase to compensate
+* Add error check to ensure flash store size not exceeded
 * Improve remote data compilation error reporting
+* Implement bitmap buttons
+  * extend touch buttons to handle this (e.g. flag to switch icon for text, use same offset field)
+  * rendering unpressed and pressed state
+  * embed image data in flash download
+* Optimised scan-line clearing
+* Implement 'status' line
 * Devices & state management
 * Optimise representation of offline remote data 
 * Power save mode
@@ -100,6 +109,7 @@ Done
 	* Compiling of remote data from source form -> binary
 	* Updating of remote data over UART connection
 	* Saving to on-chip flash inside application
+* Implemented mechanism to embed flash data in built executable
   
 Notes
 =====
@@ -209,3 +219,26 @@ IR Signal Interference
 ======================
 If some codes for different devices are sent too close together, the devices can behave incorrectly:
 * E.g. sending Sony TV KEY_POWER too close to Phillips HTS KEY_POWER prevents the HTS turning on or off.
+
+Optimised scanline clearing
+===========================
+For each scanline, track min and max X to draw in uint8_t - 2 bytes per scanline x 320 scanlines. Update when building drawlist.
+
+On rendering each scanline, apply the following:
+
+  if row minX > drawlist minX
+     fill from drawlist minX to row minX
+  if row maxX < drawlist maxX
+     fill from row maxX to drawlist maxX
+
+Unroll and double-up writes in the fill loops to optimise. Use black as colour initially.
+
+Embed binary data
+=================
+Save out raw binary data from kimony.py.
+Convert raw bin file to linker script via:
+
+    cat Resources/config.bin | hexdump -v -e '"BYTE(0x" 1/1 "%02X" ")\n"' > Resources/config.ld
+    cat Resources/config.bin | hexdump -v -e '4/4 "LONG(0x0%08X) " "\n"' > Resources/config.ld
+
+Include in main linker file in relevant section.    

@@ -126,7 +126,9 @@ SECTIONS
   {
     . = ALIGN(1024);
     __FlashStoreBase = .;
-    . += FLASH_STORE_SIZE;
+    INCLUDE "../../Resources/config.ld";
+    __FlashInitDataEnd = .;
+    . += FLASH_STORE_SIZE - (__FlashInitDataEnd - __FlashStoreBase);
     __FlashStoreLimit = .;
   } > m_text
 
