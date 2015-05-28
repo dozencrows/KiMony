@@ -109,15 +109,23 @@ class Event(RemoteDataObj):
         ("type", ct.c_uint32),
         ("data", ct.c_uint32)
         ]
+
+    _types_ = { 0:"none", 1:"IR action", 2:"Activity", 3:"Next", 4:"Prev", 5:"Home", 6:"Download" }
         
     def __init__(self, t, data = None):
         self.type = t
         if data:
             self.data = data.ref()
+            
+    def __str__(self):
+        return "Event %d (type %s)" % (self.ref(), Event._types_[self.type])
     
     def fix_up(self, package):
         if self.data:
-            self.data = package.offsetof(self.data)
+            try:
+                self.data = package.offsetof(self.data)
+            except PackageError:
+                print self, "has reference to missing object"
 
 #
 # Physical button mapping
@@ -132,8 +140,14 @@ class ButtonMapping(RemoteDataObj):
         self.button_mask = button_mask
         self.event = event.ref()
         
+    def __str__(self):
+        return "Button Mapping %d (mask 0x%08x)" % (self.ref(), self.button_mask)
+        
     def fix_up(self, package):
-        self.event = package.offsetof(self.event)
+        try:
+            self.event = package.offsetof(self.event)
+        except PackageError:
+            print self, "has reference to missing event"
 
 #
 # Touch screen button
@@ -167,13 +181,23 @@ class TouchButton(RemoteDataObj):
         self.press_activate = press_activate
         self.centre_text = centre_text
         
+    def __str__(self):
+        return "TouchButton %d" % self.ref()
+        
     def pre_pack(self, package):
         if self.wrapped_text:
             package.append_text(self.wrapped_text)
         
     def fix_up(self, package):
-        self.event = package.offsetof(self.event)
-        self.text  = package.offsetof(self.text)
+        try:
+            self.event = package.offsetof(self.event)
+        except PackageError:
+            print self, "has reference to missing event"
+
+        try:
+            self.text  = package.offsetof(self.text)
+        except PackageError:
+            print self, "has reference to missing text"
 
 #
 # Page of touch screen buttons
@@ -189,12 +213,18 @@ class TouchButtonPage(RemoteDataObj):
         self.count = len(touch_buttons)
         self.buttons = touch_buttons[0].ref()
         
+    def __str__(self):
+        return "TouchButtonPage %d" % self.ref()
+        
     def pre_pack_touch_buttons(self, package):
         for x in self.touch_buttons:
             package.append(x)
             
     def fix_up(self, package):
-        self.buttons = package.offsetof(self.buttons)
+        try:
+            self.buttons = package.offsetof(self.buttons)
+        except PackageError:
+            print self, "has reference to missing touch buttons array"
 
 #
 # Activity - a set of touch screen buttons and physical buttons
@@ -222,6 +252,8 @@ class Activity(RemoteDataObj):
         else:
             self.touch_button_pages_objs = []
             
+    def __str__(self):
+        return "Activity %d" % self.ref()
         
     def pre_pack(self, package):
         for x in self.button_mapping_objs:
@@ -235,9 +267,22 @@ class Activity(RemoteDataObj):
             x.pre_pack_touch_buttons(package)
             
     def fix_up(self, package):
-        self.button_mappings = package.offsetof(self.button_mappings)
-        self.touch_button_pages = package.offsetof(self.touch_button_pages)
+        try:
+            self.button_mappings = package.offsetof(self.button_mappings)
+        except PackageError:
+            print self, "has reference to missing button mappings array"
+            
+        try:
+            self.touch_button_pages = package.offsetof(self.touch_button_pages)
+        except PackageError:
+            print self, "has reference to missing touch button pages"
 
+class PackageError(Exception):
+    def __init__(self, message):
+        self.message = message
+    def __str__(self):
+        return self.message
+        
 #
 # Class used to bundle up and encode KiMony remote data objects into binary
 # for squirting down to the device
@@ -249,6 +294,7 @@ class Package:
         self.texts = []
         self.next_offset = 0
         self.text_offset = 0
+        self.errors = 0
         
     def append(self, obj):
         self.align_to(obj.alignment())
@@ -287,14 +333,21 @@ class Package:
         self.align_to(4)
         fill_size = self.next_offset - packed_offset
         packed_objects.append('\x00' * fill_size)
-                    
+
+        if self.errors:
+            raise PackageError("Errors during packing")
+                                
         return ''.join(packed_objects)
         
     def offsetof(self, ref):
-        if ref:
-            return self.offsets[ref]
-        else:
-            return 0
+        try:
+            if ref:
+                return self.offsets[ref]
+            else:
+                return 0
+        except KeyError:
+            self.errors += 1
+            raise PackageError('Missing object')
         
     def align_to(self, alignment):
         misalignment = self.next_offset % alignment

@@ -51,8 +51,12 @@ def save(path):
     f.write(config.packed_data)
     f.close()
 
-if args.download:
-    download(args.device)
-elif args.save:
-    save(args.device)
+try:
+    config.packed_data = config.package.pack()
+    if args.download:
+        download(args.device)
+    elif args.save:
+        save(args.device)
+except Exception as e:
+    print e
 

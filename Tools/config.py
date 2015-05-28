@@ -253,5 +253,3 @@ package.append(down_action)
 package.append(left_action)
 package.append(right_action)
 
-packed_data = package.pack()
-
