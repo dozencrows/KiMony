@@ -21,6 +21,7 @@ typedef struct _FlashDataHeader {
 } FlashDataHeader;
 
 extern uint8_t __FlashStoreBase[];
+extern uint8_t __FlashStoreLimit[];
 
 #define GET_FLASH_PTR(x) (__FlashStoreBase + sizeof(FlashDataHeader) + x)
 #define FLASH_DATA_HEADER ((const FlashDataHeader*)(__FlashStoreBase))

@@ -14,6 +14,8 @@
 #include "renderer.h"
 #include "fontdata.h"
 
+#define CPU_FLASH_SECTOR_SIZE 0x400
+
 // Pins to initialise
 // PTB: 18 (Chip Select)
 
@@ -310,8 +312,14 @@ void cpuFlashDownload()
 				size_t transferSize = uartGetchar(2) | (uartGetchar(2) << 8);
 
 				renderMessage("Downloading...", 0xffff);
-				cpuFlashEraseSector(__FlashStoreBase);
-				cpuFlashEraseSector(__FlashStoreBase + 0x400);
+
+				int sectors = (__FlashStoreLimit - __FlashStoreBase) / CPU_FLASH_SECTOR_SIZE;
+				uint8_t* sector = __FlashStoreBase;
+
+				while (sectors--) {
+					cpuFlashEraseSector(sector);
+					sector += CPU_FLASH_SECTOR_SIZE;
+				}
 
 				// Indicate readiness for data
 				uartPutchar(2, 0x10);
