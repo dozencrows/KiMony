@@ -74,6 +74,8 @@ uint16_t	drawListMinY = SCREEN_HEIGHT;
 uint16_t	drawListMaxX = 0;
 uint16_t	drawListMaxY = 0;
 uint16_t 	pixelBuffer[SCREEN_WIDTH];
+uint8_t		rowMinX[SCREEN_HEIGHT];
+uint8_t		rowMaxX[SCREEN_HEIGHT];
 
 static DrawListEntry* allocDrawListEntry(size_t bytes)
 {
@@ -138,6 +140,21 @@ static void updateDrawListBounds(uint16_t x0, uint16_t y0, uint16_t x1, uint16_t
 	if (y1 > drawListMaxY) {
 		drawListMaxY = MIN(y1, SCREEN_HEIGHT);
 	}
+
+	y0 = MAX(y0, 0);
+	y1 = MIN(y1, SCREEN_HEIGHT);
+	x0 = MAX(x0, 0);
+	x1 = MIN(x1, SCREEN_WIDTH);
+
+	for (int y = y0; y < y1; y++) {
+		if (x0 < rowMinX[y]) {
+			rowMinX[y] = x0;
+		}
+
+		if (x1 > rowMaxX[y]) {
+			rowMaxX[y] = x1;
+		}
+	}
 }
 
 static void renderScanLine(uint16_t y)
@@ -170,6 +187,30 @@ static void renderScanLine(uint16_t y)
 	lastDle = &activeDLEs;
 	dle = activeDLEs;
 
+	uint16_t minX = drawListMinX;
+
+	int fillWidth = rowMinX[y] - drawListMinX;
+	uint16_t* fillPtr = pixelBuffer;
+
+	if (fillWidth >= 2) {
+		uint32_t  fillDuo = 0;
+		uint32_t* fillPtrDuo = (uint32_t*)fillPtr;
+		while(fillWidth > 3) {
+			*(fillPtrDuo++) = fillDuo;
+			*(fillPtrDuo++) = fillDuo;
+			fillWidth -= 4;
+		}
+		while(fillWidth > 1) {
+			*(fillPtrDuo++) = fillDuo;
+			fillWidth -= 2;
+		}
+		fillPtr = (uint16_t*)fillPtrDuo;
+	}
+
+	while (fillWidth--) {
+		*fillPtr++ = 0;
+	}
+
 	//PROFILE_ENTER(primitives);
 	while(dle) {
 		DrawListEntry* nextDle = dle->next;
@@ -183,7 +224,7 @@ static void renderScanLine(uint16_t y)
 					dle->next = dle;
 				}
 				else {
-					pixelBuffer[vLine->x - drawListMinX] = vLine->colour;
+					pixelBuffer[vLine->x - minX] = vLine->colour;
 				}
 				//PROFILE_EXIT(vline);
 				break;
@@ -192,7 +233,7 @@ static void renderScanLine(uint16_t y)
 				//PROFILE_ENTER(hline);
 				LineDLE* hLine = (LineDLE*)dle;
 				for (uint16_t x = 0; x < hLine->length; x++) {
-					pixelBuffer[hLine->x - drawListMinX + x] = hLine->colour;
+					pixelBuffer[hLine->x - minX + x] = hLine->colour;
 				}
 				*lastDle = nextDle;
 				dle->next = dle;
@@ -208,7 +249,7 @@ static void renderScanLine(uint16_t y)
 				}
 				else {
 					int width = rect->width;
-					uint16_t* pixPtr = pixelBuffer + rect->x - drawListMinX;
+					uint16_t* pixPtr = pixelBuffer + rect->x - minX;
 					if (((uint32_t)pixPtr) & 3) {
 						*pixPtr++ = rect->colour;
 						width--;
@@ -245,7 +286,7 @@ static void renderScanLine(uint16_t y)
 				}
 				else {
 					const uint8_t* charData = textChar->data;
-					uint16_t* pixPtr = pixelBuffer + textChar->x - drawListMinX;
+					uint16_t* pixPtr = pixelBuffer + textChar->x - minX;
 					uint16_t width = textChar->glyph->width;
 					while (width-- > 0) {
 						if (!(*charData)) {
@@ -268,7 +309,7 @@ static void renderScanLine(uint16_t y)
 				}
 				else {
 					const uint16_t* imagePix = image->data;
-					uint16_t* pixPtr = pixelBuffer + image->x - drawListMinX;
+					uint16_t* pixPtr = pixelBuffer + image->x - minX;
 					uint16_t width = image->image->width;
 
 					if (((uint32_t)pixPtr) & 3) {
@@ -343,6 +384,29 @@ static void renderScanLine(uint16_t y)
 		}
 		dle = nextDle;
 	}
+
+	fillWidth = drawListMaxX - rowMaxX[y];
+	fillPtr = pixelBuffer + rowMaxX[y];
+
+	if (fillWidth >= 2) {
+		uint32_t  fillDuo = 0;
+		uint32_t* fillPtrDuo = (uint32_t*)fillPtr;
+		while(fillWidth > 3) {
+			*(fillPtrDuo++) = fillDuo;
+			*(fillPtrDuo++) = fillDuo;
+			fillWidth -= 4;
+		}
+		while(fillWidth > 1) {
+			*(fillPtrDuo++) = fillDuo;
+			fillWidth -= 2;
+		}
+		fillPtr = (uint16_t*)fillPtrDuo;
+	}
+
+	while (fillWidth--) {
+		*fillPtr++ = 0;
+	}
+
 	//PROFILE_EXIT(primitives);
 	//PROFILE_EXIT(scanline);
 }
@@ -371,6 +435,9 @@ void rendererNewDrawList()
 	drawListMinY = SCREEN_HEIGHT;
 	drawListMaxX = 0;
 	drawListMaxY = 0;
+
+	memset(rowMinX, 255, SCREEN_HEIGHT);
+	memset(rowMaxX, 0, SCREEN_HEIGHT);
 	PROFILE_BEGIN;
 }
 

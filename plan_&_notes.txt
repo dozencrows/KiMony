@@ -1,14 +1,12 @@
 Plan
 ====
+* Improve remote data compilation error reporting - add better identification/naming for objects
 * Ensure watermark is cleared if error in download
-* Increase flash store size; adjust erase to compensate
 * Add error check to ensure flash store size not exceeded
-* Improve remote data compilation error reporting
 * Implement bitmap buttons
   * extend touch buttons to handle this (e.g. flag to switch icon for text, use same offset field)
   * rendering unpressed and pressed state
   * embed image data in flash download
-* Optimised scan-line clearing
 * Implement 'status' line
 * Devices & state management
 * Optimise representation of offline remote data 
@@ -110,6 +108,9 @@ Done
 	* Updating of remote data over UART connection
 	* Saving to on-chip flash inside application
 * Implemented mechanism to embed flash data in built executable
+* Increased flash data area to 32Kb; adjusted erase to cover it
+* Implemented more friendly error reporting in data compile tool via exceptions
+* Implemented pre & post scanline fill for rows where rendered area is narrower than overall updated bounds
   
 Notes
 =====
