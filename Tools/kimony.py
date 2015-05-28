@@ -32,17 +32,24 @@ def download(device):
     #print ':'.join(x.encode('hex') for x in data)
     ser.write(data)
     response = ord(ser.read(1))
-    print hex(response)
+
     if response == 0x10:
         ser.write(config.packed_data)
 
         response = ser.read(1)
-        print hex(ord(response))
+        print "Validating..."
         time.sleep(1)
 
         data = struct.pack("<bh", 0x20, packed_data_words)
         ser.write(data)
         ser.write(config.packed_data)
+        response = ord(ser.read(1))
+        if response == 1:
+            print "Ok"
+        else:
+            print "Validation failed - errors found"
+    else:
+        print "Error downloading to device"
 
     ser.close()
 

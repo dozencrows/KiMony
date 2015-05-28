@@ -10,6 +10,7 @@
 #include "MKL26Z4.h"
 #include "ports.h"
 #include "uart.h"
+#include "systick.h"
 #include "codeutil.h"
 #include "renderer.h"
 #include "fontdata.h"
@@ -310,10 +311,17 @@ void cpuFlashDownload()
 			case 0x10: {
 				// Number of longwords
 				size_t transferSize = uartGetchar(2) | (uartGetchar(2) << 8);
+				ptrdiff_t storeSize = __FlashStoreLimit - __FlashStoreBase;
+
+				if (transferSize > storeSize / 4) {
+					uartPutchar(2, 0xff);
+					renderMessage("Error - retry...", 0xf800);
+					break;
+				}
 
 				renderMessage("Downloading...", 0xffff);
 
-				int sectors = (__FlashStoreLimit - __FlashStoreBase) / CPU_FLASH_SECTOR_SIZE;
+				int sectors = storeSize / CPU_FLASH_SECTOR_SIZE;
 				uint8_t* sector = __FlashStoreBase;
 
 				while (sectors--) {
@@ -360,14 +368,23 @@ void cpuFlashDownload()
 
 				if (errors == 0) {
 					downloadComplete = 1;
+					renderMessage("Done!", 0x07c0);
+					uartPutchar(2, 0x01);
 				}
 				else {
+					uartPutchar(2, 0xff);
 					renderMessage("ERRORS!", 0xf800);
+
+					uint32_t flashErrorData = 0;
+					cpuFlashEraseSector(__FlashStoreBase);
+					cpuFlashCopyLongWord((uint8_t*)&flashErrorData, __FlashStoreBase);
 				}
 				break;
 			}
 		}
 	}
+
+	sysTickDelayMs(1000);
 
 	PORTE_PCR22 = (uint32_t)((PORTE_PCR22 & (uint32_t)~(uint32_t)(
 				 PORT_PCR_ISF_MASK |
