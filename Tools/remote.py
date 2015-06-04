@@ -25,7 +25,7 @@ WATERMARK       = 0xBABABEBE
 #
 class RemoteDataObj(ct.LittleEndianStructure):
     def ref(self):
-        return id(self) & 0xffffffff
+        return id(self)
         
     def pre_pack(self, package):
         pass
@@ -115,15 +115,17 @@ class Event(RemoteDataObj):
     def __init__(self, t, data = None):
         self.type = t
         if data:
-            self.data = data.ref()
+            self.data_ref = data.ref()
+        else:
+            self.data_ref = None
             
     def __str__(self):
         return "Event %d (type %s)" % (self.ref(), Event._types_[self.type])
     
     def fix_up(self, package):
-        if self.data:
+        if self.data_ref:
             try:
-                self.data = package.offsetof(self.data)
+                self.data = package.offsetof(self.data_ref)
             except PackageError:
                 print self, "has reference to missing object"
 
@@ -138,14 +140,17 @@ class ButtonMapping(RemoteDataObj):
     
     def __init__(self, button_mask, event):
         self.button_mask = button_mask
-        self.event = event.ref()
+        if event:
+            self.event_ref = event.ref()
+        else:
+            self.event_ref = None
         
     def __str__(self):
         return "Button Mapping %d (mask 0x%08x)" % (self.ref(), self.button_mask)
         
     def fix_up(self, package):
         try:
-            self.event = package.offsetof(self.event)
+            self.event = package.offsetof(self.event_ref)
         except PackageError:
             print self, "has reference to missing event"
 
@@ -168,11 +173,16 @@ class TouchButton(RemoteDataObj):
     def __init__(self, event, text, x, y, width, height, colour, press_activate, centre_text):
         if text:
             self.wrapped_text = RemoteDataStr(text)
-            self.text  = self.wrapped_text.ref()
+            self.text_ref  = self.wrapped_text.ref()
         else:
             self.wrapped_text = None
+            self.text_ref = None
+            
         if event:
-            self.event = event.ref()
+            self.event_ref = event.ref()
+        else:
+            self.event_ref = None
+            
         self.x = x
         self.y = y
         self.width = width
@@ -190,12 +200,12 @@ class TouchButton(RemoteDataObj):
         
     def fix_up(self, package):
         try:
-            self.event = package.offsetof(self.event)
+            self.event = package.offsetof(self.event_ref)
         except PackageError:
             print self, "has reference to missing event"
 
         try:
-            self.text  = package.offsetof(self.text)
+            self.text  = package.offsetof(self.text_ref)
         except PackageError:
             print self, "has reference to missing text"
 
@@ -211,7 +221,10 @@ class TouchButtonPage(RemoteDataObj):
     def __init__(self, touch_buttons):
         self.touch_buttons = touch_buttons
         self.count = len(touch_buttons)
-        self.buttons = touch_buttons[0].ref()
+        if touch_buttons:
+            self.buttons_ref = touch_buttons[0].ref()
+        else:
+            self.buttons_ref = None
         
     def __str__(self):
         return "TouchButtonPage %d" % self.ref()
@@ -222,7 +235,7 @@ class TouchButtonPage(RemoteDataObj):
             
     def fix_up(self, package):
         try:
-            self.buttons = package.offsetof(self.buttons)
+            self.buttons = package.offsetof(self.buttons_ref)
         except PackageError:
             print self, "has reference to missing touch buttons array"
 
@@ -240,17 +253,19 @@ class Activity(RemoteDataObj):
     def __init__(self, button_mappings, touch_button_pages):
         if button_mappings:
             self.button_mapping_count = len(button_mappings)
-            self.button_mappings = button_mappings[0].ref()
+            self.button_mappings_ref = button_mappings[0].ref()
             self.button_mapping_objs = button_mappings
         else:
             self.button_mapping_objs = []
+            self.button_mappings_ref = None
 
         if touch_button_pages:
             self.touch_button_page_count = len(touch_button_pages)
-            self.touch_button_pages = touch_button_pages[0].ref()
+            self.touch_button_pages_ref = touch_button_pages[0].ref()
             self.touch_button_pages_objs = touch_button_pages
         else:
             self.touch_button_pages_objs = []
+            self.touch_button_pages_ref = None
             
     def __str__(self):
         return "Activity %d" % self.ref()
@@ -268,12 +283,12 @@ class Activity(RemoteDataObj):
             
     def fix_up(self, package):
         try:
-            self.button_mappings = package.offsetof(self.button_mappings)
+            self.button_mappings = package.offsetof(self.button_mappings_ref)
         except PackageError:
             print self, "has reference to missing button mappings array"
             
         try:
-            self.touch_button_pages = package.offsetof(self.touch_button_pages)
+            self.touch_button_pages = package.offsetof(self.touch_button_pages_ref)
         except PackageError:
             print self, "has reference to missing touch button pages"
 
