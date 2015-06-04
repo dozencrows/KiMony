@@ -60,7 +60,9 @@ phillips_hts = Device(
                                 ]
                      )
 
-phillips_hts.actions["powertoggle"] = IrAction([IrCode(IrEncoding_RC6, 21, 0xFFB38), IrCode(IrEncoding_RC6, 21, 0xEFB38), 
+phillips_hts.actions["powertoggle"] = IrAction([IrCode(IrEncoding_NOP, 0, 250), 
+                                                IrCode(IrEncoding_RC6, 21, 0xFFB38), 
+                                                IrCode(IrEncoding_RC6, 21, 0xEFB38), 
 			                                    IrCode(IrEncoding_NOP, 0, 250)])                     
 
 phillips_hts.actions["volume_up"] 	= IrAction([IrCode(IrEncoding_RC6, 21, 0xEEFEF, 0x10000)])
