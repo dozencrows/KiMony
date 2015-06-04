@@ -46,7 +46,9 @@
 #include "renderer.h"
 #include "buttons.h"
 #include "touchbuttons.h"
+#include "device.h"
 #include "activity.h"
+#include "remotedata.h"
 
 #define ARRAY_LENGTH(x) (sizeof(x) / sizeof(x[0]))
 
@@ -263,6 +265,9 @@ static void backlightOn()
 
 void selectActivity(const Activity* activity)
 {
+	rendererClearScreen();
+	renderMessage("Switching...", 0xffff);
+
 	buttonsSetActiveMapping((const ButtonMapping*)GET_FLASH_PTR(activity->buttonMappingOffset), activity->buttonMappingCount);
 
 	const TouchButton* touchButtons = NULL;
@@ -275,9 +280,11 @@ void selectActivity(const Activity* activity)
 	}
 
 	touchbuttonsSetActive(touchButtons, touchButtonCount);
-	rendererClearScreen();
 	currentActivity = activity;
 	touchPage = 0;
+
+	deviceSetStates((const DeviceState*)GET_FLASH_PTR(activity->deviceStatesOffset), activity->deviceStateCount);
+	rendererClearScreen();
 }
 
 void selectTouchPage(int page)
@@ -306,8 +313,13 @@ void mainLoop()
 {
 	buttonsInit();
 	touchbuttonsInit();
+	deviceInit();
 
-	const Activity* homeActivity = (const Activity*)GET_FLASH_PTR(0);
+	const RemoteDataHeader* dataHeader = (const RemoteDataHeader*)GET_FLASH_PTR(0);
+
+	const Activity* homeActivity = (const Activity*)GET_FLASH_PTR(dataHeader->homeActivityOffset);
+	deviceSetActive((const Device*)GET_FLASH_PTR(dataHeader->devicesOffset), dataHeader->deviceCount);
+
 	selectActivity(homeActivity);
 
 //	int frames = 0;

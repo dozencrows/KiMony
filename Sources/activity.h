@@ -19,6 +19,8 @@ typedef struct _Activity {
 	uint32_t buttonMappingOffset;
 	int touchButtonPageCount;
 	uint32_t touchButtonPagesOffset;
+	int deviceStateCount;
+	uint32_t deviceStatesOffset;
 } Activity;
 
 #endif /* ACTIVITY_H_ */

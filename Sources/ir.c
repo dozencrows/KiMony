@@ -240,14 +240,23 @@ void irDoAction(const IrAction* action)
 		}
 		switch (code->encoding) {
 			case IRCODE_NOP: {
+#if defined(_DEBUG)
+				printf("IR: wait %dms\n", code->code);
+#endif
 				sysTickDelayMs(code->code);
 				break;
 			}
 			case IRCODE_RC6: {
+#if defined(_DEBUG)
+				printf("IR: RC6 %x\n", code->code|toggleBit);
+#endif
 				irSendRC6Code(code->code|toggleBit, code->bits);
 				break;
 			}
 			case IRCODE_SIRC: {
+#if defined(_DEBUG)
+				printf("IR: SIRC %x\n", code->code|toggleBit);
+#endif
 				irSendSIRCCode(code->code|toggleBit, code->bits);
 				break;
 			}

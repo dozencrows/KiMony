@@ -18,14 +18,21 @@ Event_PREVPAGE  = 4
 Event_HOME      = 5
 Event_DOWNLOAD  = 6
 
-Device_PowerToggle  = 0x0001
-
 Option_Cycled           = 0x0001    # Option cycles through values, otherwise set explicitly to values
 Option_DefaultToZero    = 0x0002    # Option is set back to zero if not explicitly set in activity
 Option_ActionOnDefault  = 0x0004    # Option requires actions to be generated when returning to default
 
 WATERMARK       = 0xBABABEBE
 
+#
+# Remote-specific exceptions
+#
+class PackageError(Exception):
+    def __init__(self, message):
+        self.message = message
+    def __str__(self):
+        return self.message
+        
 class RemoteDataError(Exception):
     def __init__(self, message):
         self.message = message
@@ -421,9 +428,12 @@ class Device(RemoteDataStruct):
     def __str__(self):
         return "Device %d" % self.ref()
         
-    def pre_pack(self, package):
+    def pre_pack_options_and_actions(self, package):
         for option in self.options_list:
             package.append(option)
+
+        for x in self.options_list:
+            x.pre_pack_change_actions(package, self)
             
         for key, value in self.actions.iteritems():
             package.append(value)
@@ -436,10 +446,6 @@ class Device(RemoteDataStruct):
             else:
                 i += 1
         return -1
-
-    def pre_pack_trailing_children(self, package):
-        for x in self.options_list:
-            x.pre_pack_change_actions(package, self)
 
     def fix_up(self, package):
         if len(self.options_list) > 0:
@@ -561,7 +567,6 @@ class Activity(RemoteDataStruct):
         for x in self.device_states_objs:
             package.append(x)
  
-    # Ensure that the            
     def pre_pack_trailing_children(self, package):
         for x in self.touch_button_pages_objs:
             x.pre_pack_touch_buttons(package)
@@ -585,12 +590,56 @@ class Activity(RemoteDataStruct):
         except PackageError:
             print self, "has reference to missing device states"
 
-class PackageError(Exception):
-    def __init__(self, message):
-        self.message = message
-    def __str__(self):
-        return self.message
+#
+# Top level structure that pulls together the entire remote data set
+#
+# C structure:
+#   offset  home_activity;
+#   int     device_count;
+#   offset  devices;            -- contiguous array of devices
+#
+# The pre-pack trailing children method is used to add the devices to the package,
+# so they are grouped into a contiguous array of equal-sized entries - and their
+# dynamically sized data is added afterwards
+#
+class RemoteDataHeader(RemoteDataStruct):
+    _fields_ = [
+        ("home_activity", ct.c_uint32),
+        ("devices_count", ct.c_int),
+        ("devices", ct.c_uint32)
+    ]
+    
+    def __init__(self, home_activity, devices, activities):
+        self.home_activity_ref = home_activity
+        self.devices_list = devices
+        self.activities = activities
+        self.devices_count = len(devices)
         
+    def __str__(self):
+        return "RemoteDataHeader %d" % self.ref()
+    
+    def pre_pack(self, package):
+        for activity in self.activities:
+            package.append(activity)
+            
+        for device in self.devices_list:
+            package.append(device)
+
+    def pre_pack_trailing_children(self, package):
+        for device in self.devices_list:
+            device.pre_pack_options_and_actions(package)
+
+    def fix_up(self, package):        
+        try:
+            self.home_activity = package.offsetof(self.home_activity_ref.ref())
+        except PackageError:
+            print self, "has missing home activity"
+
+        try:
+            self.devices = package.offsetof(self.devices_list[0].ref())
+        except PackageError:
+            print self, "has missing devices"
+
 #
 # Class used to bundle up and encode KiMony remote data objects into binary
 # for squirting down to the device
@@ -635,7 +684,7 @@ class Package:
             binary_obj = obj.binarise()
             packed_objects.append(obj.binarise())
 
-            print "Obj", obj.ref(), "(", type(obj), ") at", self.offsets[obj.ref()], "size", len(binary_obj), "fill", fill_size
+            print "Obj", obj.ref(), "(", type(obj), ") at", self.offsets[obj.ref()], packed_offset, "size", len(binary_obj), "fill", fill_size
             packed_offset += len(binary_obj) + fill_size
 
         self.align_to(4)

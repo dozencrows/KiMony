@@ -267,21 +267,6 @@ static void cpuFlashCopy(uint8_t* src, uint8_t* dst, size_t count)
 	}
 }
 
-static void renderMessage(const char* message, uint16_t colour)
-{
-	rendererClearScreen();
-	uint16_t width, height, x, y;
-
-	rendererGetStringBounds(message, &KiMony, &width, &height);
-	x = (SCREEN_WIDTH - width) / 2;
-	y = (SCREEN_HEIGHT - height) / 2;
-
-	rendererNewDrawList();
-	rendererDrawRect(x, y, width, height, 0);
-	rendererDrawString(message, x, y, &KiMony, colour);
-	rendererRenderDrawList();
-}
-
 void cpuFlashDownload()
 {
 	PORTE_PCR22 = (uint32_t)((PORTE_PCR22 & (uint32_t)~(uint32_t)(

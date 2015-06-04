@@ -1,21 +1,29 @@
 Plan
 ====
+* Devices & state management
+  * toggle bit per device
 * Improve remote data compilation error reporting - add better identification/naming for objects
 * Implement bitmap buttons
   * extend touch buttons to handle this (e.g. flag to switch icon for text, use same offset field)
   * rendering unpressed and pressed state
   * embed image data in flash download
 * Implement 'status' line
-* Devices & state management
 * Optimise representation of offline remote data 
 * Power save mode
 * Wake-up via accelerometer
 
 Work-in-progress
 ================
+* Devices & state management
 * Reduce standard library footprint but still work with semi-host printf
   * Tried this with workaround from http://mcuoneclipse.com/2014/07/12/printf-for-the-frdm-k64f-board-and-kinetis-design-studio/
     but still only prints first character
+
+What's smart and/or novel?
+==========================
+* Device state tracking and changing based on activities
+* Wake-up on pickup
+* Programmed activity triggering on timer
 
 Done
 ====

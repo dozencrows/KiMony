@@ -204,9 +204,14 @@ home_activity = Activity(
     ],
     None)
 
+header = RemoteDataHeader(
+    home_activity,
+    [ sony_tv, phillips_hts ],
+    [ home_activity, test_remote_activity ]
+    )
+    
 package = Package()
-package.append(home_activity)
-package.append(test_remote_activity)
+package.append(header)
 package.append(test_remote_event)
 package.append(home_activity_event)
 package.append(next_event)
@@ -241,7 +246,4 @@ package.append(up_event)
 package.append(down_event)
 package.append(left_event)
 package.append(right_event)
-
-package.append(sony_tv)
-package.append(phillips_hts)
 
