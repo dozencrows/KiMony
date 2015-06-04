@@ -37,6 +37,7 @@
 #include "uart.h"
 #include "mathutil.h"
 #include "codeutil.h"
+#include "renderutils.h"
 
 #include "keymatrix.h"
 #include "lcd.h"

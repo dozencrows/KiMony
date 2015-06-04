@@ -12,8 +12,8 @@
 #include "uart.h"
 #include "systick.h"
 #include "codeutil.h"
-#include "renderer.h"
 #include "fontdata.h"
+#include "renderutils.h"
 
 #define CPU_FLASH_SECTOR_SIZE 0x400
 
