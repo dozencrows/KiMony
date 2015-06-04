@@ -38,9 +38,24 @@ void sysTickSetClockRate(unsigned int clock_hz)
 
 void sysTickDelayMs(unsigned int delayMs)
 {
+	uint32_t delayCycles = sysTickClocksPerMs * delayMs;
+	uint32_t intTicks = (delayCycles & 0xff000000) >> 24;
+
+	if (intTicks) {
+		SysTick->CTRL = 0x00U;
+		sysTickCounter = 0;
+		SysTick->LOAD = 0xffffff;
+		SysTick->VAL = 0;
+		SysTick->CTRL = 0x03U | sysTickConfig;
+
+		while (sysTickCounter < intTicks) {
+		  __asm("wfi");
+		}
+	}
+
 	SysTick->CTRL = 0x00U;
 	sysTickCounter = 0;
-	SysTick->LOAD = sysTickClocksPerMs * delayMs;
+	SysTick->LOAD = delayCycles & 0xffffff;
 	SysTick->VAL = 0;
 	SysTick->CTRL = 0x03U | sysTickConfig;
 
