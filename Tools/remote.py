@@ -362,6 +362,7 @@ class TouchButtonPage(RemoteDataStruct):
 #   uint16_t    flags;
 #   uint8_t     max_value;
 #   uint8_t     action_count;
+#   offset      pre_action;
 #   offset      actions;
 #
 # The list of actions is interpreted based on the flags and action count:
@@ -376,13 +377,15 @@ class Option(RemoteDataStruct):
         ("flags", ct.c_uint16),
         ("max_value", ct.c_uint8),
         ("action_count", ct.c_uint8),
+        ("pre_action", ct.c_uint32),
         ("actions", ct.c_uint32)
         ]
 
-    def __init__(self, name, flags, max_value, change_action_names):
+    def __init__(self, name, flags, max_value, change_action_names, pre_action = None):
         self.name = name
         self.flags = flags
         self.max_value = max_value
+        self.pre_action_ref = pre_action
         self.change_action_names = change_action_names
         self.action_count = len(self.change_action_names)
 
@@ -398,6 +401,8 @@ class Option(RemoteDataStruct):
         package.append(self.action_refs)
         
     def fix_up(self, package):
+        if self.pre_action_ref:
+            self.pre_action = package.offsetof(self.pre_action_ref.ref())
         self.actions = package.offsetof(self.action_refs.ref())
 
     def binarise(self):
@@ -419,10 +424,9 @@ class Device(RemoteDataStruct):
         ("option_count", ct.c_int),
         ("options", ct.c_uint32)
         ]
-        
-    def __init__(self, options):            
-        self.options_list = options
-        self.option_count = len(options)
+
+    def __init__(self):            
+        self.options_list = []
         self.actions = {}
 
     def __str__(self):
@@ -447,7 +451,10 @@ class Device(RemoteDataStruct):
                 i += 1
         return -1
 
-    def fix_up(self, package):
+    def pre_pack(self, package):
+        self.option_count = len(self.options_list)
+
+    def fix_up(self, package):  
         if len(self.options_list) > 0:
             try:
                 self.options = package.offsetof(self.options_list[0].ref())
@@ -477,7 +484,7 @@ class DeviceState(RemoteDataStruct):
         return "DeviceState %d" % self.ref()
     
     def pre_pack_option_values(self, package):
-        values = [0] * self.device_ref.option_count
+        values = [0] * len(self.device_ref.options_list)
         try:
             for option, value in self.option_values_dict.iteritems():
                 values[self.device_ref.option_index(option)] = value

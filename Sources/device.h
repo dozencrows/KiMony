@@ -18,6 +18,7 @@ typedef struct _Option {
 	uint16_t	flags;
 	uint8_t		maxValue;
 	uint8_t		actionCount;
+	uint32_t	preActionOffset;
 	uint32_t	actionsOffset;
 } Option;
 

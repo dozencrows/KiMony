@@ -28,6 +28,10 @@ static void actionOptionToValue(const Option* option, uint8_t currentValue, uint
 {
 	const uint32_t* actionRefs = (const uint32_t*) GET_FLASH_PTR(option->actionsOffset);
 
+	if (option->preActionOffset) {
+		irDoAction((const IrAction*)GET_FLASH_PTR(option->preActionOffset));
+	}
+
 	if (option->flags & OPTION_CYCLED) {
 		if (option->actionCount == 1) {
 			while (currentValue != newValue) {

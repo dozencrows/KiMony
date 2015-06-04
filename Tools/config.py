@@ -12,12 +12,12 @@ BUTTON_ROWS	    = 6
 BUTTON_WIDTH	= SCREEN_WIDTH/BUTTON_COLUMNS
 BUTTON_HEIGHT	= SCREEN_HEIGHT/BUTTON_ROWS
 
-sony_tv = Device(
-                 options = [ 
-                            Option(name = "power", flags = Option_Cycled|Option_DefaultToZero|Option_ActionOnDefault, max_value = 1, change_action_names = ["powertoggle"]),
-                            Option(name = "input", flags = Option_Cycled, max_value = 5, change_action_names = ["nextinput"])
-                           ] 
-                )
+sony_tv = Device()
+
+sony_tv.options_list = [ 
+                       Option(name = "power", flags = Option_Cycled|Option_DefaultToZero|Option_ActionOnDefault, max_value = 1, change_action_names = ["powertoggle"]),
+                       Option(name = "input", flags = Option_Cycled, max_value = 5, change_action_names = ["nextinput"])
+                       ] 
 
 sony_tv.actions["powertoggle"]  = IrAction([IrCode(IrEncoding_SIRC, 12, 0xA90)])
 sony_tv.actions["nextinput"] = IrAction([IrCode(IrEncoding_SIRC, 12, 0xA50)])
@@ -53,14 +53,9 @@ sony_tv.actions["left"] 		= IrAction([IrCode(IrEncoding_SIRC, 12, 0x2D0)])
 sony_tv.actions["right"] 		= IrAction([IrCode(IrEncoding_SIRC, 12, 0xCD0)])
 
 
-phillips_hts = Device(
-                      options = [ 
-                                Option(name = "power", flags = Option_Cycled|Option_DefaultToZero|Option_ActionOnDefault, max_value = 1, change_action_names = ["powertoggle"]),
-                                Option(name = "surround", flags = Option_Cycled|Option_DefaultToZero, max_value = 2, change_action_names = ["surround"])
-                                ]
-                     )
+phillips_hts = Device()
 
-phillips_hts.actions["powertoggle"] = IrAction([IrCode(IrEncoding_NOP, 0, 250), 
+phillips_hts.actions["powertoggle"] = IrAction([IrCode(IrEncoding_NOP, 0, 250),
                                                 IrCode(IrEncoding_RC6, 21, 0xFFB38), 
                                                 IrCode(IrEncoding_RC6, 21, 0xEFB38), 
 			                                    IrCode(IrEncoding_NOP, 0, 250)])                     
@@ -68,8 +63,15 @@ phillips_hts.actions["powertoggle"] = IrAction([IrCode(IrEncoding_NOP, 0, 250),
 phillips_hts.actions["volume_up"] 	= IrAction([IrCode(IrEncoding_RC6, 21, 0xEEFEF, 0x10000)])
 phillips_hts.actions["volume_down"] = IrAction([IrCode(IrEncoding_RC6, 21, 0xEEFEE, 0x10000)])
 phillips_hts.actions["mute"] 		= IrAction([IrCode(IrEncoding_RC6, 21, 0xEEFF2, 0x10000)])
-phillips_hts.actions["surround"]	= IrAction([IrCode(IrEncoding_RC6, 21, 0xEEFAD, 0x10000)])
+phillips_hts.actions["surround"]	    = IrAction([IrCode(IrEncoding_RC6, 21, 0xEEFAD, 0x10000), IrCode(IrEncoding_NOP, 0, 250)])
+phillips_hts.actions["pre-surround"]	= IrAction([IrCode(IrEncoding_NOP, 0, 20000), IrCode(IrEncoding_RC6, 21, 0xEEFAD, 0x10000), IrCode(IrEncoding_NOP, 0, 250)])
 
+phillips_hts.options_list = [ 
+                            Option(name = "power", flags = Option_Cycled|Option_DefaultToZero|Option_ActionOnDefault, max_value = 1, 
+                                     change_action_names = ["powertoggle"]),
+                            Option(name = "surround", flags = Option_Cycled|Option_DefaultToZero, max_value = 2, 
+                                     pre_action = phillips_hts.actions['pre-surround'], change_action_names = ["surround"])
+                            ]
 # Events
 home_activity_event = Event(Event_HOME)
 next_event 		    = Event(Event_NEXTPAGE)
