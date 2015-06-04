@@ -12,86 +12,102 @@ BUTTON_ROWS	    = 6
 BUTTON_WIDTH	= SCREEN_WIDTH/BUTTON_COLUMNS
 BUTTON_HEIGHT	= SCREEN_HEIGHT/BUTTON_ROWS
 
-# Actions
-power_action = IrAction([IrCode(IrEncoding_RC6, 21, 0xFFB38), IrCode(IrEncoding_RC6, 21, 0xEFB38), 
-			             IrCode(IrEncoding_NOP, 0, 250), IrCode(IrEncoding_SIRC, 12, 0xA90)])
+sony_tv = Device(
+                 options = [ 
+                            Option(name = "power", flags = Option_Cycled|Option_DefaultToZero|Option_ActionOnDefault, max_value = 1, change_action_names = ["powertoggle"]),
+                            Option(name = "input", flags = Option_Cycled, max_value = 5, change_action_names = ["nextinput"])
+                           ] 
+                )
 
-numeric1_action = IrAction([IrCode(IrEncoding_SIRC, 12, 0x010)])
-numeric2_action = IrAction([IrCode(IrEncoding_SIRC, 12, 0x810)])
-numeric3_action = IrAction([IrCode(IrEncoding_SIRC, 12, 0x410)])
-numeric4_action = IrAction([IrCode(IrEncoding_SIRC, 12, 0xC10)])
-numeric5_action = IrAction([IrCode(IrEncoding_SIRC, 12, 0x210)])
-numeric6_action = IrAction([IrCode(IrEncoding_SIRC, 12, 0xA10)])
-numeric7_action = IrAction([IrCode(IrEncoding_SIRC, 12, 0x610)])
-numeric8_action = IrAction([IrCode(IrEncoding_SIRC, 12, 0xE10)])
-numeric9_action = IrAction([IrCode(IrEncoding_SIRC, 12, 0x110)])
-numeric0_action = IrAction([IrCode(IrEncoding_SIRC, 12, 0x910)])
+sony_tv.actions["powertoggle"]  = IrAction([IrCode(IrEncoding_SIRC, 12, 0xA90)])
+sony_tv.actions["nextinput"] = IrAction([IrCode(IrEncoding_SIRC, 12, 0xA50)])
 
-volume_up_action 	= IrAction([IrCode(IrEncoding_RC6, 21, 0xEEFEF, 0x10000)])
-volume_down_action 	= IrAction([IrCode(IrEncoding_RC6, 21, 0xEEFEE, 0x10000)])
-mute_action 		= IrAction([IrCode(IrEncoding_RC6, 21, 0xEEFF2, 0x10000)])
-surround_action		= IrAction([IrCode(IrEncoding_RC6, 21, 0xEEFAD, 0x10000)])
+sony_tv.actions["numeric1"] = IrAction([IrCode(IrEncoding_SIRC, 12, 0x010)])
+sony_tv.actions["numeric2"] = IrAction([IrCode(IrEncoding_SIRC, 12, 0x810)])
+sony_tv.actions["numeric3"] = IrAction([IrCode(IrEncoding_SIRC, 12, 0x410)])
+sony_tv.actions["numeric4"] = IrAction([IrCode(IrEncoding_SIRC, 12, 0xC10)])
+sony_tv.actions["numeric5"] = IrAction([IrCode(IrEncoding_SIRC, 12, 0x210)])
+sony_tv.actions["numeric6"] = IrAction([IrCode(IrEncoding_SIRC, 12, 0xA10)])
+sony_tv.actions["numeric7"] = IrAction([IrCode(IrEncoding_SIRC, 12, 0x610)])
+sony_tv.actions["numeric8"] = IrAction([IrCode(IrEncoding_SIRC, 12, 0xE10)])
+sony_tv.actions["numeric9"] = IrAction([IrCode(IrEncoding_SIRC, 12, 0x110)])
+sony_tv.actions["numeric0"] = IrAction([IrCode(IrEncoding_SIRC, 12, 0x910)])
 
-channel_up_action 	= IrAction([IrCode(IrEncoding_SIRC, 12, 0x090)])
-channel_down_action	= IrAction([IrCode(IrEncoding_SIRC, 12, 0x890)])
-info_action		    = IrAction([IrCode(IrEncoding_SIRC, 12, 0x5D0)])
+sony_tv.actions["channel_up"] 	= IrAction([IrCode(IrEncoding_SIRC, 12, 0x090)])
+sony_tv.actions["channel_down"]	= IrAction([IrCode(IrEncoding_SIRC, 12, 0x890)])
+sony_tv.actions["info"]		    = IrAction([IrCode(IrEncoding_SIRC, 12, 0x5D0)])
 
-red_action 		    = IrAction([IrCode(IrEncoding_SIRC, 15, 0x52E9)])
-yellow_action 		= IrAction([IrCode(IrEncoding_SIRC, 15, 0x72E9)])
-green_action 		= IrAction([IrCode(IrEncoding_SIRC, 15, 0x32E9)])
-blue_action	 	    = IrAction([IrCode(IrEncoding_SIRC, 15, 0x12E9)])
+sony_tv.actions["red"] 		    = IrAction([IrCode(IrEncoding_SIRC, 15, 0x52E9)])
+sony_tv.actions["yellow"] 		= IrAction([IrCode(IrEncoding_SIRC, 15, 0x72E9)])
+sony_tv.actions["green"] 		= IrAction([IrCode(IrEncoding_SIRC, 15, 0x32E9)])
+sony_tv.actions["blue"]	 	    = IrAction([IrCode(IrEncoding_SIRC, 15, 0x12E9)])
 
-guide_action 		= IrAction([IrCode(IrEncoding_SIRC, 15, 0x6D25)])
-enter_action 		= IrAction([IrCode(IrEncoding_SIRC, 12, 0xA70)])
-back_action 		= IrAction([IrCode(IrEncoding_SIRC, 12, 0xC70)])
-home_action 		= IrAction([IrCode(IrEncoding_SIRC, 12, 0x070)])
+sony_tv.actions["guide"] 		= IrAction([IrCode(IrEncoding_SIRC, 15, 0x6D25)])
+sony_tv.actions["enter"] 		= IrAction([IrCode(IrEncoding_SIRC, 12, 0xA70)])
+sony_tv.actions["back"] 		= IrAction([IrCode(IrEncoding_SIRC, 12, 0xC70)])
+sony_tv.actions["home"] 		= IrAction([IrCode(IrEncoding_SIRC, 12, 0x070)])
 
-up_action 		    = IrAction([IrCode(IrEncoding_SIRC, 12, 0x2F0)])
-down_action 		= IrAction([IrCode(IrEncoding_SIRC, 12, 0xAF0)])
-left_action 		= IrAction([IrCode(IrEncoding_SIRC, 12, 0x2D0)])
-right_action 		= IrAction([IrCode(IrEncoding_SIRC, 12, 0xCD0)])
+sony_tv.actions["up"] 		    = IrAction([IrCode(IrEncoding_SIRC, 12, 0x2F0)])
+sony_tv.actions["down"] 		= IrAction([IrCode(IrEncoding_SIRC, 12, 0xAF0)])
+sony_tv.actions["left"] 		= IrAction([IrCode(IrEncoding_SIRC, 12, 0x2D0)])
+sony_tv.actions["right"] 		= IrAction([IrCode(IrEncoding_SIRC, 12, 0xCD0)])
+
+
+phillips_hts = Device(
+                      options = [ 
+                                Option(name = "power", flags = Option_Cycled|Option_DefaultToZero|Option_ActionOnDefault, max_value = 1, change_action_names = ["powertoggle"]),
+                                Option(name = "surround", flags = Option_Cycled|Option_DefaultToZero, max_value = 2, change_action_names = ["surround"])
+                                ]
+                     )
+
+phillips_hts.actions["powertoggle"] = IrAction([IrCode(IrEncoding_RC6, 21, 0xFFB38), IrCode(IrEncoding_RC6, 21, 0xEFB38), 
+			                                    IrCode(IrEncoding_NOP, 0, 250)])                     
+
+phillips_hts.actions["volume_up"] 	= IrAction([IrCode(IrEncoding_RC6, 21, 0xEEFEF, 0x10000)])
+phillips_hts.actions["volume_down"] = IrAction([IrCode(IrEncoding_RC6, 21, 0xEEFEE, 0x10000)])
+phillips_hts.actions["mute"] 		= IrAction([IrCode(IrEncoding_RC6, 21, 0xEEFF2, 0x10000)])
+phillips_hts.actions["surround"]	= IrAction([IrCode(IrEncoding_RC6, 21, 0xEEFAD, 0x10000)])
 
 # Events
 home_activity_event = Event(Event_HOME)
 next_event 		    = Event(Event_NEXTPAGE)
 prev_event 		    = Event(Event_PREVPAGE)
-power_event 		= Event(Event_IRACTION, power_action)
 download_event      = Event(Event_DOWNLOAD)
 
-numeric1_event 		= Event(Event_IRACTION, numeric1_action)
-numeric2_event 		= Event(Event_IRACTION, numeric2_action)
-numeric3_event 		= Event(Event_IRACTION, numeric3_action)
-numeric4_event 		= Event(Event_IRACTION, numeric4_action)
-numeric5_event 		= Event(Event_IRACTION, numeric5_action)
-numeric6_event 		= Event(Event_IRACTION, numeric6_action)
-numeric7_event 		= Event(Event_IRACTION, numeric7_action)
-numeric8_event 		= Event(Event_IRACTION, numeric8_action)
-numeric9_event 		= Event(Event_IRACTION, numeric9_action)
-numeric0_event 		= Event(Event_IRACTION, numeric0_action)
+numeric1_event 		= Event(Event_IRACTION, sony_tv.actions["numeric1"])
+numeric2_event 		= Event(Event_IRACTION, sony_tv.actions["numeric2"])
+numeric3_event 		= Event(Event_IRACTION, sony_tv.actions["numeric3"])
+numeric4_event 		= Event(Event_IRACTION, sony_tv.actions["numeric4"])
+numeric5_event 		= Event(Event_IRACTION, sony_tv.actions["numeric5"])
+numeric6_event 		= Event(Event_IRACTION, sony_tv.actions["numeric6"])
+numeric7_event 		= Event(Event_IRACTION, sony_tv.actions["numeric7"])
+numeric8_event 		= Event(Event_IRACTION, sony_tv.actions["numeric8"])
+numeric9_event 		= Event(Event_IRACTION, sony_tv.actions["numeric9"])
+numeric0_event 		= Event(Event_IRACTION, sony_tv.actions["numeric0"])
 
-volume_up_event 	= Event(Event_IRACTION, volume_up_action)
-volume_down_event 	= Event(Event_IRACTION, volume_down_action)
-mute_event 		    = Event(Event_IRACTION, mute_action)
-surround_event		= Event(Event_IRACTION, surround_action)
+volume_up_event 	= Event(Event_IRACTION, phillips_hts.actions["volume_up"])
+volume_down_event 	= Event(Event_IRACTION, phillips_hts.actions["volume_down"])
+mute_event 		    = Event(Event_IRACTION, phillips_hts.actions["mute"])
+surround_event		= Event(Event_IRACTION, phillips_hts.actions["surround"])
 
-channel_up_event 	= Event(Event_IRACTION, channel_up_action)
-channel_down_event	= Event(Event_IRACTION, channel_down_action)
-info_event		    = Event(Event_IRACTION, info_action)
+channel_up_event 	= Event(Event_IRACTION, sony_tv.actions["channel_up"])
+channel_down_event	= Event(Event_IRACTION, sony_tv.actions["channel_down"])
+info_event		    = Event(Event_IRACTION, sony_tv.actions["info"])
 
-red_event		    = Event(Event_IRACTION, red_action)
-yellow_event		= Event(Event_IRACTION, yellow_action)
-green_event		    = Event(Event_IRACTION, green_action)
-blue_event 		    = Event(Event_IRACTION, blue_action)
+red_event		    = Event(Event_IRACTION, sony_tv.actions["red"])
+yellow_event		= Event(Event_IRACTION, sony_tv.actions["yellow"])
+green_event		    = Event(Event_IRACTION, sony_tv.actions["green"])
+blue_event 		    = Event(Event_IRACTION, sony_tv.actions["blue"])
 
-guide_event		    = Event(Event_IRACTION, guide_action)
-enter_event		    = Event(Event_IRACTION, enter_action)
-back_event		    = Event(Event_IRACTION, back_action)
-home_event		    = Event(Event_IRACTION, home_action)
+guide_event		    = Event(Event_IRACTION, sony_tv.actions["guide"])
+enter_event		    = Event(Event_IRACTION, sony_tv.actions["enter"])
+back_event		    = Event(Event_IRACTION, sony_tv.actions["back"])
+home_event		    = Event(Event_IRACTION, sony_tv.actions["home"])
 
-up_event		    = Event(Event_IRACTION, up_action)
-down_event		    = Event(Event_IRACTION, down_action)
-left_event		    = Event(Event_IRACTION, left_action)
-right_event		    = Event(Event_IRACTION, right_action)
+up_event		    = Event(Event_IRACTION, sony_tv.actions["up"])
+down_event		    = Event(Event_IRACTION, sony_tv.actions["down"])
+left_event		    = Event(Event_IRACTION, sony_tv.actions["left"])
+right_event		    = Event(Event_IRACTION, sony_tv.actions["right"])
 
 # Activities, button mappings and touch button pages
 test_remote_activity = Activity(
@@ -100,7 +116,7 @@ test_remote_activity = Activity(
 	    #ButtonMapping(0x100000, blue_event),
 	    #ButtonMapping(0x080000, green_event),
 	    #ButtonMapping(0x040000, yellow_event),
-	    ButtonMapping(0x020000, power_event),
+	    #ButtonMapping(0x020000, power_event),
 	    ButtonMapping(0x010000, home_activity_event),
 	    ButtonMapping(0x008000, numeric1_event),
 	    ButtonMapping(0x000800, numeric2_event),
@@ -157,6 +173,10 @@ test_remote_activity = Activity(
 #	        TouchButton(None,    None,  2*BUTTON_WIDTH, 5*BUTTON_HEIGHT, BUTTON_WIDTH, BUTTON_HEIGHT, 0xf9e0, True, False),
 #	        TouchButton(None,    None,  3*BUTTON_WIDTH, 5*BUTTON_HEIGHT, BUTTON_WIDTH, BUTTON_HEIGHT, 0xf9e0, True, False),
         ])
+    ],
+    [
+        DeviceState(sony_tv, { "power": 1, "input": 0 }),
+        DeviceState(phillips_hts, { "power": 1, "surround": 2 })
     ])
     
 test_remote_event = Event(Event_ACTIVITY, test_remote_activity)
@@ -181,7 +201,8 @@ home_activity = Activity(
             TouchButton(test_remote_event, "Test 3", 0, 2*BUTTON_HEIGHT, 4*BUTTON_WIDTH, BUTTON_HEIGHT, 0xf9e0, False, True),   
             TouchButton(test_remote_event, "Test 4", 0, 3*BUTTON_HEIGHT, 4*BUTTON_WIDTH, BUTTON_HEIGHT, 0xf9e0, False, True),   
         ]),
-    ])
+    ],
+    None)
 
 package = Package()
 package.append(home_activity)
@@ -190,7 +211,6 @@ package.append(test_remote_event)
 package.append(home_activity_event)
 package.append(next_event)
 package.append(prev_event)
-package.append(power_event)
 package.append(download_event)
 package.append(numeric1_event)
 package.append(numeric2_event)
@@ -222,34 +242,6 @@ package.append(down_event)
 package.append(left_event)
 package.append(right_event)
 
-package.append(power_action)
-package.append(numeric1_action)
-package.append(numeric2_action)
-package.append(numeric3_action)
-package.append(numeric4_action)
-package.append(numeric5_action)
-package.append(numeric6_action)
-package.append(numeric7_action)
-package.append(numeric8_action)
-package.append(numeric9_action)
-package.append(numeric0_action)
-package.append(volume_up_action)
-package.append(volume_down_action)
-package.append(mute_action)
-package.append(surround_action)
-package.append(channel_up_action)
-package.append(channel_down_action)
-package.append(info_action)
-package.append(red_action)
-package.append(yellow_action)
-package.append(green_action)
-package.append(blue_action)
-package.append(guide_action)
-package.append(enter_action)
-package.append(back_action)
-package.append(home_action)
-package.append(up_action)
-package.append(down_action)
-package.append(left_action)
-package.append(right_action)
+package.append(sony_tv)
+package.append(phillips_hts)
 

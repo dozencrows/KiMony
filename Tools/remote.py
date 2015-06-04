@@ -1,5 +1,5 @@
 #
-# KiMony structures:
+# KiMony remote control data structures
 #
 
 import ctypes as ct
@@ -18,32 +18,62 @@ Event_PREVPAGE  = 4
 Event_HOME      = 5
 Event_DOWNLOAD  = 6
 
+Device_PowerToggle  = 0x0001
+
+Option_Cycled           = 0x0001    # Option cycles through values, otherwise set explicitly to values
+Option_DefaultToZero    = 0x0002    # Option is set back to zero if not explicitly set in activity
+Option_ActionOnDefault  = 0x0004    # Option requires actions to be generated when returning to default
+
 WATERMARK       = 0xBABABEBE
+
+class RemoteDataError(Exception):
+    def __init__(self, message):
+        self.message = message
+    def __str__(self):
+        return self.message
 
 #
 # Base class for all KiMony remote objects
 #
-class RemoteDataObj(ct.LittleEndianStructure):
+class RemoteDataObj(object):
+    # Return unique reference, for fixing up to offsets in packaged data
     def ref(self):
         return id(self)
-        
+    
+    # Hook for per-object preparation prior to packaging - e.g. appending contained
+    # objects into the package depth-first
     def pre_pack(self, package):
         pass
         
+    # Hook for this object to append child objects in a breadth-first manner
     def pre_pack_trailing_children(self, package):
         pass
         
+    # Generate offset values in C structure fields from references to other Python objects
     def fix_up(self, offsets):
         pass
 
+    # Size of C structure
     def size(self):
-        return ct.sizeof(self)
+        return 0
                 
+    # This object's C structure packed as binary data into a string
     def binarise(self):
-        return ct.string_at(ct.addressof(self), ct.sizeof(self))
+        return ''
         
+    # Alignment in bytes for start of this object's C structure in packed file
     def alignment(self):
         return 4
+
+#
+# Base class for remote objects that are represented as C structures in packed file
+#
+class RemoteDataStruct(RemoteDataObj, ct.LittleEndianStructure):
+    def size(self):
+        return ct.sizeof(self)
+
+    def binarise(self):
+        return ct.string_at(ct.addressof(self), ct.sizeof(self))
 
 #
 # Wrapper for strings, to handle referencing
@@ -60,11 +90,57 @@ class RemoteDataStr(RemoteDataObj):
         
     def alignment(self):
         return 1
- 
+
+#
+# Wrapper for arrays of types that don't require fixup other than copying
+#
+class RemoteDataArray(RemoteDataObj):
+    def __init__(self, values, value_type):
+        self.values = values
+        self.value_type = value_type
+        self.values_array = (value_type * len(values))()
+
+    def __str__(self):
+        return "Array %d (type %s, size %d)" % (self.ref(), self.value_type, len(self.values))
+        
+    def fix_up(self, package):
+        self.values_array[:] = [x for x in self.values]
+
+    def size(self):
+        return ct.sizeof(self.values_array)
+                
+    def binarise(self):
+        return ct.string_at(ct.addressof(self.values_array), ct.sizeof(self.values_array))
+
+    def alignment(self):
+        return ct.sizeof(self.value_type)
+
+# 
+# Wrapper for arrays of references
+#
+class RemoteDataRefArray(RemoteDataArray):
+    def __init__(self, values):
+        super(RemoteDataRefArray, self).__init__(values, ct.c_uint32)
+
+    def __str__(self):
+        return "RefArray %d (size %d)" % (self.ref(), len(self.values))
+        
+    def fix_up(self, package):
+        try:
+            self.values_array[:] = [package.offsetof(x) for x in self.values]
+        except PackageError:
+            print self, "has unsatisfied references"
+
 #
 # Single IR code that can be sent by a remote
-#           
-class IrCode(RemoteDataObj):
+#
+# C structure:
+#   uint32_t    encoding:4;     -- type of encoding (SIRC, RC6, ...)
+#   uint32_t    bits:5;         -- number of bits in code
+#   uint32_t    code:23;        -- code value
+#   uint32_t    toggle_mask;    -- mask indicating any toggle bit expected by receiver
+#
+class IrCode(RemoteDataStruct):
     _fields_ = [
         ("encoding", ct.c_uint32, 4),
         ("bits", ct.c_uint32, 5),
@@ -81,13 +157,20 @@ class IrCode(RemoteDataObj):
 #
 # Single IR 'action' consisting of one or more codes
 #
+# C structure:
+#   int     code_count;
+#   IrCode  codes[];
+#
+# This function dynamically generates a class with the right size of array for the set of codes
+# The codes are packaged as part of the structure
+#
 def IrAction(codes=None):
     if codes:
         code_count = len(codes)
     else:
         code_count = 1
     
-    class IrAction_(RemoteDataObj):
+    class IrAction_(RemoteDataStruct):
         _fields_ = [
             ("count", ct.c_int),
             ("codes", IrCode * code_count)
@@ -104,7 +187,13 @@ def IrAction(codes=None):
 #
 # KiMony event - e.g. an IrAction, Activity selection
 #
-class Event(RemoteDataObj):
+# C structure:
+#   uint32_t    type;
+#   uint32_t    data;
+#
+# Data is ignored for some event types, or treated as an offset to another object for others.
+#
+class Event(RemoteDataStruct):
     _fields_ = [
         ("type", ct.c_uint32),
         ("data", ct.c_uint32)
@@ -132,7 +221,13 @@ class Event(RemoteDataObj):
 #
 # Physical button mapping
 #
-class ButtonMapping(RemoteDataObj):
+# C structure:
+#   uint32_t    button_mask;
+#   offset      event;
+#
+# If pressed button state matches mask, the given event is fired.
+#
+class ButtonMapping(RemoteDataStruct):
     _fields_ = [
         ("button_mask", ct.c_uint32),
         ("event", ct.c_uint32)
@@ -157,7 +252,14 @@ class ButtonMapping(RemoteDataObj):
 #
 # Touch screen button
 #
-class TouchButton(RemoteDataObj):
+# C structure:
+#   offset      event;
+#   offset      text;
+#   uint16_t    x, y, width, height, colour;
+#   uint32_t    press_activate:1;               -- if true, event is fired on press, otherwise release
+#   uint32_t    centre_text:1;                  -- if true, text is centered in the button
+#
+class TouchButton(RemoteDataStruct):
     _fields_ = [
         ("event", ct.c_uint32),
         ("text", ct.c_uint32),
@@ -212,7 +314,14 @@ class TouchButton(RemoteDataObj):
 #
 # Page of touch screen buttons
 #
-class TouchButtonPage(RemoteDataObj):
+# C structure:
+#   int     button_count;
+#   offset  buttons;
+#
+# As a page has a variable number of buttons, the button array is kept separate so that multipe pages
+# can be packed into one contiguous array using pre_pack_trailing_children().
+#
+class TouchButtonPage(RemoteDataStruct):
     _fields_ = [
         ("count", ct.c_int),
         ("buttons", ct.c_uint32)
@@ -240,17 +349,181 @@ class TouchButtonPage(RemoteDataObj):
             print self, "has reference to missing touch buttons array"
 
 #
+# Option - a tracked variable/setting on a device, with a value from 0 to N where 0 < N < 256
+#
+# C structure:
+#   uint16_t    flags;
+#   uint8_t     max_value;
+#   uint8_t     action_count;
+#   offset      actions;
+#
+# The list of actions is interpreted based on the flags and action count:
+#   Option_Cycled flag:
+#       1 action: advances the option to the next value, wrapping to zero on passing max_value
+#       2 action: first decrements the option, second increments the option, wrapping around on 0 or max_value
+#   No Option_Cycled flag:
+#       One action per value - when a given action occurs, the option is set to the corresponding value
+#
+class Option(RemoteDataStruct):
+    _fields_ = [
+        ("flags", ct.c_uint16),
+        ("max_value", ct.c_uint8),
+        ("action_count", ct.c_uint8),
+        ("actions", ct.c_uint32)
+        ]
+
+    def __init__(self, name, flags, max_value, change_action_names):
+        self.name = name
+        self.flags = flags
+        self.max_value = max_value
+        self.change_action_names = change_action_names
+        self.action_count = len(self.change_action_names)
+
+    def __str__(self):
+        return "Option %d" % self.ref()
+
+    def pre_pack_change_actions(self, package, device):
+        try:
+            self.action_refs = RemoteDataRefArray([device.actions[x].ref() for x in self.change_action_names])
+        except KeyError:
+            print self, "has unrecognised change action name(s)"
+            
+        package.append(self.action_refs)
+        
+    def fix_up(self, package):
+        self.actions = package.offsetof(self.action_refs.ref())
+
+    def binarise(self):
+        return ct.string_at(ct.addressof(self), ct.sizeof(self))
+                
+#
+# Device - a physical object that responds to recognised IrActions
+#
+# C structure:
+#   int     option_count;
+#   offset  options;        -- offset to contiguous array of options
+#
+# As each option has a variable-sized array of change actions, 'pre-pack trailing children' is used to pack
+# the change action data after all options for the device, so that the option array can be addressed
+# contiguously.
+#
+class Device(RemoteDataStruct):
+    _fields_ = [
+        ("option_count", ct.c_int),
+        ("options", ct.c_uint32)
+        ]
+        
+    def __init__(self, options):            
+        self.options_list = options
+        self.option_count = len(options)
+        self.actions = {}
+
+    def __str__(self):
+        return "Device %d" % self.ref()
+        
+    def pre_pack(self, package):
+        for option in self.options_list:
+            package.append(option)
+            
+        for key, value in self.actions.iteritems():
+            package.append(value)
+            
+    def option_index(self, option_name):
+        i = 0
+        for option in self.options_list:
+            if option.name == option_name:
+                return i
+            else:
+                i += 1
+        return -1
+
+    def pre_pack_trailing_children(self, package):
+        for x in self.options_list:
+            x.pre_pack_change_actions(package, self)
+
+    def fix_up(self, package):
+        if len(self.options_list) > 0:
+            try:
+                self.options = package.offsetof(self.options_list[0].ref())
+            except PackageError:
+                print self, "has missing options(s)"
+
+#
+# DeviceState - represents an expected state of a device in terms of options
+#
+# C structure:
+#   offset      device;
+#   offset      option_values;
+#
+# Size of the option_values array is determined from the device's option count
+#
+class DeviceState(RemoteDataStruct):
+    _fields_ = [
+        ("device", ct.c_uint32),
+        ("option_values", ct.c_uint32)
+    ]
+    
+    def __init__(self, device, option_values_dict):
+        self.device_ref = device
+        self.option_values_dict = option_values_dict
+        
+    def __str__(self):
+        return "DeviceState %d" % self.ref()
+    
+    def pre_pack_option_values(self, package):
+        values = [0] * self.device_ref.option_count
+        try:
+            for option, value in self.option_values_dict.iteritems():
+                values[self.device_ref.option_index(option)] = value
+        except IndexError:
+            raise PackageError("%s has invalid option in %s" % (self, self.option_values_dict))
+            
+        self.option_values_ref = RemoteDataArray(values, ct.c_uint8)
+        package.append(self.option_values_ref)
+        
+    def fix_up(self, package):        
+        try:
+            self.device = package.offsetof(self.device_ref.ref())
+        except PackageError:
+            print self, "has missing device"
+
+        try:
+            self.option_values = package.offsetof(self.option_values_ref.ref())
+        except PackageError:
+            print self, "has missing device"
+
+#
 # Activity - a set of touch screen buttons and physical buttons
 #
-class Activity(RemoteDataObj):
+# C structure:
+#       int     button_mapping_count;
+#       offset  button_mappings;            -- offset to contiguous array of button mappings
+#       int     touch_button_page_count;
+#       offset  touch_button_pages;         -- offset to contiguous array of button pages
+#       int     device_state_count;
+#       offset  device_states;              -- offset to contiguous array of device states
+#
+# The button mappings, touch button pages and device states arrays will immediately follow on from the
+# activity structure in the packed file.
+#
+# As each touch button page can have a varying number of touch buttons, the 'pre-pack trailing children'
+# hook is used to ensure that the touch buttons are packed after the pages. This means that each entry
+# in the touch button page array has the same size, so can be addressed contiguously.
+#
+# Similarly, each device state is of variable size (due to number of options on device) - this is
+# packed in the same manner as for touch buttons in touch button pages.
+#
+class Activity(RemoteDataStruct):
     _fields_ = [
         ("button_mapping_count", ct.c_int),
         ("button_mappings", ct.c_uint32),
         ("touch_button_page_count", ct.c_int),
         ("touch_button_pages", ct.c_uint32),
+        ("device_state_count", ct.c_int),
+        ("device_states", ct.c_uint32),
         ]
 
-    def __init__(self, button_mappings, touch_button_pages):
+    def __init__(self, button_mappings, touch_button_pages, device_states):
         if button_mappings:
             self.button_mapping_count = len(button_mappings)
             self.button_mappings_ref = button_mappings[0].ref()
@@ -267,6 +540,14 @@ class Activity(RemoteDataObj):
             self.touch_button_pages_objs = []
             self.touch_button_pages_ref = None
             
+        if device_states:
+            self.device_state_count = len(device_states)
+            self.device_states_ref = device_states[0].ref()
+            self.device_states_objs = device_states
+        else:
+            self.device_states_objs = []
+            self.device_states_ref = None
+
     def __str__(self):
         return "Activity %d" % self.ref()
         
@@ -276,10 +557,17 @@ class Activity(RemoteDataObj):
             
         for x in self.touch_button_pages_objs:
             package.append(x)
-            
+
+        for x in self.device_states_objs:
+            package.append(x)
+ 
+    # Ensure that the            
     def pre_pack_trailing_children(self, package):
         for x in self.touch_button_pages_objs:
             x.pre_pack_touch_buttons(package)
+
+        for x in self.device_states_objs:
+            x.pre_pack_option_values(package)
             
     def fix_up(self, package):
         try:
@@ -291,6 +579,11 @@ class Activity(RemoteDataObj):
             self.touch_button_pages = package.offsetof(self.touch_button_pages_ref)
         except PackageError:
             print self, "has reference to missing touch button pages"
+
+        try:
+            self.device_states = package.offsetof(self.device_states_ref)
+        except PackageError:
+            print self, "has reference to missing device states"
 
 class PackageError(Exception):
     def __init__(self, message):
@@ -362,7 +655,7 @@ class Package:
                 return 0
         except KeyError:
             self.errors += 1
-            raise PackageError('Missing object')
+            raise PackageError('Missing object %d' % ref)
         
     def align_to(self, alignment):
         misalignment = self.next_offset % alignment
