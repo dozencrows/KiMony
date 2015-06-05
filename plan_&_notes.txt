@@ -1,10 +1,9 @@
 Plan
 ====
 * Devices & state management
-  * toggle bit per device
-  * conditional pre-actions - e.g. if option 1 was 0, option 2 pre-action has extra delay (e.g. for post power-on only delays)
   * third device & second activity (e.g. play blue-ray)
   * third activity that uses disjoint device set from first two (e.g. digital music -> Squeezebox and hifi)
+  * conditional pre-actions - e.g. if option 1 was 0, option 2 pre-action has extra delay (e.g. for post power-on only delays)
 * Improve remote data compilation error reporting - add better identification/naming for objects
 * Implement bitmap buttons
   * extend touch buttons to handle this (e.g. flag to switch icon for text, use same offset field)
@@ -127,6 +126,7 @@ Done
 	* First sector erased and watermark set to zero if error found
 	* Success/error status communicated to tool and reported on screen and in tool
 * Implemented basic device and state management with two devices and two configuration options each
+* Implemented toggle bit per device
 
 Notes
 =====
