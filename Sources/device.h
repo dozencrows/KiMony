@@ -10,6 +10,8 @@
 
 #include <stdint.h>
 
+typedef struct _IrAction IrAction;
+
 #define OPTION_CYCLED				0x0001
 #define OPTION_DEFAULT_TO_ZERO		0x0002
 #define OPTION_ACTION_ON_DEFAULT	0x0004
@@ -35,7 +37,6 @@ typedef struct _DeviceState {
 extern void deviceInit();
 extern void deviceSetActive(const Device* devices, int deviceCount);
 extern void deviceSetStates(const DeviceState* states, int stateCount);
-extern int deviceGetToggleFlag(const Device* device);
-extern void deviceSetToggleFlag(const Device* device, int toggleFlag);
+extern void deviceDoIrAction(const Device* device, const IrAction* irAction);
 
 #endif /* DEVICE_H_ */

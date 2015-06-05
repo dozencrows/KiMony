@@ -387,10 +387,7 @@ void mainLoop()
 			backlightOn();
 			rendererRenderDrawList();
 			if (event->type == EVENT_IRACTION) {
-				const Device* device = (const Device*)GET_FLASH_PTR(event->deviceOffset);
-				int toggleFlag = deviceGetToggleFlag(device);
-				irDoAction((const IrAction*)GET_FLASH_PTR(event->irActionOffset), &toggleFlag);
-				deviceSetToggleFlag(device, toggleFlag);
+				deviceDoIrAction((const Device*)GET_FLASH_PTR(event->deviceOffset), (const IrAction*)GET_FLASH_PTR(event->irActionOffset));
 			}
 			else if (event->type == EVENT_ACTIVITY) {
 				selectActivity((const Activity*)GET_FLASH_PTR(event->activityOffset));

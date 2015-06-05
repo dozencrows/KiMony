@@ -40,7 +40,8 @@ static void actionOptionToValue(const Device* device, const Option* option, uint
 {
 	const uint32_t* actionRefs = (const uint32_t*) GET_FLASH_PTR(option->actionsOffset);
 
-	int toggleFlag = deviceGetToggleFlag(device);
+	unsigned int deviceIndex = getDeviceIndex(device);
+	int toggleFlag = deviceDynamicState[deviceIndex].toggleFlag;
 
 	if (option->preActionOffset) {
 		irDoAction((const IrAction*)GET_FLASH_PTR(option->preActionOffset), &toggleFlag);
@@ -72,7 +73,7 @@ static void actionOptionToValue(const Device* device, const Option* option, uint
 		irDoAction((const IrAction*)GET_FLASH_PTR(actionRefs[newValue]), &toggleFlag);
 	}
 
-	deviceSetToggleFlag(device, toggleFlag);
+	deviceDynamicState[deviceIndex].toggleFlag = toggleFlag ? 1 : 0;
 }
 
 static void setDeviceToState(const DeviceState* state, int deviceIndex)
@@ -153,22 +154,10 @@ void deviceSetStates(const DeviceState* states, int stateCount)
 	}
 }
 
-int deviceGetToggleFlag(const Device* device)
+void deviceDoIrAction(const Device* device, const IrAction* action)
 {
 	unsigned int deviceIndex = getDeviceIndex(device);
-
-	if (deviceIndex < activeDeviceCount) {
-		return deviceDynamicState[deviceIndex].toggleFlag;
-	}
-
-	return 0;
-}
-
-void deviceSetToggleFlag(const Device* device, int toggleFlag)
-{
-	unsigned int deviceIndex = getDeviceIndex(device);
-
-	if (deviceIndex < activeDeviceCount) {
-		deviceDynamicState[deviceIndex].toggleFlag = toggleFlag ? 1 : 0;
-	}
+	int toggleFlag = deviceDynamicState[deviceIndex].toggleFlag;
+	irDoAction(action, &toggleFlag);
+	deviceDynamicState[deviceIndex].toggleFlag = toggleFlag ? 1 : 0;
 }
