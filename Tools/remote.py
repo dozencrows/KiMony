@@ -196,35 +196,39 @@ def IrAction(codes=None):
 #
 # C structure:
 #   uint32_t    type;
-#   uint32_t    data;
+#   uint32_t    data[2];
 #
 # Data is ignored for some event types, or treated as an offset to another object for others.
 #
 class Event(RemoteDataStruct):
     _fields_ = [
         ("type", ct.c_uint32),
-        ("data", ct.c_uint32)
+        ("data", ct.c_uint32 * 2)
         ]
 
     _types_ = { 0:"none", 1:"IR action", 2:"Activity", 3:"Next", 4:"Prev", 5:"Home", 6:"Download" }
         
     def __init__(self, t, data = None):
         self.type = t
-        if data:
-            self.data_ref = data.ref()
-        else:
-            self.data_ref = None
+        self.data_values = data
             
     def __str__(self):
         return "Event %d (type %s)" % (self.ref(), Event._types_[self.type])
     
     def fix_up(self, package):
-        if self.data_ref:
-            try:
-                self.data = package.offsetof(self.data_ref)
-            except PackageError:
-                print self, "has reference to missing object"
-
+        if self.data_values and len(self.data_values) > 0:
+            if self.type == Event_IRACTION:
+                try:
+                    self.data[0] = package.offsetof(self.data_values[0].ref())
+                    self.data[1] = package.offsetof(self.data_values[1].ref())
+                except PackageError:
+                    print self, "has reference to missing action or device"
+            else:
+                try:
+                    self.data[0] = package.offsetof(self.data_values[0].ref())
+                except PackageError:
+                    print self, "has reference to missing object"
+                    
 #
 # Physical button mapping
 #

@@ -16,6 +16,7 @@
 
 typedef struct _DeviceDynamicState {
 	uint8_t optionValuesOffset;
+	uint8_t toggleFlag;
 } DeviceDynamicState;
 
 static const Device* activeDevices = NULL;
@@ -24,18 +25,31 @@ static int activeDeviceCount = 0;
 static DeviceDynamicState deviceDynamicState[MAX_DEVICES];
 static uint8_t optionValuesStore[MAX_OPTIONS];
 
-static void actionOptionToValue(const Option* option, uint8_t currentValue, uint8_t newValue)
+static unsigned int getDeviceIndex(const Device* device)
+{
+	ptrdiff_t index = device - activeDevices;
+
+	if (index < 0) {
+		index = activeDeviceCount;
+	}
+
+	return index;
+}
+
+static void actionOptionToValue(const Device* device, const Option* option, uint8_t currentValue, uint8_t newValue)
 {
 	const uint32_t* actionRefs = (const uint32_t*) GET_FLASH_PTR(option->actionsOffset);
 
+	int toggleFlag = deviceGetToggleFlag(device);
+
 	if (option->preActionOffset) {
-		irDoAction((const IrAction*)GET_FLASH_PTR(option->preActionOffset));
+		irDoAction((const IrAction*)GET_FLASH_PTR(option->preActionOffset), &toggleFlag);
 	}
 
 	if (option->flags & OPTION_CYCLED) {
 		if (option->actionCount == 1) {
 			while (currentValue != newValue) {
-				irDoAction((const IrAction*)GET_FLASH_PTR(actionRefs[0]));
+				irDoAction((const IrAction*)GET_FLASH_PTR(actionRefs[0]), &toggleFlag);
 				currentValue++;
 				if (currentValue > option->maxValue) {
 					currentValue = 0;
@@ -44,19 +58,21 @@ static void actionOptionToValue(const Option* option, uint8_t currentValue, uint
 		}
 		else {
 			while (currentValue < newValue) {
-				irDoAction((const IrAction*)GET_FLASH_PTR(actionRefs[1]));
+				irDoAction((const IrAction*)GET_FLASH_PTR(actionRefs[1]), &toggleFlag);
 				currentValue++;
 			}
 
 			while (currentValue > newValue) {
-				irDoAction((const IrAction*)GET_FLASH_PTR(actionRefs[0]));
+				irDoAction((const IrAction*)GET_FLASH_PTR(actionRefs[0]), &toggleFlag);
 				currentValue--;
 			}
 		}
 	}
 	else {
-		irDoAction((const IrAction*)GET_FLASH_PTR(actionRefs[newValue]));
+		irDoAction((const IrAction*)GET_FLASH_PTR(actionRefs[newValue]), &toggleFlag);
 	}
+
+	deviceSetToggleFlag(device, toggleFlag);
 }
 
 static void setDeviceToState(const DeviceState* state, int deviceIndex)
@@ -68,7 +84,7 @@ static void setDeviceToState(const DeviceState* state, int deviceIndex)
 
 	for (int i = 0; i < device->optionCount; i++) {
 		if (stateOptionValues[i] != optionValues[i]) {
-			actionOptionToValue(options + i, optionValues[i], stateOptionValues[i]);
+			actionOptionToValue(device, options + i, optionValues[i], stateOptionValues[i]);
 			optionValues[i] = stateOptionValues[i];
 		}
 	}
@@ -83,7 +99,7 @@ static void setDeviceToDefault(int deviceIndex)
 	for (int i = 0; i < device->optionCount; i++) {
 		if (options[i].flags & OPTION_DEFAULT_TO_ZERO) {
 			if (options[i].flags & OPTION_ACTION_ON_DEFAULT) {
-				actionOptionToValue(options + i, optionValues[i], 0);
+				actionOptionToValue(device, options + i, optionValues[i], 0);
 			}
 
 			optionValues[i] = 0;
@@ -106,6 +122,7 @@ void deviceSetActive(const Device* devices, int deviceCount)
 
 	for (i = 0; i < deviceCount && nextOption < MAX_OPTIONS - devices[i].optionCount; i++) {
 		deviceDynamicState[i].optionValuesOffset = nextOption;
+		deviceDynamicState[i].toggleFlag = 0;
 		nextOption += devices[i].optionCount;
 	}
 
@@ -133,5 +150,25 @@ void deviceSetStates(const DeviceState* states, int stateCount)
 		else {
 			setDeviceToDefault(i);
 		}
+	}
+}
+
+int deviceGetToggleFlag(const Device* device)
+{
+	unsigned int deviceIndex = getDeviceIndex(device);
+
+	if (deviceIndex < activeDeviceCount) {
+		return deviceDynamicState[deviceIndex].toggleFlag;
+	}
+
+	return 0;
+}
+
+void deviceSetToggleFlag(const Device* device, int toggleFlag)
+{
+	unsigned int deviceIndex = getDeviceIndex(device);
+
+	if (deviceIndex < activeDeviceCount) {
+		deviceDynamicState[deviceIndex].toggleFlag = toggleFlag ? 1 : 0;
 	}
 }

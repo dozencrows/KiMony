@@ -230,14 +230,21 @@ static void irSendSIRCCode(uint32_t data, int bitCount)
 
 static uint32_t toggleBit = 0;
 
-void irDoAction(const IrAction* action)
+void irDoAction(const IrAction* action, int* toggleFlag)
 {
 	const IrCode* code = action->codes;
 
 	for (int i = 0; i < action->codeCount; i++, code++) {
+		unsigned int completedCode = code->code;
+
 		if (code->toggleMask) {
-			toggleBit ^= code->toggleMask;
+			*toggleFlag = !*toggleFlag;
+
+			if (*toggleFlag) {
+				completedCode |= code->toggleMask;
+			}
 		}
+
 		switch (code->encoding) {
 			case IRCODE_NOP: {
 #if defined(_DEBUG)
@@ -248,16 +255,16 @@ void irDoAction(const IrAction* action)
 			}
 			case IRCODE_RC6: {
 #if defined(_DEBUG)
-				printf("IR: RC6 %x\n", code->code|toggleBit);
+				printf("IR: RC6 %x\n", completedCode);
 #endif
-				irSendRC6Code(code->code|toggleBit, code->bits);
+				irSendRC6Code(completedCode, code->bits);
 				break;
 			}
 			case IRCODE_SIRC: {
 #if defined(_DEBUG)
-				printf("IR: SIRC %x\n", code->code|toggleBit);
+				printf("IR: SIRC %x\n", completedCode);
 #endif
-				irSendSIRCCode(code->code|toggleBit, code->bits);
+				irSendSIRCCode(completedCode, code->bits);
 				break;
 			}
 		}

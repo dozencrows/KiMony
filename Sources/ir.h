@@ -25,6 +25,6 @@ typedef struct _IrAction {
 	IrCode	codes[];
 } IrAction;
 
-extern void irDoAction(const IrAction* action);
+extern void irDoAction(const IrAction* action, int* toggleFlag);
 
 #endif /* IR_H_ */

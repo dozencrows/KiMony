@@ -35,5 +35,7 @@ typedef struct _DeviceState {
 extern void deviceInit();
 extern void deviceSetActive(const Device* devices, int deviceCount);
 extern void deviceSetStates(const DeviceState* states, int stateCount);
+extern int deviceGetToggleFlag(const Device* device);
+extern void deviceSetToggleFlag(const Device* device, int toggleFlag);
 
 #endif /* DEVICE_H_ */
