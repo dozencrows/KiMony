@@ -1,4 +1,12 @@
 #!/usr/bin/python
+
+#=======================================================================
+# Copyright Nicholas Tuckett 2015.
+# Distributed under the MIT License.
+# (See accompanying file license.txt or copy at
+#  http://opensource.org/licenses/MIT)
+#=======================================================================
+
 #
 # KiMony configuration file
 #

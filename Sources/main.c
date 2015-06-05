@@ -1,3 +1,10 @@
+//=======================================================================
+// Copyright Nicholas Tuckett 2015.
+// Distributed under the MIT License.
+// (See accompanying file license.txt or copy at
+//  http://opensource.org/licenses/MIT)
+//=======================================================================
+
 /*
  * Copyright (c) 2014, Freescale Semiconductor, Inc.
  * All rights reserved.
