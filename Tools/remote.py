@@ -598,66 +598,61 @@ class Activity(RemoteDataStruct):
         ("device_states", ct.c_uint32),
         ]
 
-    def __init__(self, button_mappings, touch_button_pages, flags = 0, name = 'unknown'):
+    def __init__(self, flags = 0, name = 'unknown'):
         self.name = name
         self.flags = flags
-            
-        if button_mappings:
-            self.button_mapping_count = len(button_mappings)
-            self.button_mappings_ref = button_mappings[0].ref()
-            self.button_mapping_objs = button_mappings
-        else:
-            self.button_mapping_objs = []
-            self.button_mappings_ref = None
-
-        if touch_button_pages:
-            self.touch_button_page_count = len(touch_button_pages)
-            self.touch_button_pages_ref = touch_button_pages[0].ref()
-            self.touch_button_pages_objs = touch_button_pages
-        else:
-            self.touch_button_pages_objs = []
-            self.touch_button_pages_ref = None
-            
-        self.device_states_objs = []
+        self.button_mapping_objs = []
+        self.touch_button_page_objs = []
+        self.device_state_objs = []
 
     def __str__(self):
         return "Activity %s" % self.name
         
     def create_device_state(self, device, options):
-        self.device_states_objs.append(DeviceState(self.name + "-" + device.name, device, options))
+        self.device_state_objs.append(DeviceState(self.name + "-" + device.name, device, options))
+        
+    def create_button_mapping(self, button_mask, event):
+        self.button_mapping_objs.append(ButtonMapping(button_mask, event))
+
+    def create_touch_button_page(self, touch_buttons):
+        self.touch_button_page_objs.append(TouchButtonPage(touch_buttons, self.name + "-page-" + str(len(self.touch_button_page_objs) + 1)))
         
     def pre_pack(self, package):
         for x in self.button_mapping_objs:
             package.append(x)
             
-        for x in self.touch_button_pages_objs:
+        for x in self.touch_button_page_objs:
             package.append(x)
 
-        for x in self.device_states_objs:
+        for x in self.device_state_objs:
             package.append(x)
  
     def pre_pack_trailing_children(self, package):
-        for x in self.touch_button_pages_objs:
+        for x in self.touch_button_page_objs:
             x.pre_pack_touch_buttons(package)
 
-        for x in self.device_states_objs:
+        for x in self.device_state_objs:
             x.pre_pack_option_values(package)
             
     def fix_up(self, package):
-        try:
-            self.button_mappings = package.offsetof(self.button_mappings_ref)
-        except PackageError:
-            print self, "has reference to missing button mappings array"
-            
-        try:
-            self.touch_button_pages = package.offsetof(self.touch_button_pages_ref)
-        except PackageError:
-            print self, "has reference to missing touch button pages"
+        self.button_mapping_count = len(self.button_mapping_objs)
+        if self.button_mapping_count > 0:
+            try:
+                self.button_mappings = package.offsetof(self.button_mapping_objs[0].ref())
+            except PackageError:
+                print self, "has reference to missing button mappings array"
+        
+        self.touch_button_page_count = len(self.touch_button_page_objs)
+        if self.touch_button_page_count > 0:
+            try:
+                self.touch_button_pages = package.offsetof(self.touch_button_page_objs[0].ref())
+            except PackageError:
+                print self, "has reference to missing touch button pages"
 
-        self.device_state_count = len(self.device_states_objs)
+        self.device_state_count = len(self.device_state_objs)
         if self.device_state_count > 0:
             try:
-                self.device_states = package.offsetof(self.device_states_objs[0].ref())
+                self.device_states = package.offsetof(self.device_state_objs[0].ref())
             except PackageError:
                 print self, "has reference to missing device states"
 

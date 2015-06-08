@@ -179,92 +179,67 @@ br_left_event		= remoteConfig.create_ir_event("br-left", sony_bluray, "left")
 br_right_event		= remoteConfig.create_ir_event("br-right", sony_bluray, "right")
 
 # Activities, button mappings and touch button pages
-watch_tv_activity = Activity(name = "watch-tv",
-    button_mappings = [ 
-	    ButtonMapping(0x200000, info_event),
-	    #ButtonMapping(0x100000, blue_event),
-	    #ButtonMapping(0x080000, green_event),
-	    #ButtonMapping(0x040000, yellow_event),
-	    ButtonMapping(0x020000, poweroff_event),
-	    ButtonMapping(0x010000, home_activity_event),
-	    ButtonMapping(0x008000, numeric1_event),
-	    ButtonMapping(0x000800, numeric2_event),
-	    ButtonMapping(0x000080, numeric3_event),
-	    ButtonMapping(0x000008, volume_up_event),
-	    ButtonMapping(0x004000, numeric4_event),
-	    ButtonMapping(0x000400, numeric5_event),
-	    ButtonMapping(0x000040, numeric6_event),
-	    ButtonMapping(0x000004, volume_down_event),
-	    ButtonMapping(0x002000, numeric7_event),
-	    ButtonMapping(0x000200, numeric8_event),
-	    ButtonMapping(0x000020, numeric9_event),
-	    ButtonMapping(0x000002, channel_up_event),
-	    ButtonMapping(0x001000, surround_event),
-	    ButtonMapping(0x000100, numeric0_event),
-	    ButtonMapping(0x000010, mute_event),
-	    ButtonMapping(0x000001, channel_down_event),
-    ],
-    touch_button_pages = [
-        TouchButtonPage(name = "1",
-            touch_buttons = [
-	            TouchButton(guide_event, "Guide",  		      0, 0, BUTTON_WIDTH, BUTTON_HEIGHT, 0xf9e0, True, True),
-	            TouchButton(enter_event, "Enter",  BUTTON_WIDTH, 0, BUTTON_WIDTH, BUTTON_HEIGHT, 0xf9e0, True, True),
-	            TouchButton(back_event,  "Back", 2*BUTTON_WIDTH, 0, BUTTON_WIDTH, BUTTON_HEIGHT, 0xf9e0, True, True),
-	            TouchButton(home_event,  "Home", 3*BUTTON_WIDTH, 0, BUTTON_WIDTH, BUTTON_HEIGHT, 0xf9e0, True, True),
+watch_tv_activity = Activity(name = "watch-tv")
 
-	            TouchButton(red_event,    None,  	         0, BUTTON_HEIGHT, BUTTON_WIDTH, BUTTON_HEIGHT, 0xf800, True, False, name = "Red"),
-	            TouchButton(green_event,  None,   BUTTON_WIDTH, BUTTON_HEIGHT, BUTTON_WIDTH, BUTTON_HEIGHT, 0x07e0, True, False, name = "Green"),
-	            TouchButton(yellow_event, None, 2*BUTTON_WIDTH, BUTTON_HEIGHT, BUTTON_WIDTH, BUTTON_HEIGHT, 0xffe0, True, False, name = "Yellow"),
-	            TouchButton(blue_event,   None, 3*BUTTON_WIDTH, BUTTON_HEIGHT, BUTTON_WIDTH, BUTTON_HEIGHT, 0x001f, True, False, name = "Blue"),
+watch_tv_activity.create_button_mapping(0x200000, info_event)
+#watch_tv_activity.create_button_mapping(0x100000, blue_event)
+#watch_tv_activity.create_button_mapping(0x080000, green_event)
+#watch_tv_activity.create_button_mapping(0x040000, yellow_event)
+watch_tv_activity.create_button_mapping(0x020000, poweroff_event)
+watch_tv_activity.create_button_mapping(0x010000, home_activity_event)
+watch_tv_activity.create_button_mapping(0x008000, numeric1_event)
+watch_tv_activity.create_button_mapping(0x004000, numeric4_event)
+watch_tv_activity.create_button_mapping(0x002000, numeric7_event)
+watch_tv_activity.create_button_mapping(0x001000, surround_event)
+watch_tv_activity.create_button_mapping(0x000800, numeric2_event)
+watch_tv_activity.create_button_mapping(0x000400, numeric5_event)
+watch_tv_activity.create_button_mapping(0x000200, numeric8_event)
+watch_tv_activity.create_button_mapping(0x000100, numeric0_event)
+watch_tv_activity.create_button_mapping(0x000080, numeric3_event)
+watch_tv_activity.create_button_mapping(0x000040, numeric6_event)
+watch_tv_activity.create_button_mapping(0x000020, numeric9_event)
+watch_tv_activity.create_button_mapping(0x000010, mute_event)
+watch_tv_activity.create_button_mapping(0x000008, volume_up_event)
+watch_tv_activity.create_button_mapping(0x000004, volume_down_event)
+watch_tv_activity.create_button_mapping(0x000002, channel_up_event)
+watch_tv_activity.create_button_mapping(0x000001, channel_down_event)
 
-	            TouchButton(up_event, "U",  (SCREEN_WIDTH - BUTTON_WIDTH) / 2, 2*BUTTON_HEIGHT, BUTTON_WIDTH, BUTTON_HEIGHT, 0xf9e0, True, True),
-	            TouchButton(down_event, "D",  (SCREEN_WIDTH - BUTTON_WIDTH) / 2, 3*BUTTON_HEIGHT, BUTTON_WIDTH, BUTTON_HEIGHT, 0xf9e0, True, True),
-	            TouchButton(left_event, "L",  (SCREEN_WIDTH - BUTTON_WIDTH) / 2 - BUTTON_WIDTH, int(2.5*BUTTON_HEIGHT), BUTTON_WIDTH, BUTTON_HEIGHT, 0xf9e0, True, True),
-	            TouchButton(right_event, "R",  (SCREEN_WIDTH - BUTTON_WIDTH) / 2 + BUTTON_WIDTH, int(2.5*BUTTON_HEIGHT), BUTTON_WIDTH, BUTTON_HEIGHT, 0xf9e0, True, True),
-        ])
-    ]
-    )
+watch_tv_activity.create_touch_button_page([
+    TouchButton(guide_event, "Guide",  		      0, 0, BUTTON_WIDTH, BUTTON_HEIGHT, 0xf9e0, True, True),
+    TouchButton(enter_event, "Enter",  BUTTON_WIDTH, 0, BUTTON_WIDTH, BUTTON_HEIGHT, 0xf9e0, True, True),
+    TouchButton(back_event,  "Back", 2*BUTTON_WIDTH, 0, BUTTON_WIDTH, BUTTON_HEIGHT, 0xf9e0, True, True),
+    TouchButton(home_event,  "Home", 3*BUTTON_WIDTH, 0, BUTTON_WIDTH, BUTTON_HEIGHT, 0xf9e0, True, True),
+
+    TouchButton(red_event,    None,  	         0, BUTTON_HEIGHT, BUTTON_WIDTH, BUTTON_HEIGHT, 0xf800, True, False, name = "Red"),
+    TouchButton(green_event,  None,   BUTTON_WIDTH, BUTTON_HEIGHT, BUTTON_WIDTH, BUTTON_HEIGHT, 0x07e0, True, False, name = "Green"),
+    TouchButton(yellow_event, None, 2*BUTTON_WIDTH, BUTTON_HEIGHT, BUTTON_WIDTH, BUTTON_HEIGHT, 0xffe0, True, False, name = "Yellow"),
+    TouchButton(blue_event,   None, 3*BUTTON_WIDTH, BUTTON_HEIGHT, BUTTON_WIDTH, BUTTON_HEIGHT, 0x001f, True, False, name = "Blue"),
+
+    TouchButton(up_event, "U",  (SCREEN_WIDTH - BUTTON_WIDTH) / 2, 2*BUTTON_HEIGHT, BUTTON_WIDTH, BUTTON_HEIGHT, 0xf9e0, True, True),
+    TouchButton(down_event, "D",  (SCREEN_WIDTH - BUTTON_WIDTH) / 2, 3*BUTTON_HEIGHT, BUTTON_WIDTH, BUTTON_HEIGHT, 0xf9e0, True, True),
+    TouchButton(left_event, "L",  (SCREEN_WIDTH - BUTTON_WIDTH) / 2 - BUTTON_WIDTH, int(2.5*BUTTON_HEIGHT), BUTTON_WIDTH, BUTTON_HEIGHT, 0xf9e0, True, True),
+    TouchButton(right_event, "R",  (SCREEN_WIDTH - BUTTON_WIDTH) / 2 + BUTTON_WIDTH, int(2.5*BUTTON_HEIGHT), BUTTON_WIDTH, BUTTON_HEIGHT, 0xf9e0, True, True),
+    ])
 
 watch_tv_activity.create_device_state(sony_tv, { "power": 1, "input": 0 })  
 watch_tv_activity.create_device_state(phillips_hts, { "power": 1, "surround": 2 })
 
-watch_movie_activity = Activity(name = "watch-movie",
-    button_mappings = [ 
-	    #ButtonMapping(0x200000, info_event),
-	    #ButtonMapping(0x100000, blue_event),
-	    #ButtonMapping(0x080000, green_event),
-	    #ButtonMapping(0x040000, yellow_event),
-	    ButtonMapping(0x020000, poweroff_event),
-	    ButtonMapping(0x010000, home_activity_event),
-	    #ButtonMapping(0x008000, numeric1_event),
-	    #ButtonMapping(0x000800, numeric2_event),
-	    #ButtonMapping(0x000080, numeric3_event),
-	    ButtonMapping(0x000008, volume_up_event),
-	    #ButtonMapping(0x004000, numeric4_event),
-	    #ButtonMapping(0x000400, numeric5_event),
-	    #ButtonMapping(0x000040, numeric6_event),
-	    ButtonMapping(0x000004, volume_down_event),
-	    #ButtonMapping(0x002000, numeric7_event),
-	    #ButtonMapping(0x000200, numeric8_event),
-	    #ButtonMapping(0x000020, numeric9_event),
-	    #ButtonMapping(0x000002, channel_up_event),
-	    ButtonMapping(0x001000, surround_event),
-	    #ButtonMapping(0x000100, numeric0_event),
-	    ButtonMapping(0x000010, mute_event),
-	    #ButtonMapping(0x000001, channel_down_event),
-    ],
+watch_movie_activity = Activity(name = "watch-movie")
 
-    touch_button_pages = [
-        TouchButtonPage(name = '1',
-            touch_buttons = [
-	            TouchButton(br_up_event, "U",  (SCREEN_WIDTH - BUTTON_WIDTH) / 2, 2*BUTTON_HEIGHT, BUTTON_WIDTH, BUTTON_HEIGHT, 0xf9e0, True, True),
-	            TouchButton(br_down_event, "D",  (SCREEN_WIDTH - BUTTON_WIDTH) / 2, 3*BUTTON_HEIGHT, BUTTON_WIDTH, BUTTON_HEIGHT, 0xf9e0, True, True),
-	            TouchButton(br_left_event, "L",  (SCREEN_WIDTH - BUTTON_WIDTH) / 2 - BUTTON_WIDTH, int(2.5*BUTTON_HEIGHT), BUTTON_WIDTH, BUTTON_HEIGHT, 0xf9e0, True, True),
-	            TouchButton(br_right_event, "R",  (SCREEN_WIDTH - BUTTON_WIDTH) / 2 + BUTTON_WIDTH, int(2.5*BUTTON_HEIGHT), BUTTON_WIDTH, BUTTON_HEIGHT, 0xf9e0, True, True),
-	    ])
-	]
-    )
+watch_movie_activity.create_button_mapping(0x020000, poweroff_event)
+watch_movie_activity.create_button_mapping(0x010000, home_activity_event)
+watch_movie_activity.create_button_mapping(0x000008, volume_up_event)
+watch_movie_activity.create_button_mapping(0x000004, volume_down_event)
+watch_movie_activity.create_button_mapping(0x001000, surround_event)
+watch_movie_activity.create_button_mapping(0x000010, mute_event)
     
+watch_movie_activity.create_touch_button_page([
+    TouchButton(br_up_event, "U",  (SCREEN_WIDTH - BUTTON_WIDTH) / 2, 2*BUTTON_HEIGHT, BUTTON_WIDTH, BUTTON_HEIGHT, 0xf9e0, True, True),
+    TouchButton(br_down_event, "D",  (SCREEN_WIDTH - BUTTON_WIDTH) / 2, 3*BUTTON_HEIGHT, BUTTON_WIDTH, BUTTON_HEIGHT, 0xf9e0, True, True),
+    TouchButton(br_left_event, "L",  (SCREEN_WIDTH - BUTTON_WIDTH) / 2 - BUTTON_WIDTH, int(2.5*BUTTON_HEIGHT), BUTTON_WIDTH, BUTTON_HEIGHT, 0xf9e0, True, True),
+    TouchButton(br_right_event, "R",  (SCREEN_WIDTH - BUTTON_WIDTH) / 2 + BUTTON_WIDTH, int(2.5*BUTTON_HEIGHT), BUTTON_WIDTH, BUTTON_HEIGHT, 0xf9e0, True, True),
+    ])
+	    
 watch_movie_activity.create_device_state(sony_tv, { "power": 1, "input": 0 })
 watch_movie_activity.create_device_state(sony_bluray, { "power": 1 })
 watch_movie_activity.create_device_state(phillips_hts, { "power": 1, "surround": 2 })
@@ -272,17 +247,17 @@ watch_movie_activity.create_device_state(phillips_hts, { "power": 1, "surround":
 watch_tv_event = remoteConfig.create_activity_event("watch-tv", watch_tv_activity)
 watch_movie_event = remoteConfig.create_activity_event("watch-movie", watch_movie_activity)
 
-home_activity = Activity(name = "home",
-    button_mappings = [ ButtonMapping(0x010000, prev_event), ButtonMapping(0x040000, next_event), ButtonMapping(0x100000, download_event), ButtonMapping(0x020000, poweroff_event) ],
-    touch_button_pages = [ 
-        TouchButtonPage(name = '1',
-            touch_buttons = [
-                TouchButton(watch_tv_event, "Watch TV", 0, 0*BUTTON_HEIGHT, 4*BUTTON_WIDTH, BUTTON_HEIGHT, 0xf9e0, False, True),   
-                TouchButton(watch_movie_event, "Watch Movie", 0, 1*BUTTON_HEIGHT, 4*BUTTON_WIDTH, BUTTON_HEIGHT, 0xf9e0, False, True),   
-        ]),
-    ],
-    flags = Activity_NoDevices
-    )
+home_activity = Activity(name = "home", flags = Activity_NoDevices)
+
+home_activity.create_button_mapping(0x010000, prev_event)
+home_activity.create_button_mapping(0x040000, next_event)
+home_activity.create_button_mapping(0x100000, download_event)
+home_activity.create_button_mapping(0x020000, poweroff_event)
+
+home_activity.create_touch_button_page([
+    TouchButton(watch_tv_event, "Watch TV", 0, 0*BUTTON_HEIGHT, 4*BUTTON_WIDTH, BUTTON_HEIGHT, 0xf9e0, False, True),   
+    TouchButton(watch_movie_event, "Watch Movie", 0, 1*BUTTON_HEIGHT, 4*BUTTON_WIDTH, BUTTON_HEIGHT, 0xf9e0, False, True),   
+    ])
 
 remoteConfig.add_activity(home_activity)
 remoteConfig.add_activity(watch_tv_activity)
