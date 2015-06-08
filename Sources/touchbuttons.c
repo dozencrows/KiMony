@@ -44,7 +44,7 @@ static int activeTouchButtonsCount = 0;
 static ButtonState buttonState[MAX_BUTTONS];
 static int touchState = TOUCH_STATE_IDLE;
 static int touchStateCounter = 0;
-static int currentTouchButton = NULL;
+static int currentTouchButton = -1;
 
 static void renderTouchButton(const TouchButton* button, uint16_t colour, uint16_t textColour)
 {
@@ -145,7 +145,7 @@ int touchButtonsUpdate(const Event** eventTriggered)
 
 				if (touchScreenGetCoordinates(&touch)) {
 					int touchButton = hitTestTouchButtons(&touch);
-					if (touchButton == currentTouchButton) {
+					if (touchButton >= 0 && touchButton == currentTouchButton) {
 						touchState = TOUCH_STATE_ACTIVE;
 						if (activeTouchButtons[currentTouchButton].eventOffset) {
 							if (activeTouchButtons[currentTouchButton].flags & TB_PRESS_ACTIVATE) {
