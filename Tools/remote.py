@@ -422,23 +422,19 @@ class Option(RemoteDataStruct):
         ("actions", ct.c_uint32)
         ]
 
-    def __init__(self, name, flags, max_value, change_action_names, pre_action = None):
+    def __init__(self, name, flags, max_value, change_actions, pre_action):
         self.name = name
         self.flags = flags
         self.max_value = max_value
         self.pre_action_ref = pre_action
-        self.change_action_names = change_action_names
-        self.action_count = len(self.change_action_names)
+        self.change_actions = change_actions
+        self.action_count = len(self.change_actions)
 
     def __str__(self):
-        return "Option %d" % self.ref()
+        return "Option %s" % self.name
 
     def pre_pack_change_actions(self, package, device):
-        try:
-            self.action_refs = RemoteDataRefArray([device.actions[x].ref() for x in self.change_action_names])
-        except KeyError:
-            print self, "has unrecognised change action name(s)"
-            
+        self.action_refs = RemoteDataRefArray([x.ref() for x in self.change_actions])
         package.append(self.action_refs)
         
     def fix_up(self, package):
@@ -468,6 +464,7 @@ class Device(RemoteDataStruct):
 
     def __init__(self, name = 'unknown'):            
         self.options_list = []
+        self.options_lookup = {}
         self.actions = {}
         self.name = name
 
@@ -475,7 +472,24 @@ class Device(RemoteDataStruct):
         return "Device %s" % self.name
         
     def create_action(self, name, codes):
-        self.actions[name] = IrAction(codes, name)
+        self.actions[name] = IrAction(codes, self.name + "-" + name)
+        
+    def create_option(self, name, flags, max_value, change_action_names, pre_action_name = None):
+        if pre_action_name:
+            try:
+                pre_action = self.actions[pre_action_name]
+            except KeyError as e:
+                raise RemoteDataError("%s has unrecognised pre-action name %s" % (self, e))
+        else:
+            pre_action = None
+
+        try:
+            change_actions = [self.actions[x] for x in change_action_names]
+        except KeyError as e:
+            raise RemoteDataError("%s has unrecognised change action name %s" % (self, e))
+            
+        self.options_lookup[name] = len(self.options_list)
+        self.options_list.append(Option(self.name + "-" + name, flags, max_value, change_actions, pre_action))
         
     def pre_pack_options_and_actions(self, package):
         for option in self.options_list:
@@ -488,13 +502,10 @@ class Device(RemoteDataStruct):
             package.append(value)
             
     def option_index(self, option_name):
-        i = 0
-        for option in self.options_list:
-            if option.name == option_name:
-                return i
-            else:
-                i += 1
-        return -1
+        try:
+            return self.options_lookup[option_name]
+        except KeyError:
+            return len(self.options_lookup)
 
     def pre_pack(self, package):
         self.option_count = len(self.options_list)
@@ -504,7 +515,7 @@ class Device(RemoteDataStruct):
             try:
                 self.options = package.offsetof(self.options_list[0].ref())
             except PackageError:
-                print self, "has missing options(s)"
+                print self, "has missing options"
 
 #
 # DeviceState - represents an expected state of a device in terms of options

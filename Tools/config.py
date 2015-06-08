@@ -24,13 +24,7 @@ remoteConfig = RemoteConfig()
 
 sony_tv = Device("Sony TV")
 
-sony_tv.options_list = [ 
-                       Option(name = "power", flags = Option_Cycled|Option_DefaultToZero|Option_ActionOnDefault, max_value = 1, change_action_names = ["powertoggle"]),
-                       Option(name = "input", flags = Option_Cycled, max_value = 5, change_action_names = ["nextinput"])
-                       ] 
-
 sony_tv.create_action("powertoggle", [IrCode(IrEncoding_SIRC, 12, 0xA90)])
-
 sony_tv.create_action("nextinput", [IrCode(IrEncoding_SIRC, 12, 0xA50)])
 
 sony_tv.create_action("numeric1", [IrCode(IrEncoding_SIRC, 12, 0x010)])
@@ -63,6 +57,8 @@ sony_tv.create_action("down", [IrCode(IrEncoding_SIRC, 12, 0xAF0)])
 sony_tv.create_action("left", [IrCode(IrEncoding_SIRC, 12, 0x2D0)])
 sony_tv.create_action("right", [IrCode(IrEncoding_SIRC, 12, 0xCD0)])
 
+sony_tv.create_option(name = "power", flags = Option_Cycled|Option_DefaultToZero|Option_ActionOnDefault, max_value = 1, change_action_names = ["powertoggle"])
+sony_tv.create_option(name = "input", flags = Option_Cycled, max_value = 5, change_action_names = ["nextinput"])
 
 phillips_hts = Device("Phillips HTS")
 
@@ -77,12 +73,8 @@ phillips_hts.create_action("mute", [IrCode(IrEncoding_RC6, 21, 0xEEFF2, 0x10000)
 phillips_hts.create_action("surround", [IrCode(IrEncoding_RC6, 21, 0xEEFAD, 0x10000), IrCode(IrEncoding_NOP, 0, 250)])
 phillips_hts.create_action("pre-surround", [IrCode(IrEncoding_NOP, 0, 20000), IrCode(IrEncoding_RC6, 21, 0xEEFAD, 0x10000), IrCode(IrEncoding_NOP, 0, 250)])
 
-phillips_hts.options_list = [ 
-                            Option(name = "power", flags = Option_Cycled|Option_DefaultToZero|Option_ActionOnDefault, max_value = 1, 
-                                     change_action_names = ["powertoggle"]),
-                            Option(name = "surround", flags = Option_Cycled|Option_DefaultToZero, max_value = 2, 
-                                     pre_action = phillips_hts.actions['pre-surround'], change_action_names = ["surround"])
-                            ]
+phillips_hts.create_option("power", Option_Cycled|Option_DefaultToZero|Option_ActionOnDefault, 1, ["powertoggle"])
+phillips_hts.create_option("surround", Option_Cycled|Option_DefaultToZero, 2, ["surround"], "pre-surround")
 
 sony_bluray = Device("Sony Blu-ray")
 sony_bluray.create_action("powertoggle", [IrCode(IrEncoding_SIRC, 20, 0xA8B47)])
@@ -91,10 +83,7 @@ sony_bluray.create_action("down", [IrCode(IrEncoding_SIRC, 20, 0x5CB47)])
 sony_bluray.create_action("left", [IrCode(IrEncoding_SIRC, 20, 0xDCB47)])
 sony_bluray.create_action("right", [IrCode(IrEncoding_SIRC, 20, 0x3CB47)])
 
-sony_bluray.options_list = [
-                            Option(name = "power", flags = Option_Cycled|Option_DefaultToZero|Option_ActionOnDefault, max_value = 1, 
-                                     change_action_names = ["powertoggle"])
-                           ]
+sony_bluray.create_option("power", Option_Cycled|Option_DefaultToZero|Option_ActionOnDefault, 1, ["powertoggle"])
 
 #  post_data_bits  8
 #'post_data      0x47
