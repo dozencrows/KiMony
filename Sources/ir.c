@@ -49,12 +49,14 @@ typedef struct _IrEncoder {
 	int			state;
 	uint16_t	counter;
 	IrPacket*	packet;
+	uint32_t	duration;
 } IrEncoder;
 
 static void irEncoderBegin(IrEncoder* encoder, IrPacket* packet)
 {
 	encoder->state 					= IRENCODER_STATE_UNDEFINED;
 	encoder->counter				= 0;
+	encoder->duration				= 0;
 	encoder->packet					= packet;
 	encoder->packet->header.length	= 0;
 }
@@ -90,6 +92,7 @@ static int irEncoderMark(IrEncoder* encoder, uint16_t duration)
 	}
 	else {
 		encoder->counter += duration;
+		encoder->duration += duration;
 	}
 	return result;
 }
@@ -111,6 +114,7 @@ static int irEncoderSpace(IrEncoder* encoder, uint16_t duration)
 	}
 	else {
 		encoder->counter += duration;
+		encoder->duration += duration;
 	}
 	return result;
 }
@@ -204,6 +208,16 @@ static int irEncodeSIRC(IrPacket* packet, uint32_t data, int bitCount, int repea
 	}
 
 	result = !result ? irEncoderEnd(&encoder, 0) : result;
+
+	uint32_t durationMs = (encoder.duration + 999) / 1000;
+
+	if (durationMs < packet->header.repeat_delay) {
+		packet->header.repeat_delay -= durationMs;
+	}
+	else {
+		packet->header.repeat_delay = 10;
+	}
+
 	return result;
 }
 
@@ -232,12 +246,7 @@ static void irSendRC6Code(uint32_t data, int bitCount)
 
 static void irSendSIRCCode(uint32_t data, int bitCount)
 {
-	int repeatCount = SIRC_REPEATS;
-
-	if (bitCount == 20) {
-		repeatCount = SIRC_REPEATS_20;
-	}
-	irEncodeSIRC(&irPacket, data, bitCount, repeatCount);
+	irEncodeSIRC(&irPacket, data, bitCount, SIRC_REPEATS);
 	sendIrPacketAndWait(&irPacket, 45000);
 }
 
