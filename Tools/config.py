@@ -29,7 +29,9 @@ sony_tv.options_list = [
                        Option(name = "input", flags = Option_Cycled, max_value = 5, change_action_names = ["nextinput"])
                        ] 
 
-sony_tv.actions["powertoggle"]  = IrAction([IrCode(IrEncoding_SIRC, 12, 0xA90)])
+sony_tv.create_action("powertoggle", [IrCode(IrEncoding_SIRC, 12, 0xA90)])
+
+#sony_tv.actions["powertoggle"]  = IrAction([IrCode(IrEncoding_SIRC, 12, 0xA90)])
 sony_tv.actions["nextinput"] = IrAction([IrCode(IrEncoding_SIRC, 12, 0xA50)])
 
 sony_tv.actions["numeric1"] = IrAction([IrCode(IrEncoding_SIRC, 12, 0x010)])

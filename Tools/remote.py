@@ -193,7 +193,7 @@ class IrCode(RemoteDataStruct):
 # This function dynamically generates a class with the right size of array for the set of codes
 # The codes are packaged as part of the structure
 #
-def IrAction(codes=None):
+def IrAction(codes=None, name='unknown'):
 
     if codes:
         code_count = len(codes)
@@ -206,10 +206,14 @@ def IrAction(codes=None):
             ("codes", IrCode * code_count)
             ]
             
+        def __init__(self, name):
+            self.name = name
+            
         def __str__(self):
             code_list = [self.codes[x] for x in range(0, len(self.codes))]
-            return "IrAction %s" % code_list
-    o = IrAction_()
+            return "IrAction %s (%s)" % (self.name, code_list)
+            
+    o = IrAction_(name)
     o.count = code_count
     
     if codes:
@@ -469,6 +473,9 @@ class Device(RemoteDataStruct):
 
     def __str__(self):
         return "Device %s" % self.name
+        
+    def create_action(self, name, codes):
+        self.actions[name] = IrAction(codes, name)
         
     def pre_pack_options_and_actions(self, package):
         for option in self.options_list:
