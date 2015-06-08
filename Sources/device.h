@@ -45,5 +45,6 @@ extern void deviceInit();
 extern void deviceSetActive(const Device* devices, int deviceCount);
 extern void deviceSetStates(const DeviceState* states, int stateCount);
 extern void deviceDoIrAction(const Device* device, const IrAction* irAction);
+extern int deviceAreAllOnDefault();
 
 #endif /* DEVICE_H_ */

@@ -307,6 +307,12 @@ void selectActivity(const Activity* activity)
 	}
 }
 
+void forceActivity(const Activity* activity)
+{
+	currentActivity = NULL;
+	selectActivity(activity);
+}
+
 void selectTouchPage(int page)
 {
 	if (page < 0) {
@@ -427,8 +433,10 @@ void mainLoop()
 				selectActivity(homeActivity);
 			}
 			else if (event->type == EVENT_POWEROFF) {
-				turnOffAllDevices();
-				selectActivity(homeActivity);
+				if (!deviceAreAllOnDefault()) {
+					turnOffAllDevices();
+					forceActivity(homeActivity);
+				}
 			}
 		}
 		else {
