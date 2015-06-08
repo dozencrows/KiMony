@@ -116,13 +116,14 @@ class RemoteDataStr(RemoteDataObj):
 # Wrapper for arrays of types that don't require fixup other than copying
 #
 class RemoteDataArray(RemoteDataObj):
-    def __init__(self, values, value_type):
+    def __init__(self, values, value_type, name = 'unknown'):
         self.values = values
         self.value_type = value_type
         self.values_array = (value_type * len(values))()
+        self.name = name
 
     def __str__(self):
-        return "Array %d (type %s, size %d)" % (self.ref(), self.value_type, len(self.values))
+        return "Array %s (type %s, size %d)" % (self.name, self.value_type, len(self.values))
         
     def fix_up(self, package):
         self.values_array[:] = [x for x in self.values]
@@ -140,11 +141,11 @@ class RemoteDataArray(RemoteDataObj):
 # Wrapper for arrays of references
 #
 class RemoteDataRefArray(RemoteDataArray):
-    def __init__(self, values):
-        super(RemoteDataRefArray, self).__init__(values, ct.c_uint32)
+    def __init__(self, values, name = 'unknown'):
+        super(RemoteDataRefArray, self).__init__(values, ct.c_uint32, name)
 
     def __str__(self):
-        return "RefArray %d (size %d)" % (self.ref(), len(self.values))
+        return "RefArray %s (size %d)" % (self.name, len(self.values))
         
     def fix_up(self, package):
         try:
@@ -438,7 +439,7 @@ class Option(RemoteDataStruct):
         return "Option %s" % self.name
 
     def pre_pack_change_actions(self, package, device):
-        self.action_refs = RemoteDataRefArray([x.ref() for x in self.change_actions])
+        self.action_refs = RemoteDataRefArray([x.ref() for x in self.change_actions], self.name + "-actions")
         package.append(self.action_refs)
         
     def fix_up(self, package):
@@ -552,7 +553,7 @@ class DeviceState(RemoteDataStruct):
         except IndexError:
             raise PackageError("%s has invalid option in %s" % (self, self.option_values_dict))
             
-        self.option_values_ref = RemoteDataArray(values, ct.c_uint8)
+        self.option_values_ref = RemoteDataArray(values, ct.c_uint8, self.name + "-options")
         package.append(self.option_values_ref)
         
     def fix_up(self, package):        
