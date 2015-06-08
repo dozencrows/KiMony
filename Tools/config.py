@@ -31,52 +31,51 @@ sony_tv.options_list = [
 
 sony_tv.create_action("powertoggle", [IrCode(IrEncoding_SIRC, 12, 0xA90)])
 
-#sony_tv.actions["powertoggle"]  = IrAction([IrCode(IrEncoding_SIRC, 12, 0xA90)])
-sony_tv.actions["nextinput"] = IrAction([IrCode(IrEncoding_SIRC, 12, 0xA50)])
+sony_tv.create_action("nextinput", [IrCode(IrEncoding_SIRC, 12, 0xA50)])
 
-sony_tv.actions["numeric1"] = IrAction([IrCode(IrEncoding_SIRC, 12, 0x010)])
-sony_tv.actions["numeric2"] = IrAction([IrCode(IrEncoding_SIRC, 12, 0x810)])
-sony_tv.actions["numeric3"] = IrAction([IrCode(IrEncoding_SIRC, 12, 0x410)])
-sony_tv.actions["numeric4"] = IrAction([IrCode(IrEncoding_SIRC, 12, 0xC10)])
-sony_tv.actions["numeric5"] = IrAction([IrCode(IrEncoding_SIRC, 12, 0x210)])
-sony_tv.actions["numeric6"] = IrAction([IrCode(IrEncoding_SIRC, 12, 0xA10)])
-sony_tv.actions["numeric7"] = IrAction([IrCode(IrEncoding_SIRC, 12, 0x610)])
-sony_tv.actions["numeric8"] = IrAction([IrCode(IrEncoding_SIRC, 12, 0xE10)])
-sony_tv.actions["numeric9"] = IrAction([IrCode(IrEncoding_SIRC, 12, 0x110)])
-sony_tv.actions["numeric0"] = IrAction([IrCode(IrEncoding_SIRC, 12, 0x910)])
+sony_tv.create_action("numeric1", [IrCode(IrEncoding_SIRC, 12, 0x010)])
+sony_tv.create_action("numeric2", [IrCode(IrEncoding_SIRC, 12, 0x810)])
+sony_tv.create_action("numeric3", [IrCode(IrEncoding_SIRC, 12, 0x410)])
+sony_tv.create_action("numeric4", [IrCode(IrEncoding_SIRC, 12, 0xC10)])
+sony_tv.create_action("numeric5", [IrCode(IrEncoding_SIRC, 12, 0x210)])
+sony_tv.create_action("numeric6", [IrCode(IrEncoding_SIRC, 12, 0xA10)])
+sony_tv.create_action("numeric7", [IrCode(IrEncoding_SIRC, 12, 0x610)])
+sony_tv.create_action("numeric8", [IrCode(IrEncoding_SIRC, 12, 0xE10)])
+sony_tv.create_action("numeric9", [IrCode(IrEncoding_SIRC, 12, 0x110)])
+sony_tv.create_action("numeric0", [IrCode(IrEncoding_SIRC, 12, 0x910)])
 
-sony_tv.actions["channel_up"] 	= IrAction([IrCode(IrEncoding_SIRC, 12, 0x090)])
-sony_tv.actions["channel_down"]	= IrAction([IrCode(IrEncoding_SIRC, 12, 0x890)])
-sony_tv.actions["info"]		    = IrAction([IrCode(IrEncoding_SIRC, 12, 0x5D0)])
+sony_tv.create_action("channel_up", [IrCode(IrEncoding_SIRC, 12, 0x090)])
+sony_tv.create_action("channel_down", [IrCode(IrEncoding_SIRC, 12, 0x890)])
+sony_tv.create_action("info", [IrCode(IrEncoding_SIRC, 12, 0x5D0)])
 
-sony_tv.actions["red"] 		    = IrAction([IrCode(IrEncoding_SIRC, 15, 0x52E9)])
-sony_tv.actions["yellow"] 		= IrAction([IrCode(IrEncoding_SIRC, 15, 0x72E9)])
-sony_tv.actions["green"] 		= IrAction([IrCode(IrEncoding_SIRC, 15, 0x32E9)])
-sony_tv.actions["blue"]	 	    = IrAction([IrCode(IrEncoding_SIRC, 15, 0x12E9)])
+sony_tv.create_action("red", [IrCode(IrEncoding_SIRC, 15, 0x52E9)])
+sony_tv.create_action("yellow", [IrCode(IrEncoding_SIRC, 15, 0x72E9)])
+sony_tv.create_action("green", [IrCode(IrEncoding_SIRC, 15, 0x32E9)])
+sony_tv.create_action("blue", [IrCode(IrEncoding_SIRC, 15, 0x12E9)])
 
-sony_tv.actions["guide"] 		= IrAction([IrCode(IrEncoding_SIRC, 15, 0x6D25)])
-sony_tv.actions["enter"] 		= IrAction([IrCode(IrEncoding_SIRC, 12, 0xA70)])
-sony_tv.actions["back"] 		= IrAction([IrCode(IrEncoding_SIRC, 12, 0xC70)])
-sony_tv.actions["home"] 		= IrAction([IrCode(IrEncoding_SIRC, 12, 0x070)])
+sony_tv.create_action("guide", [IrCode(IrEncoding_SIRC, 15, 0x6D25)])
+sony_tv.create_action("enter", [IrCode(IrEncoding_SIRC, 12, 0xA70)])
+sony_tv.create_action("back", [IrCode(IrEncoding_SIRC, 12, 0xC70)])
+sony_tv.create_action("home", [IrCode(IrEncoding_SIRC, 12, 0x070)])
 
-sony_tv.actions["up"] 		    = IrAction([IrCode(IrEncoding_SIRC, 12, 0x2F0)])
-sony_tv.actions["down"] 		= IrAction([IrCode(IrEncoding_SIRC, 12, 0xAF0)])
-sony_tv.actions["left"] 		= IrAction([IrCode(IrEncoding_SIRC, 12, 0x2D0)])
-sony_tv.actions["right"] 		= IrAction([IrCode(IrEncoding_SIRC, 12, 0xCD0)])
+sony_tv.create_action("up", [IrCode(IrEncoding_SIRC, 12, 0x2F0)])
+sony_tv.create_action("down", [IrCode(IrEncoding_SIRC, 12, 0xAF0)])
+sony_tv.create_action("left", [IrCode(IrEncoding_SIRC, 12, 0x2D0)])
+sony_tv.create_action("right", [IrCode(IrEncoding_SIRC, 12, 0xCD0)])
 
 
 phillips_hts = Device("Phillips HTS")
 
-phillips_hts.actions["powertoggle"] = IrAction([IrCode(IrEncoding_NOP, 0, 250),
+phillips_hts.create_action("powertoggle", [IrCode(IrEncoding_NOP, 0, 250),
                                                 IrCode(IrEncoding_RC6, 21, 0xFFB38), 
                                                 IrCode(IrEncoding_RC6, 21, 0xEFB38), 
 			                                    IrCode(IrEncoding_NOP, 0, 250)])                     
 
-phillips_hts.actions["volume_up"] 	= IrAction([IrCode(IrEncoding_RC6, 21, 0xEEFEF, 0x10000)])
-phillips_hts.actions["volume_down"] = IrAction([IrCode(IrEncoding_RC6, 21, 0xEEFEE, 0x10000)])
-phillips_hts.actions["mute"] 		= IrAction([IrCode(IrEncoding_RC6, 21, 0xEEFF2, 0x10000)])
-phillips_hts.actions["surround"]	    = IrAction([IrCode(IrEncoding_RC6, 21, 0xEEFAD, 0x10000), IrCode(IrEncoding_NOP, 0, 250)])
-phillips_hts.actions["pre-surround"]	= IrAction([IrCode(IrEncoding_NOP, 0, 20000), IrCode(IrEncoding_RC6, 21, 0xEEFAD, 0x10000), IrCode(IrEncoding_NOP, 0, 250)])
+phillips_hts.create_action("volume_up", [IrCode(IrEncoding_RC6, 21, 0xEEFEF, 0x10000)])
+phillips_hts.create_action("volume_down", [IrCode(IrEncoding_RC6, 21, 0xEEFEE, 0x10000)])
+phillips_hts.create_action("mute", [IrCode(IrEncoding_RC6, 21, 0xEEFF2, 0x10000)])
+phillips_hts.create_action("surround", [IrCode(IrEncoding_RC6, 21, 0xEEFAD, 0x10000), IrCode(IrEncoding_NOP, 0, 250)])
+phillips_hts.create_action("pre-surround", [IrCode(IrEncoding_NOP, 0, 20000), IrCode(IrEncoding_RC6, 21, 0xEEFAD, 0x10000), IrCode(IrEncoding_NOP, 0, 250)])
 
 phillips_hts.options_list = [ 
                             Option(name = "power", flags = Option_Cycled|Option_DefaultToZero|Option_ActionOnDefault, max_value = 1, 
@@ -86,11 +85,11 @@ phillips_hts.options_list = [
                             ]
 
 sony_bluray = Device("Sony Blu-ray")
-sony_bluray.actions["powertoggle"]  = IrAction([IrCode(IrEncoding_SIRC, 20, 0xA8B47)])
-sony_bluray.actions["up"] 		    = IrAction([IrCode(IrEncoding_SIRC, 20, 0x9CB47)])
-sony_bluray.actions["down"] 		= IrAction([IrCode(IrEncoding_SIRC, 20, 0x5CB47)])
-sony_bluray.actions["left"] 		= IrAction([IrCode(IrEncoding_SIRC, 20, 0xDCB47)])
-sony_bluray.actions["right"] 		= IrAction([IrCode(IrEncoding_SIRC, 20, 0x3CB47)])
+sony_bluray.create_action("powertoggle", [IrCode(IrEncoding_SIRC, 20, 0xA8B47)])
+sony_bluray.create_action("up", [IrCode(IrEncoding_SIRC, 20, 0x9CB47)])
+sony_bluray.create_action("down", [IrCode(IrEncoding_SIRC, 20, 0x5CB47)])
+sony_bluray.create_action("left", [IrCode(IrEncoding_SIRC, 20, 0xDCB47)])
+sony_bluray.create_action("right", [IrCode(IrEncoding_SIRC, 20, 0x3CB47)])
 
 sony_bluray.options_list = [
                             Option(name = "power", flags = Option_Cycled|Option_DefaultToZero|Option_ActionOnDefault, max_value = 1, 
