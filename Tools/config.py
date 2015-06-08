@@ -82,11 +82,11 @@ phillips_hts.options_list = [
                             ]
 
 sony_bluray = Device()
-sony_bluray.actions["powertoggle"]  = IrAction([IrCode(IrEncoding_SIRC, 12, 0xA8B)])
-sony_bluray.actions["up"] 		    = IrAction([IrCode(IrEncoding_SIRC, 12, 0x9CB)])
-sony_bluray.actions["down"] 		= IrAction([IrCode(IrEncoding_SIRC, 12, 0x5CB)])
-sony_bluray.actions["left"] 		= IrAction([IrCode(IrEncoding_SIRC, 12, 0xDCB)])
-sony_bluray.actions["right"] 		= IrAction([IrCode(IrEncoding_SIRC, 12, 0x3CB)])
+sony_bluray.actions["powertoggle"]  = IrAction([IrCode(IrEncoding_SIRC, 20, 0xA8B47)])
+sony_bluray.actions["up"] 		    = IrAction([IrCode(IrEncoding_SIRC, 20, 0x9CB47)])
+sony_bluray.actions["down"] 		= IrAction([IrCode(IrEncoding_SIRC, 20, 0x5CB47)])
+sony_bluray.actions["left"] 		= IrAction([IrCode(IrEncoding_SIRC, 20, 0xDCB47)])
+sony_bluray.actions["right"] 		= IrAction([IrCode(IrEncoding_SIRC, 20, 0x3CB47)])
 
 sony_bluray.options_list = [
                             Option(name = "power", flags = Option_Cycled|Option_DefaultToZero|Option_ActionOnDefault, max_value = 1, 
