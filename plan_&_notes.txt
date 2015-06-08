@@ -127,6 +127,8 @@ Done
 	* Success/error status communicated to tool and reported on screen and in tool
 * Implemented basic device and state management with two devices and two configuration options each
 * Implemented toggle bit per device
+* Refactored state changing so can switch activities without turning all devices off
+  * Home activity now leaves devices unchanged - either select new activity or hit power button
 
 Notes
 =====

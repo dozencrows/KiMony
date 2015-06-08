@@ -24,6 +24,9 @@ Event_NEXTPAGE  = 3
 Event_PREVPAGE  = 4
 Event_HOME      = 5
 Event_DOWNLOAD  = 6
+Event_POWEROFF  = 7
+
+Activity_NoDevices      = 0x0001    # Activity should not use or change state of any devices
 
 Option_Cycled           = 0x0001    # Option cycles through values, otherwise set explicitly to values
 Option_DefaultToZero    = 0x0002    # Option is set back to zero if not explicitly set in activity
@@ -542,6 +545,7 @@ class DeviceState(RemoteDataStruct):
 #
 class Activity(RemoteDataStruct):
     _fields_ = [
+        ("flags", ct.c_uint32),
         ("button_mapping_count", ct.c_int),
         ("button_mappings", ct.c_uint32),
         ("touch_button_page_count", ct.c_int),
@@ -550,7 +554,10 @@ class Activity(RemoteDataStruct):
         ("device_states", ct.c_uint32),
         ]
 
-    def __init__(self, button_mappings, touch_button_pages, device_states):
+    def __init__(self, button_mappings, touch_button_pages, device_states, flags = 0):
+        if flags:
+            self.flags = flags
+            
         if button_mappings:
             self.button_mapping_count = len(button_mappings)
             self.button_mappings_ref = button_mappings[0].ref()

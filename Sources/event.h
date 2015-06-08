@@ -22,6 +22,7 @@
 #define EVENT_PREVPAGE		4
 #define EVENT_HOME			5
 #define EVENT_DOWNLOAD		6
+#define EVENT_POWEROFF		7
 
 typedef struct _IrAction IrAction;
 typedef struct _Activity Activity;

@@ -16,12 +16,15 @@
 #define ACTIVITY_H_
 #include <stdint.h>
 
+#define ACTIVITY_NODEVICES	1
+
 typedef struct _TouchButtonPage {
 	int touchButtonCount;
 	uint32_t touchButtonOffset;
 } TouchButtonPage;
 
 typedef struct _Activity {
+	uint32_t flags;
 	int buttonMappingCount;
 	uint32_t buttonMappingOffset;
 	int touchButtonPageCount;

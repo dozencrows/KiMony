@@ -139,6 +139,7 @@ home_activity_event = Event(Event_HOME)
 next_event 		    = Event(Event_NEXTPAGE)
 prev_event 		    = Event(Event_PREVPAGE)
 download_event      = Event(Event_DOWNLOAD)
+poweroff_event      = Event(Event_POWEROFF)
 
 numeric1_event 		= Event(Event_IRACTION, [sony_tv.actions["numeric1"], sony_tv])
 numeric2_event 		= Event(Event_IRACTION, [sony_tv.actions["numeric2"], sony_tv])
@@ -188,7 +189,7 @@ watch_tv_activity = Activity(
 	    #ButtonMapping(0x100000, blue_event),
 	    #ButtonMapping(0x080000, green_event),
 	    #ButtonMapping(0x040000, yellow_event),
-	    #ButtonMapping(0x020000, power_event),
+	    ButtonMapping(0x020000, poweroff_event),
 	    ButtonMapping(0x010000, home_activity_event),
 	    ButtonMapping(0x008000, numeric1_event),
 	    ButtonMapping(0x000800, numeric2_event),
@@ -258,7 +259,7 @@ watch_movie_activity = Activity(
 	    #ButtonMapping(0x100000, blue_event),
 	    #ButtonMapping(0x080000, green_event),
 	    #ButtonMapping(0x040000, yellow_event),
-	    ButtonMapping(0x020000, br_power_event),
+	    ButtonMapping(0x020000, poweroff_event),
 	    ButtonMapping(0x010000, home_activity_event),
 	    #ButtonMapping(0x008000, numeric1_event),
 	    #ButtonMapping(0x000800, numeric2_event),
@@ -297,7 +298,7 @@ watch_tv_event = Event(Event_ACTIVITY, [watch_tv_activity])
 watch_movie_event = Event(Event_ACTIVITY, [watch_movie_activity])
 
 home_activity = Activity(
-    [ ButtonMapping(0x010000, prev_event), ButtonMapping(0x040000, next_event), ButtonMapping(0x100000, download_event) ],
+    [ ButtonMapping(0x010000, prev_event), ButtonMapping(0x040000, next_event), ButtonMapping(0x100000, download_event), ButtonMapping(0x020000, poweroff_event) ],
     [ 
         TouchButtonPage(
         [
@@ -305,7 +306,9 @@ home_activity = Activity(
             TouchButton(watch_movie_event, "Watch Movie", 0, 1*BUTTON_HEIGHT, 4*BUTTON_WIDTH, BUTTON_HEIGHT, 0xf9e0, False, True),   
         ]),
     ],
-    None)
+    None,
+    flags = Activity_NoDevices
+    )
 
 header = RemoteDataHeader(
     home_activity,
@@ -321,6 +324,7 @@ package.append(watch_movie_event)
 package.append(next_event)
 package.append(prev_event)
 package.append(download_event)
+package.append(poweroff_event)
 package.append(numeric1_event)
 package.append(numeric2_event)
 package.append(numeric3_event)

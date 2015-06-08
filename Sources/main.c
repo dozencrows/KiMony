@@ -271,28 +271,40 @@ static void backlightOn()
 	tftSetBacklight(1);
 }
 
+void turnOffAllDevices()
+{
+	renderMessage("Powering down...", 0xffff);
+	deviceSetStates(NULL, 0);
+}
+
 void selectActivity(const Activity* activity)
 {
-	rendererClearScreen();
-	renderMessage("Switching...", 0xffff);
+	if (currentActivity != activity) {
+		if (!(activity->flags & ACTIVITY_NODEVICES)) {
+			renderMessage("Switching...", 0xffff);
+		}
 
-	buttonsSetActiveMapping((const ButtonMapping*)GET_FLASH_PTR(activity->buttonMappingOffset), activity->buttonMappingCount);
+		buttonsSetActiveMapping((const ButtonMapping*)GET_FLASH_PTR(activity->buttonMappingOffset), activity->buttonMappingCount);
 
-	const TouchButton* touchButtons = NULL;
-	int touchButtonCount = 0;
+		const TouchButton* touchButtons = NULL;
+		int touchButtonCount = 0;
 
-	if (activity->touchButtonPageCount) {
-		const TouchButtonPage* tbPage = (const TouchButtonPage*)GET_FLASH_PTR(activity->touchButtonPagesOffset);
-		touchButtons = (const TouchButton*)GET_FLASH_PTR(tbPage->touchButtonOffset);
-		touchButtonCount = tbPage->touchButtonCount;
+		if (activity->touchButtonPageCount) {
+			const TouchButtonPage* tbPage = (const TouchButtonPage*)GET_FLASH_PTR(activity->touchButtonPagesOffset);
+			touchButtons = (const TouchButton*)GET_FLASH_PTR(tbPage->touchButtonOffset);
+			touchButtonCount = tbPage->touchButtonCount;
+		}
+
+		touchbuttonsSetActive(touchButtons, touchButtonCount);
+		currentActivity = activity;
+		touchPage = 0;
+
+		if (!(activity->flags & ACTIVITY_NODEVICES)) {
+			deviceSetStates((const DeviceState*)GET_FLASH_PTR(activity->deviceStatesOffset), activity->deviceStateCount);
+		}
+
+		rendererClearScreen();
 	}
-
-	touchbuttonsSetActive(touchButtons, touchButtonCount);
-	currentActivity = activity;
-	touchPage = 0;
-
-	deviceSetStates((const DeviceState*)GET_FLASH_PTR(activity->deviceStatesOffset), activity->deviceStateCount);
-	rendererClearScreen();
 }
 
 void selectTouchPage(int page)
@@ -304,17 +316,19 @@ void selectTouchPage(int page)
 		page = 0;
 	}
 
-	touchPage = page;
+	if (page != touchPage) {
+		touchPage = page;
 
-	if (page < currentActivity->touchButtonPageCount) {
-		const TouchButtonPage* tbPages = (const TouchButtonPage*)GET_FLASH_PTR(currentActivity->touchButtonPagesOffset);
-		touchbuttonsSetActive((const TouchButton*)GET_FLASH_PTR(tbPages[page].touchButtonOffset), tbPages->touchButtonCount);
-	}
-	else {
-		touchbuttonsSetActive(NULL, 0);
-	}
+		if (page < currentActivity->touchButtonPageCount) {
+			const TouchButtonPage* tbPages = (const TouchButtonPage*)GET_FLASH_PTR(currentActivity->touchButtonPagesOffset);
+			touchbuttonsSetActive((const TouchButton*)GET_FLASH_PTR(tbPages[page].touchButtonOffset), tbPages->touchButtonCount);
+		}
+		else {
+			touchbuttonsSetActive(NULL, 0);
+		}
 
-	rendererClearScreen();
+		rendererClearScreen();
+	}
 }
 
 void mainLoop()
@@ -410,6 +424,10 @@ void mainLoop()
 			}
 			else if (event->type == EVENT_DOWNLOAD) {
 				cpuFlashDownload();
+				selectActivity(homeActivity);
+			}
+			else if (event->type == EVENT_POWEROFF) {
+				turnOffAllDevices();
 				selectActivity(homeActivity);
 			}
 		}
