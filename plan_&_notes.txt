@@ -4,6 +4,8 @@ Plan
   * third device & second activity (e.g. play blue-ray)
   * third activity that uses disjoint device set from first two (e.g. digital music -> Squeezebox and hifi)
   * conditional pre-actions - e.g. if option 1 was 0, option 2 pre-action has extra delay (e.g. for post power-on only delays)
+  * Blu-ray player power-on delay to ensure ready for commands
+  * Device-specific mappings to emulate individual remotes, easily accessible for remedying issues.
 * Implement bitmap buttons
   * extend touch buttons to handle this (e.g. flag to switch icon for text, use same offset field)
   * rendering unpressed and pressed state

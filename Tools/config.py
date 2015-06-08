@@ -24,7 +24,7 @@ remoteConfig = RemoteConfig()
 
 sony_tv = Device("Sony TV")
 
-sony_tv.create_action("powertoggle", [IrCode(IrEncoding_SIRC, 12, 0xA90)])
+sony_tv.create_action("powertoggle", [IrCode(IrEncoding_SIRC, 12, 0xA90), IrCode(IrEncoding_NOP, 0, 500)])
 sony_tv.create_action("tvinput", [IrCode(IrEncoding_SIRC, 15, 0x58EE)])
 sony_tv.create_action("hdmi1input", [IrCode(IrEncoding_SIRC, 15, 0x4D58)])
 sony_tv.create_action("hdmi2input", [IrCode(IrEncoding_SIRC, 15, 0xCD58)])
@@ -75,7 +75,7 @@ phillips_hts.create_action("volume_up", [IrCode(IrEncoding_RC6, 21, 0xEEFEF, 0x1
 phillips_hts.create_action("volume_down", [IrCode(IrEncoding_RC6, 21, 0xEEFEE, 0x10000)])
 phillips_hts.create_action("mute", [IrCode(IrEncoding_RC6, 21, 0xEEFF2, 0x10000)])
 phillips_hts.create_action("surround", [IrCode(IrEncoding_RC6, 21, 0xEEFAD, 0x10000), IrCode(IrEncoding_NOP, 0, 250)])
-phillips_hts.create_action("pre-surround", [IrCode(IrEncoding_NOP, 0, 20000), IrCode(IrEncoding_RC6, 21, 0xEEFAD, 0x10000), IrCode(IrEncoding_NOP, 0, 250)])
+phillips_hts.create_action("pre-surround", [IrCode(IrEncoding_NOP, 0, 15000), IrCode(IrEncoding_RC6, 21, 0xEEFAD, 0x10000), IrCode(IrEncoding_NOP, 0, 250)])
 
 phillips_hts.create_option("power", Option_Cycled|Option_DefaultToZero|Option_ActionOnDefault, 1, ["powertoggle"])
 phillips_hts.create_option("surround", Option_Cycled|Option_DefaultToZero, 2, ["surround"], "pre-surround")
