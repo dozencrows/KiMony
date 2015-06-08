@@ -80,6 +80,60 @@ phillips_hts.options_list = [
                             Option(name = "surround", flags = Option_Cycled|Option_DefaultToZero, max_value = 2, 
                                      pre_action = phillips_hts.actions['pre-surround'], change_action_names = ["surround"])
                             ]
+
+sony_bluray = Device()
+sony_bluray.actions["powertoggle"]  = IrAction([IrCode(IrEncoding_SIRC, 12, 0xA8B)])
+sony_bluray.actions["up"] 		    = IrAction([IrCode(IrEncoding_SIRC, 12, 0x9CB)])
+sony_bluray.actions["down"] 		= IrAction([IrCode(IrEncoding_SIRC, 12, 0x5CB)])
+sony_bluray.actions["left"] 		= IrAction([IrCode(IrEncoding_SIRC, 12, 0xDCB)])
+sony_bluray.actions["right"] 		= IrAction([IrCode(IrEncoding_SIRC, 12, 0x3CB)])
+
+sony_bluray.options_list = [
+                            Option(name = "power", flags = Option_Cycled|Option_DefaultToZero|Option_ActionOnDefault, max_value = 1, 
+                                     change_action_names = ["powertoggle"])
+                           ]
+
+#  post_data_bits  8
+#'post_data      0x47
+#          KEY_EJECTCD              0x68B
+#          KEY_POWER                0xA8B
+#          KEY_1                    0x00B
+#          KEY_2                    0x80B
+#          KEY_3                    0x40B
+#          KEY_4                    0xC0B
+#          KEY_5                    0x20B
+#          KEY_6                    0xA0B
+#          KEY_7                    0x60B
+#          KEY_8                    0xE0B
+#          KEY_9                    0x10B
+#          KEY_0                    0x90B
+#          KEY_AUDIO                0x26B
+#          KEY_SUBTITLE             0xC6B
+#          KEY_RED                  0xE6B
+#          KEY_GREEN                0x16B
+#          KEY_BLUE                 0x66B
+#          KEY_YELLOW               0x96B
+#          KEY_MENU                 0x34B
+#          KEY_CONTEXT_MENU         0x94B
+#          KEY_UP                   0x9CB
+#          KEY_DOWN                 0x5CB
+#          KEY_LEFT                 0xDCB
+#          KEY_RIGHT                0x3CB
+#          KEY_OK                   0xBCB
+#          KEY_BACK                 0xC2B
+#          KEY_OPTION               0xFCB
+#          KEY_HOME                 0x42B
+#          KEY_RESTART              0xEAB
+#          KEY_PAUSE                0x98B
+#          KEY_END                  0x6AB
+#          KEY_REWIND               0xD8B
+#          KEY_PLAY                 0x58B
+#          KEY_FASTFORWARD          0x38B
+#          KEY_DISPLAYTOGGLE        0x82B
+#          KEY_STOP                 0x18B
+#          KEY_WWW                  0x32B
+
+
 # Events
 home_activity_event = Event(Event_HOME)
 next_event 		    = Event(Event_NEXTPAGE)
@@ -121,8 +175,14 @@ down_event		    = Event(Event_IRACTION, [sony_tv.actions["down"], sony_tv])
 left_event		    = Event(Event_IRACTION, [sony_tv.actions["left"], sony_tv])
 right_event		    = Event(Event_IRACTION, [sony_tv.actions["right"], sony_tv])
 
+br_power_event      = sony_bluray.create_event("powertoggle")
+br_up_event		    = sony_bluray.create_event("up")
+br_down_event		= sony_bluray.create_event("down")
+br_left_event		= sony_bluray.create_event("left")
+br_right_event		= sony_bluray.create_event("right")
+
 # Activities, button mappings and touch button pages
-test_remote_activity = Activity(
+watch_tv_activity = Activity(
     [ 
 	    ButtonMapping(0x200000, info_event),
 	    #ButtonMapping(0x100000, blue_event),
@@ -191,41 +251,73 @@ test_remote_activity = Activity(
         DeviceState(phillips_hts, { "power": 1, "surround": 2 })
     ])
     
-test_remote_event = Event(Event_ACTIVITY, [test_remote_activity])
+
+watch_movie_activity = Activity(
+    [ 
+	    #ButtonMapping(0x200000, info_event),
+	    #ButtonMapping(0x100000, blue_event),
+	    #ButtonMapping(0x080000, green_event),
+	    #ButtonMapping(0x040000, yellow_event),
+	    ButtonMapping(0x020000, br_power_event),
+	    ButtonMapping(0x010000, home_activity_event),
+	    #ButtonMapping(0x008000, numeric1_event),
+	    #ButtonMapping(0x000800, numeric2_event),
+	    #ButtonMapping(0x000080, numeric3_event),
+	    ButtonMapping(0x000008, volume_up_event),
+	    #ButtonMapping(0x004000, numeric4_event),
+	    #ButtonMapping(0x000400, numeric5_event),
+	    #ButtonMapping(0x000040, numeric6_event),
+	    ButtonMapping(0x000004, volume_down_event),
+	    #ButtonMapping(0x002000, numeric7_event),
+	    #ButtonMapping(0x000200, numeric8_event),
+	    #ButtonMapping(0x000020, numeric9_event),
+	    #ButtonMapping(0x000002, channel_up_event),
+	    ButtonMapping(0x001000, surround_event),
+	    #ButtonMapping(0x000100, numeric0_event),
+	    ButtonMapping(0x000010, mute_event),
+	    #ButtonMapping(0x000001, channel_down_event),
+    ],
+
+    [
+        TouchButtonPage(
+        [
+	        TouchButton(br_up_event, "U",  (SCREEN_WIDTH - BUTTON_WIDTH) / 2, 2*BUTTON_HEIGHT, BUTTON_WIDTH, BUTTON_HEIGHT, 0xf9e0, True, True),
+	        TouchButton(br_down_event, "D",  (SCREEN_WIDTH - BUTTON_WIDTH) / 2, 3*BUTTON_HEIGHT, BUTTON_WIDTH, BUTTON_HEIGHT, 0xf9e0, True, True),
+	        TouchButton(br_left_event, "L",  (SCREEN_WIDTH - BUTTON_WIDTH) / 2 - BUTTON_WIDTH, int(2.5*BUTTON_HEIGHT), BUTTON_WIDTH, BUTTON_HEIGHT, 0xf9e0, True, True),
+	        TouchButton(br_right_event, "R",  (SCREEN_WIDTH - BUTTON_WIDTH) / 2 + BUTTON_WIDTH, int(2.5*BUTTON_HEIGHT), BUTTON_WIDTH, BUTTON_HEIGHT, 0xf9e0, True, True),
+	    ])
+	],
+    [
+        DeviceState(sony_tv, { "power": 1, "input": 0 }),
+        DeviceState(sony_bluray, { "power": 1 }),
+        DeviceState(phillips_hts, { "power": 1, "surround": 2 }),
+    ])
+
+watch_tv_event = Event(Event_ACTIVITY, [watch_tv_activity])
+watch_movie_event = Event(Event_ACTIVITY, [watch_movie_activity])
 
 home_activity = Activity(
     [ ButtonMapping(0x010000, prev_event), ButtonMapping(0x040000, next_event), ButtonMapping(0x100000, download_event) ],
     [ 
         TouchButtonPage(
         [
-            TouchButton(test_remote_event, "Test 1", 0, 0*BUTTON_HEIGHT, 4*BUTTON_WIDTH, BUTTON_HEIGHT, 0xf9e0, False, True),   
-            TouchButton(test_remote_event, "Test 2", 0, 1*BUTTON_HEIGHT, 4*BUTTON_WIDTH, BUTTON_HEIGHT, 0xf9e0, False, True),   
-        ]),
-        
-        TouchButtonPage(
-        [
-            TouchButton(test_remote_event, "Test 2", 0, 1*BUTTON_HEIGHT, 4*BUTTON_WIDTH, BUTTON_HEIGHT, 0xf9e0, False, True),   
-            TouchButton(test_remote_event, "Test 3", 0, 2*BUTTON_HEIGHT, 4*BUTTON_WIDTH, BUTTON_HEIGHT, 0xf9e0, False, True),   
-        ]),
-
-        TouchButtonPage(
-        [
-            TouchButton(test_remote_event, "Test 3", 0, 2*BUTTON_HEIGHT, 4*BUTTON_WIDTH, BUTTON_HEIGHT, 0xf9e0, False, True),   
-            TouchButton(test_remote_event, "Test 4", 0, 3*BUTTON_HEIGHT, 4*BUTTON_WIDTH, BUTTON_HEIGHT, 0xf9e0, False, True),   
+            TouchButton(watch_tv_event, "Watch TV", 0, 0*BUTTON_HEIGHT, 4*BUTTON_WIDTH, BUTTON_HEIGHT, 0xf9e0, False, True),   
+            TouchButton(watch_movie_event, "Watch Movie", 0, 1*BUTTON_HEIGHT, 4*BUTTON_WIDTH, BUTTON_HEIGHT, 0xf9e0, False, True),   
         ]),
     ],
     None)
 
 header = RemoteDataHeader(
     home_activity,
-    [ sony_tv, phillips_hts ],
-    [ home_activity, test_remote_activity ]
+    [ sony_tv, sony_bluray, phillips_hts ],
+    [ home_activity, watch_tv_activity, watch_movie_activity ]
     )
     
 package = Package()
 package.append(header)
-package.append(test_remote_event)
 package.append(home_activity_event)
+package.append(watch_tv_event)
+package.append(watch_movie_event)
 package.append(next_event)
 package.append(prev_event)
 package.append(download_event)
@@ -258,4 +350,9 @@ package.append(up_event)
 package.append(down_event)
 package.append(left_event)
 package.append(right_event)
+package.append(br_power_event)
+package.append(br_up_event)
+package.append(br_down_event)
+package.append(br_left_event)
+package.append(br_right_event)
 

@@ -443,6 +443,9 @@ class Device(RemoteDataStruct):
     def __str__(self):
         return "Device %d" % self.ref()
         
+    def create_event(self, action_name):
+        return Event(Event_IRACTION, [self.actions[action_name], self])
+        
     def pre_pack_options_and_actions(self, package):
         for option in self.options_list:
             package.append(option)
