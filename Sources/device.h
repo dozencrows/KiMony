@@ -22,6 +22,7 @@ typedef struct _IrAction IrAction;
 #define OPTION_CYCLED				0x0001
 #define OPTION_DEFAULT_TO_ZERO		0x0002
 #define OPTION_ACTION_ON_DEFAULT	0x0004
+#define OPTION_ALWAYS_SET			0x0008
 
 typedef struct _Option {
 	uint16_t	flags;

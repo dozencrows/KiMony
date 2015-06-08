@@ -91,7 +91,7 @@ static void setDeviceToState(const DeviceState* state, int deviceIndex)
 	uint8_t* optionValues = optionValuesStore + deviceDynamicState[deviceIndex].optionValuesOffset;
 
 	for (int i = 0; i < device->optionCount; i++) {
-		if (stateOptionValues[i] != optionValues[i]) {
+		if (stateOptionValues[i] != optionValues[i] || (options[i].flags & OPTION_ALWAYS_SET)) {
 			actionOptionToValue(device, options + i, optionValues[i], stateOptionValues[i]);
 			optionValues[i] = stateOptionValues[i];
 		}

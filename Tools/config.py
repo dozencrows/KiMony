@@ -62,7 +62,7 @@ sony_tv.create_action("left", [IrCode(IrEncoding_SIRC, 12, 0x2D0)])
 sony_tv.create_action("right", [IrCode(IrEncoding_SIRC, 12, 0xCD0)])
 
 sony_tv.create_option(name = "power", flags = Option_Cycled|Option_DefaultToZero|Option_ActionOnDefault, max_value = 1, change_action_names = ["powertoggle"])
-sony_tv.create_option(name = "input", flags = 0, max_value = 4, change_action_names = ["tvinput", "hdmi1input", "hdmi2input", "hdmi3input", "hdmi4input"])
+sony_tv.create_option(name = "input", flags = Option_AlwaysSet, max_value = 4, change_action_names = ["tvinput", "hdmi1input", "hdmi2input", "hdmi3input", "hdmi4input"])
 
 phillips_hts = Device("Phillips HTS")
 
