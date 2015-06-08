@@ -262,18 +262,19 @@ class ButtonMapping(RemoteDataStruct):
     def __init__(self, button_mask, event):
         self.button_mask = button_mask
         if event:
-            self.event_ref = event.ref()
+            self.event_ref = event
         else:
             self.event_ref = None
         
     def __str__(self):
-        return "Button Mapping %08x" % (self.button_mask)
+        return "Button Mapping %08x to %s" % (self.button_mask, self.event_ref.name)
         
     def fix_up(self, package):
-        try:
-            self.event = package.offsetof(self.event_ref)
-        except PackageError:
-            print self, "has reference to missing event"
+        if self.event_ref:
+            try:
+                self.event = package.offsetof(self.event_ref.ref())
+            except PackageError:
+                print self, "has reference to missing event"
 
 #
 # Touch screen button
@@ -356,7 +357,8 @@ class TouchButtonPage(RemoteDataStruct):
         ("buttons", ct.c_uint32)
         ]
     
-    def __init__(self, touch_buttons):
+    def __init__(self, touch_buttons, name = 'unknown'):
+        self.name = name;
         self.touch_buttons = touch_buttons
         self.count = len(touch_buttons)
         if touch_buttons:
@@ -365,7 +367,7 @@ class TouchButtonPage(RemoteDataStruct):
             self.buttons_ref = None
         
     def __str__(self):
-        return "TouchButtonPage %d" % self.ref()
+        return "TouchButtonPage %s" % self.name
         
     def pre_pack_touch_buttons(self, package):
         for x in self.touch_buttons:
@@ -559,9 +561,9 @@ class Activity(RemoteDataStruct):
         ("device_states", ct.c_uint32),
         ]
 
-    def __init__(self, button_mappings, touch_button_pages, device_states, flags = 0):
-        if flags:
-            self.flags = flags
+    def __init__(self, button_mappings, touch_button_pages, device_states, flags = 0, name = 'unknown'):
+        self.name = name
+        self.flags = flags
             
         if button_mappings:
             self.button_mapping_count = len(button_mappings)
@@ -588,7 +590,7 @@ class Activity(RemoteDataStruct):
             self.device_states_ref = None
 
     def __str__(self):
-        return "Activity %d" % self.ref()
+        return "Activity %s" % self.name
         
     def pre_pack(self, package):
         for x in self.button_mapping_objs:
