@@ -22,7 +22,7 @@ BUTTON_HEIGHT	= SCREEN_HEIGHT/BUTTON_ROWS
 
 remoteConfig = RemoteConfig()
 
-sony_tv = Device()
+sony_tv = Device("Sony TV")
 
 sony_tv.options_list = [ 
                        Option(name = "power", flags = Option_Cycled|Option_DefaultToZero|Option_ActionOnDefault, max_value = 1, change_action_names = ["powertoggle"]),
@@ -63,7 +63,7 @@ sony_tv.actions["left"] 		= IrAction([IrCode(IrEncoding_SIRC, 12, 0x2D0)])
 sony_tv.actions["right"] 		= IrAction([IrCode(IrEncoding_SIRC, 12, 0xCD0)])
 
 
-phillips_hts = Device()
+phillips_hts = Device("Phillips HTS")
 
 phillips_hts.actions["powertoggle"] = IrAction([IrCode(IrEncoding_NOP, 0, 250),
                                                 IrCode(IrEncoding_RC6, 21, 0xFFB38), 
@@ -83,7 +83,7 @@ phillips_hts.options_list = [
                                      pre_action = phillips_hts.actions['pre-surround'], change_action_names = ["surround"])
                             ]
 
-sony_bluray = Device()
+sony_bluray = Device("Sony Blu-ray")
 sony_bluray.actions["powertoggle"]  = IrAction([IrCode(IrEncoding_SIRC, 20, 0xA8B47)])
 sony_bluray.actions["up"] 		    = IrAction([IrCode(IrEncoding_SIRC, 20, 0x9CB47)])
 sony_bluray.actions["down"] 		= IrAction([IrCode(IrEncoding_SIRC, 20, 0x5CB47)])
@@ -232,12 +232,11 @@ watch_tv_activity = Activity(name = "watch-tv",
 	            TouchButton(left_event, "L",  (SCREEN_WIDTH - BUTTON_WIDTH) / 2 - BUTTON_WIDTH, int(2.5*BUTTON_HEIGHT), BUTTON_WIDTH, BUTTON_HEIGHT, 0xf9e0, True, True),
 	            TouchButton(right_event, "R",  (SCREEN_WIDTH - BUTTON_WIDTH) / 2 + BUTTON_WIDTH, int(2.5*BUTTON_HEIGHT), BUTTON_WIDTH, BUTTON_HEIGHT, 0xf9e0, True, True),
         ])
-    ],
-    device_states = [
-        DeviceState(sony_tv, { "power": 1, "input": 0 }),
-        DeviceState(phillips_hts, { "power": 1, "surround": 2 })
-    ])
-    
+    ]
+    )
+
+watch_tv_activity.create_device_state(sony_tv, { "power": 1, "input": 0 })  
+watch_tv_activity.create_device_state(phillips_hts, { "power": 1, "surround": 2 })
 
 watch_movie_activity = Activity(name = "watch-movie",
     button_mappings = [ 
@@ -273,12 +272,12 @@ watch_movie_activity = Activity(name = "watch-movie",
 	            TouchButton(br_left_event, "L",  (SCREEN_WIDTH - BUTTON_WIDTH) / 2 - BUTTON_WIDTH, int(2.5*BUTTON_HEIGHT), BUTTON_WIDTH, BUTTON_HEIGHT, 0xf9e0, True, True),
 	            TouchButton(br_right_event, "R",  (SCREEN_WIDTH - BUTTON_WIDTH) / 2 + BUTTON_WIDTH, int(2.5*BUTTON_HEIGHT), BUTTON_WIDTH, BUTTON_HEIGHT, 0xf9e0, True, True),
 	    ])
-	],
-    device_states = [
-        DeviceState(sony_tv, { "power": 1, "input": 0 }),
-        DeviceState(sony_bluray, { "power": 1 }),
-        DeviceState(phillips_hts, { "power": 1, "surround": 2 }),
-    ])
+	]
+    )
+    
+watch_movie_activity.create_device_state(sony_tv, { "power": 1, "input": 0 })
+watch_movie_activity.create_device_state(sony_bluray, { "power": 1 })
+watch_movie_activity.create_device_state(phillips_hts, { "power": 1, "surround": 2 })
 
 watch_tv_event = remoteConfig.create_activity_event("watch-tv", watch_tv_activity)
 watch_movie_event = remoteConfig.create_activity_event("watch-movie", watch_movie_activity)
@@ -292,7 +291,6 @@ home_activity = Activity(name = "home",
                 TouchButton(watch_movie_event, "Watch Movie", 0, 1*BUTTON_HEIGHT, 4*BUTTON_WIDTH, BUTTON_HEIGHT, 0xf9e0, False, True),   
         ]),
     ],
-    device_states = None,
     flags = Activity_NoDevices
     )
 

@@ -169,11 +169,19 @@ class IrCode(RemoteDataStruct):
         ("toggle_mask", ct.c_uint32) 
         ]
         
+    _encodings_ = { 0:"nop", 1:"RC6", 2:"SIRC" }
+        
     def __init__(self, encoding, bits, code, toggle_mask=0):
         self.encoding = encoding
         self.bits = bits
         self.code = code
         self.toggle_mask = toggle_mask
+        
+    def __repr__(self):
+        return self.__str__()
+        
+    def __str__(self):
+        return "IrCode %s %d bits %08x (%08x)" % (IrCode._encodings_[self.encoding], self.bits, self.code, self.toggle_mask)
 
 #
 # Single IR 'action' consisting of one or more codes
@@ -186,6 +194,7 @@ class IrCode(RemoteDataStruct):
 # The codes are packaged as part of the structure
 #
 def IrAction(codes=None):
+
     if codes:
         code_count = len(codes)
     else:
@@ -196,6 +205,10 @@ def IrAction(codes=None):
             ("count", ct.c_int),
             ("codes", IrCode * code_count)
             ]
+            
+        def __str__(self):
+            code_list = [self.codes[x] for x in range(0, len(self.codes))]
+            return "IrAction %s" % code_list
     o = IrAction_()
     o.count = code_count
     
@@ -449,12 +462,13 @@ class Device(RemoteDataStruct):
         ("options", ct.c_uint32)
         ]
 
-    def __init__(self):            
+    def __init__(self, name = 'unknown'):            
         self.options_list = []
         self.actions = {}
+        self.name = name
 
     def __str__(self):
-        return "Device %d" % self.ref()
+        return "Device %s" % self.name
         
     def pre_pack_options_and_actions(self, package):
         for option in self.options_list:
@@ -500,12 +514,13 @@ class DeviceState(RemoteDataStruct):
         ("option_values", ct.c_uint32)
     ]
     
-    def __init__(self, device, option_values_dict):
+    def __init__(self, name, device, option_values_dict):
+        self.name = name
         self.device_ref = device
         self.option_values_dict = option_values_dict
         
     def __str__(self):
-        return "DeviceState %d" % self.ref()
+        return "DeviceState %s" % self.name
     
     def pre_pack_option_values(self, package):
         values = [0] * len(self.device_ref.options_list)
@@ -561,7 +576,7 @@ class Activity(RemoteDataStruct):
         ("device_states", ct.c_uint32),
         ]
 
-    def __init__(self, button_mappings, touch_button_pages, device_states, flags = 0, name = 'unknown'):
+    def __init__(self, button_mappings, touch_button_pages, flags = 0, name = 'unknown'):
         self.name = name
         self.flags = flags
             
@@ -581,16 +596,13 @@ class Activity(RemoteDataStruct):
             self.touch_button_pages_objs = []
             self.touch_button_pages_ref = None
             
-        if device_states:
-            self.device_state_count = len(device_states)
-            self.device_states_ref = device_states[0].ref()
-            self.device_states_objs = device_states
-        else:
-            self.device_states_objs = []
-            self.device_states_ref = None
+        self.device_states_objs = []
 
     def __str__(self):
         return "Activity %s" % self.name
+        
+    def create_device_state(self, device, options):
+        self.device_states_objs.append(DeviceState(self.name + "-" + device.name, device, options))
         
     def pre_pack(self, package):
         for x in self.button_mapping_objs:
@@ -620,10 +632,12 @@ class Activity(RemoteDataStruct):
         except PackageError:
             print self, "has reference to missing touch button pages"
 
-        try:
-            self.device_states = package.offsetof(self.device_states_ref)
-        except PackageError:
-            print self, "has reference to missing device states"
+        self.device_state_count = len(self.device_states_objs)
+        if self.device_state_count > 0:
+            try:
+                self.device_states = package.offsetof(self.device_states_objs[0].ref())
+            except PackageError:
+                print self, "has reference to missing device states"
 
 #
 # Top level structure that pulls together the entire remote data set
