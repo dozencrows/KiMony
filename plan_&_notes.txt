@@ -4,7 +4,6 @@ Plan
   * third device & second activity (e.g. play blue-ray)
   * third activity that uses disjoint device set from first two (e.g. digital music -> Squeezebox and hifi)
   * conditional pre-actions - e.g. if option 1 was 0, option 2 pre-action has extra delay (e.g. for post power-on only delays)
-* Improve remote data compilation error reporting - add better identification/naming for objects
 * Implement bitmap buttons
   * extend touch buttons to handle this (e.g. flag to switch icon for text, use same offset field)
   * rendering unpressed and pressed state
@@ -129,6 +128,7 @@ Done
 * Implemented toggle bit per device
 * Refactored state changing so can switch activities without turning all devices off
   * Home activity now leaves devices unchanged - either select new activity or hit power button
+* Implemented improved remote data compilation error reporting, with naming of objects
 
 Notes
 =====
