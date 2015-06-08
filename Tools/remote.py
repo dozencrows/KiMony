@@ -316,7 +316,7 @@ class TouchButton(RemoteDataStruct):
         ("centre_text", ct.c_uint32, 1),
         ]
         
-    def __init__(self, event, text, x, y, width, height, colour, press_activate, centre_text):
+    def __init__(self, event, text, x, y, width, height, colour, press_activate, centre_text, name = None):
         if text:
             self.wrapped_text = RemoteDataStr(text)
             self.text_ref  = self.wrapped_text.ref()
@@ -337,11 +337,15 @@ class TouchButton(RemoteDataStruct):
         self.press_activate = press_activate
         self.centre_text = centre_text
         
-    def __str__(self):
-        if self.wrapped_text:
-            return "TouchButton %s" % self.wrapped_text
+        if name:
+            self.name = name
+        elif text:
+            self.name = text
         else:
-            return "TouchButton %d" % self.ref()
+            self.name = 'unknown'
+        
+    def __str__(self):
+        return "TouchButton %s" % self.name
         
     def pre_pack(self, package):
         if self.wrapped_text:
