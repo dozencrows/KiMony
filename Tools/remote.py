@@ -97,7 +97,11 @@ class RemoteDataStruct(RemoteDataObj, ct.LittleEndianStructure):
 #
 class RemoteDataStr(RemoteDataObj):
     def __init__(self, string):
+        self.string = string
         self.wrapped_string = ct.create_string_buffer(string)
+        
+    def __str__(self):
+        return self.string
 
     def size(self):
         return ct.sizeof(self.wrapped_string)
@@ -216,7 +220,7 @@ class Event(RemoteDataStruct):
         ("data", ct.c_uint32 * 2)
         ]
 
-    _types_ = { 0:"none", 1:"IR action", 2:"Activity", 3:"Next", 4:"Prev", 5:"Home", 6:"Download" }
+    _types_ = { 0:"none", 1:"IR action", 2:"Activity", 3:"Next", 4:"Prev", 5:"Home", 6:"Download", 7:"PowerOff" }
         
     def __init__(self, t, data = None):
         self.type = t
@@ -262,7 +266,7 @@ class ButtonMapping(RemoteDataStruct):
             self.event_ref = None
         
     def __str__(self):
-        return "Button Mapping %d (mask 0x%08x)" % (self.ref(), self.button_mask)
+        return "Button Mapping %08x" % (self.button_mask)
         
     def fix_up(self, package):
         try:
@@ -315,7 +319,10 @@ class TouchButton(RemoteDataStruct):
         self.centre_text = centre_text
         
     def __str__(self):
-        return "TouchButton %d" % self.ref()
+        if self.wrapped_text:
+            return "TouchButton %s" % self.wrapped_text
+        else:
+            return "TouchButton %d" % self.ref()
         
     def pre_pack(self, package):
         if self.wrapped_text:
@@ -712,7 +719,7 @@ class Package:
             binary_obj = obj.binarise()
             packed_objects.append(obj.binarise())
 
-            print "Obj", obj.ref(), "(", type(obj), ") at", self.offsets[obj.ref()], packed_offset, "size", len(binary_obj), "fill", fill_size
+            print "Obj", obj, "at", self.offsets[obj.ref()], packed_offset, "size", len(binary_obj), "fill", fill_size
             packed_offset += len(binary_obj) + fill_size
 
         self.align_to(4)
