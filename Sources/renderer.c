@@ -132,26 +132,26 @@ static void updateDrawListBounds(uint16_t x0, uint16_t y0, uint16_t x1, uint16_t
 		SWAPNUM(y0, y1);
 	}
 
-	if (x0 < drawListMinX) {
-		drawListMinX = MAX(x0, 0);
-	}
-
-	if (x1 > drawListMaxX) {
-		drawListMaxX = MIN(x1, SCREEN_WIDTH);
-	}
-
-	if (y0 < drawListMinY) {
-		drawListMinY = MAX(y0, 0);
-	}
-
-	if (y1 > drawListMaxY) {
-		drawListMaxY = MIN(y1, SCREEN_HEIGHT);
-	}
-
 	y0 = MAX(y0, 0);
 	y1 = MIN(y1, SCREEN_HEIGHT);
 	x0 = MAX(x0, 0);
 	x1 = MIN(x1, SCREEN_WIDTH);
+
+	if (x0 < drawListMinX) {
+		drawListMinX = x0;
+	}
+
+	if (x1 > drawListMaxX) {
+		drawListMaxX = x1;
+	}
+
+	if (y0 < drawListMinY) {
+		drawListMinY = y0;
+	}
+
+	if (y1 > drawListMaxY) {
+		drawListMaxY = y1;
+	}
 
 	for (int y = y0; y < y1; y++) {
 		if (x0 < rowMinX[y]) {
@@ -393,7 +393,7 @@ static void renderScanLine(uint16_t y)
 	}
 
 	fillWidth = drawListMaxX - rowMaxX[y];
-	fillPtr = pixelBuffer + rowMaxX[y];
+	fillPtr = pixelBuffer + rowMaxX[y] - drawListMinX;
 
 	if (fillWidth >= 2) {
 		uint32_t  fillDuo = 0;
