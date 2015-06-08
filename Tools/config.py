@@ -25,7 +25,11 @@ remoteConfig = RemoteConfig()
 sony_tv = Device("Sony TV")
 
 sony_tv.create_action("powertoggle", [IrCode(IrEncoding_SIRC, 12, 0xA90)])
-sony_tv.create_action("nextinput", [IrCode(IrEncoding_SIRC, 12, 0xA50)])
+sony_tv.create_action("tvinput", [IrCode(IrEncoding_SIRC, 15, 0x58EE)])
+sony_tv.create_action("hdmi1input", [IrCode(IrEncoding_SIRC, 15, 0x4D58)])
+sony_tv.create_action("hdmi2input", [IrCode(IrEncoding_SIRC, 15, 0xCD58)])
+sony_tv.create_action("hdmi3input", [IrCode(IrEncoding_SIRC, 15, 0x1D58)])
+sony_tv.create_action("hdmi4input", [IrCode(IrEncoding_SIRC, 15, 0x5D58)])
 
 sony_tv.create_action("numeric1", [IrCode(IrEncoding_SIRC, 12, 0x010)])
 sony_tv.create_action("numeric2", [IrCode(IrEncoding_SIRC, 12, 0x810)])
@@ -58,7 +62,7 @@ sony_tv.create_action("left", [IrCode(IrEncoding_SIRC, 12, 0x2D0)])
 sony_tv.create_action("right", [IrCode(IrEncoding_SIRC, 12, 0xCD0)])
 
 sony_tv.create_option(name = "power", flags = Option_Cycled|Option_DefaultToZero|Option_ActionOnDefault, max_value = 1, change_action_names = ["powertoggle"])
-sony_tv.create_option(name = "input", flags = Option_Cycled, max_value = 5, change_action_names = ["nextinput"])
+sony_tv.create_option(name = "input", flags = 0, max_value = 4, change_action_names = ["tvinput", "hdmi1input", "hdmi2input", "hdmi3input", "hdmi4input"])
 
 phillips_hts = Device("Phillips HTS")
 
