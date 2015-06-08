@@ -20,6 +20,8 @@ BUTTON_ROWS	    = 6
 BUTTON_WIDTH	= SCREEN_WIDTH/BUTTON_COLUMNS
 BUTTON_HEIGHT	= SCREEN_HEIGHT/BUTTON_ROWS
 
+remoteConfig = RemoteConfig()
+
 sony_tv = Device()
 
 sony_tv.options_list = [ 
@@ -134,53 +136,57 @@ sony_bluray.options_list = [
 #          KEY_WWW                  0x32B
 
 
+remoteConfig.add_device(sony_tv)
+remoteConfig.add_device(sony_bluray)
+remoteConfig.add_device(phillips_hts)
+
 # Events
-home_activity_event = Event(Event_HOME)
-next_event 		    = Event(Event_NEXTPAGE)
-prev_event 		    = Event(Event_PREVPAGE)
-download_event      = Event(Event_DOWNLOAD)
-poweroff_event      = Event(Event_POWEROFF)
+home_activity_event = remoteConfig.create_event("home",         Event_HOME)
+next_event 		    = remoteConfig.create_event("next",         Event_NEXTPAGE)
+prev_event 		    = remoteConfig.create_event("prev",         Event_PREVPAGE)
+download_event      = remoteConfig.create_event("download",     Event_DOWNLOAD)
+poweroff_event      = remoteConfig.create_event("power-off",    Event_POWEROFF)
 
-numeric1_event 		= Event(Event_IRACTION, [sony_tv.actions["numeric1"], sony_tv])
-numeric2_event 		= Event(Event_IRACTION, [sony_tv.actions["numeric2"], sony_tv])
-numeric3_event 		= Event(Event_IRACTION, [sony_tv.actions["numeric3"], sony_tv])
-numeric4_event 		= Event(Event_IRACTION, [sony_tv.actions["numeric4"], sony_tv])
-numeric5_event 		= Event(Event_IRACTION, [sony_tv.actions["numeric5"], sony_tv])
-numeric6_event 		= Event(Event_IRACTION, [sony_tv.actions["numeric6"], sony_tv])
-numeric7_event 		= Event(Event_IRACTION, [sony_tv.actions["numeric7"], sony_tv])
-numeric8_event 		= Event(Event_IRACTION, [sony_tv.actions["numeric8"], sony_tv])
-numeric9_event 		= Event(Event_IRACTION, [sony_tv.actions["numeric9"], sony_tv])
-numeric0_event 		= Event(Event_IRACTION, [sony_tv.actions["numeric0"], sony_tv])
+numeric1_event 		= remoteConfig.create_ir_event("tv-1", sony_tv, "numeric1")
+numeric2_event 		= remoteConfig.create_ir_event("tv-2", sony_tv, "numeric2")
+numeric3_event 		= remoteConfig.create_ir_event("tv-3", sony_tv, "numeric3")
+numeric4_event 		= remoteConfig.create_ir_event("tv-4", sony_tv, "numeric4")
+numeric5_event 		= remoteConfig.create_ir_event("tv-5", sony_tv, "numeric5")
+numeric6_event 		= remoteConfig.create_ir_event("tv-6", sony_tv, "numeric6")
+numeric7_event 		= remoteConfig.create_ir_event("tv-7", sony_tv, "numeric7")
+numeric8_event 		= remoteConfig.create_ir_event("tv-8", sony_tv, "numeric8")
+numeric9_event 		= remoteConfig.create_ir_event("tv-9", sony_tv, "numeric9")
+numeric0_event 		= remoteConfig.create_ir_event("tv-0", sony_tv, "numeric0")
 
-volume_up_event 	= Event(Event_IRACTION, [phillips_hts.actions["volume_up"], phillips_hts])
-volume_down_event 	= Event(Event_IRACTION, [phillips_hts.actions["volume_down"], phillips_hts])
-mute_event 		    = Event(Event_IRACTION, [phillips_hts.actions["mute"], phillips_hts])
-surround_event		= Event(Event_IRACTION, [phillips_hts.actions["surround"], phillips_hts])
+volume_up_event 	= remoteConfig.create_ir_event("vol-up", phillips_hts, "volume_up")
+volume_down_event 	= remoteConfig.create_ir_event("vol-down", phillips_hts, "volume_down")
+mute_event 		    = remoteConfig.create_ir_event("mute", phillips_hts, "mute")
+surround_event		= remoteConfig.create_ir_event("surround", phillips_hts, "surround")
 
-channel_up_event 	= Event(Event_IRACTION, [sony_tv.actions["channel_up"], sony_tv])
-channel_down_event	= Event(Event_IRACTION, [sony_tv.actions["channel_down"], sony_tv])
-info_event		    = Event(Event_IRACTION, [sony_tv.actions["info"], sony_tv])
+channel_up_event 	= remoteConfig.create_ir_event("ch-up", sony_tv, "channel_up")
+channel_down_event	= remoteConfig.create_ir_event("ch-down", sony_tv, "channel_down")
+info_event		    = remoteConfig.create_ir_event("info", sony_tv, "info")
 
-red_event		    = Event(Event_IRACTION, [sony_tv.actions["red"], sony_tv])
-yellow_event		= Event(Event_IRACTION, [sony_tv.actions["yellow"], sony_tv])
-green_event		    = Event(Event_IRACTION, [sony_tv.actions["green"], sony_tv])
-blue_event 		    = Event(Event_IRACTION, [sony_tv.actions["blue"], sony_tv])
+red_event		    = remoteConfig.create_ir_event("red", sony_tv, "red")
+yellow_event		= remoteConfig.create_ir_event("yellow", sony_tv, "yellow")
+green_event		    = remoteConfig.create_ir_event("green", sony_tv, "green")
+blue_event 		    = remoteConfig.create_ir_event("blue", sony_tv, "blue")
 
-guide_event		    = Event(Event_IRACTION, [sony_tv.actions["guide"], sony_tv])
-enter_event		    = Event(Event_IRACTION, [sony_tv.actions["enter"], sony_tv])
-back_event		    = Event(Event_IRACTION, [sony_tv.actions["back"], sony_tv])
-home_event		    = Event(Event_IRACTION, [sony_tv.actions["home"], sony_tv])
+guide_event		    = remoteConfig.create_ir_event("guide", sony_tv, "guide")
+enter_event		    = remoteConfig.create_ir_event("enter", sony_tv, "enter")
+back_event		    = remoteConfig.create_ir_event("back", sony_tv, "back")
+home_event		    = remoteConfig.create_ir_event("tv-home", sony_tv, "home")
 
-up_event		    = Event(Event_IRACTION, [sony_tv.actions["up"], sony_tv])
-down_event		    = Event(Event_IRACTION, [sony_tv.actions["down"], sony_tv])
-left_event		    = Event(Event_IRACTION, [sony_tv.actions["left"], sony_tv])
-right_event		    = Event(Event_IRACTION, [sony_tv.actions["right"], sony_tv])
+up_event		    = remoteConfig.create_ir_event("tv-up", sony_tv, "up")
+down_event		    = remoteConfig.create_ir_event("tv-down", sony_tv, "down")
+left_event		    = remoteConfig.create_ir_event("tv-left", sony_tv, "left")
+right_event		    = remoteConfig.create_ir_event("tv-right", sony_tv, "right")
 
-br_power_event      = sony_bluray.create_event("powertoggle")
-br_up_event		    = sony_bluray.create_event("up")
-br_down_event		= sony_bluray.create_event("down")
-br_left_event		= sony_bluray.create_event("left")
-br_right_event		= sony_bluray.create_event("right")
+br_power_event      = remoteConfig.create_ir_event("br-power", sony_bluray, "powertoggle")
+br_up_event		    = remoteConfig.create_ir_event("br-up", sony_bluray, "up")
+br_down_event		= remoteConfig.create_ir_event("br-down", sony_bluray, "down")
+br_left_event		= remoteConfig.create_ir_event("br-left", sony_bluray, "left")
+br_right_event		= remoteConfig.create_ir_event("br-right", sony_bluray, "right")
 
 # Activities, button mappings and touch button pages
 watch_tv_activity = Activity(
@@ -294,8 +300,8 @@ watch_movie_activity = Activity(
         DeviceState(phillips_hts, { "power": 1, "surround": 2 }),
     ])
 
-watch_tv_event = Event(Event_ACTIVITY, [watch_tv_activity])
-watch_movie_event = Event(Event_ACTIVITY, [watch_movie_activity])
+watch_tv_event = remoteConfig.create_activity_event("watch-tv", watch_tv_activity)
+watch_movie_event = remoteConfig.create_activity_event("watch-movie", watch_movie_activity)
 
 home_activity = Activity(
     [ ButtonMapping(0x010000, prev_event), ButtonMapping(0x040000, next_event), ButtonMapping(0x100000, download_event), ButtonMapping(0x020000, poweroff_event) ],
@@ -310,53 +316,11 @@ home_activity = Activity(
     flags = Activity_NoDevices
     )
 
-header = RemoteDataHeader(
-    home_activity,
-    [ sony_tv, sony_bluray, phillips_hts ],
-    [ home_activity, watch_tv_activity, watch_movie_activity ]
-    )
-    
+remoteConfig.add_activity(home_activity)
+remoteConfig.add_activity(watch_tv_activity)
+remoteConfig.add_activity(watch_movie_activity)
+remoteConfig.set_home_activity(home_activity)
+
 package = Package()
-package.append(header)
-package.append(home_activity_event)
-package.append(watch_tv_event)
-package.append(watch_movie_event)
-package.append(next_event)
-package.append(prev_event)
-package.append(download_event)
-package.append(poweroff_event)
-package.append(numeric1_event)
-package.append(numeric2_event)
-package.append(numeric3_event)
-package.append(numeric4_event)
-package.append(numeric5_event)
-package.append(numeric6_event)
-package.append(numeric7_event)
-package.append(numeric8_event)
-package.append(numeric9_event)
-package.append(numeric0_event)
-package.append(volume_up_event)
-package.append(volume_down_event)
-package.append(mute_event)
-package.append(surround_event)
-package.append(channel_up_event)
-package.append(channel_down_event)
-package.append(info_event)
-package.append(red_event)
-package.append(yellow_event)
-package.append(green_event)
-package.append(blue_event)
-package.append(guide_event)
-package.append(enter_event)
-package.append(back_event)
-package.append(home_event)
-package.append(up_event)
-package.append(down_event)
-package.append(left_event)
-package.append(right_event)
-package.append(br_power_event)
-package.append(br_up_event)
-package.append(br_down_event)
-package.append(br_left_event)
-package.append(br_right_event)
+package.append(remoteConfig)
 

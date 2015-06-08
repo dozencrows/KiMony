@@ -222,12 +222,13 @@ class Event(RemoteDataStruct):
 
     _types_ = { 0:"none", 1:"IR action", 2:"Activity", 3:"Next", 4:"Prev", 5:"Home", 6:"Download", 7:"PowerOff" }
         
-    def __init__(self, t, data = None):
+    def __init__(self, t, data = None, name = 'unknown'):
         self.type = t
         self.data_values = data
+        self.name = name
             
     def __str__(self):
-        return "Event %d (type %s)" % (self.ref(), Event._types_[self.type])
+        return "Event %s (type %s)" % (self.name, Event._types_[self.type])
     
     def fix_up(self, package):
         if self.data_values and len(self.data_values) > 0:
@@ -453,9 +454,6 @@ class Device(RemoteDataStruct):
     def __str__(self):
         return "Device %d" % self.ref()
         
-    def create_event(self, action_name):
-        return Event(Event_IRACTION, [self.actions[action_name], self])
-        
     def pre_pack_options_and_actions(self, package):
         for option in self.options_list:
             package.append(option)
@@ -637,21 +635,45 @@ class Activity(RemoteDataStruct):
 # so they are grouped into a contiguous array of equal-sized entries - and their
 # dynamically sized data is added afterwards
 #
-class RemoteDataHeader(RemoteDataStruct):
+class RemoteConfig(RemoteDataStruct):
     _fields_ = [
         ("home_activity", ct.c_uint32),
         ("devices_count", ct.c_int),
         ("devices", ct.c_uint32)
     ]
     
-    def __init__(self, home_activity, devices, activities):
-        self.home_activity_ref = home_activity
-        self.devices_list = devices
-        self.activities = activities
-        self.devices_count = len(devices)
+    def __init__(self):
+        self.home_activity_ref = None
+        self.devices_list = []
+        self.activities = []
+        self.events = []
         
     def __str__(self):
-        return "RemoteDataHeader %d" % self.ref()
+        return "RemoteConfig"
+        
+    def set_home_activity(self, home_activity):
+        self.home_activity_ref = home_activity
+        
+    def add_device(self, device):
+        self.devices_list.append(device)
+        
+    def create_event(self, name, type):
+        event = Event(type, name = name)
+        self.events.append(event)
+        return event
+        
+    def create_activity_event(self, name, activity):
+        event = Event(Event_ACTIVITY, [activity], name = name)
+        self.events.append(event)
+        return event
+
+    def create_ir_event(self, name, device, action):
+        event = Event(Event_IRACTION, [device.actions[action], device], name = name)
+        self.events.append(event)
+        return event
+
+    def add_activity(self, activity):
+        self.activities.append(activity)
     
     def pre_pack(self, package):
         for activity in self.activities:
@@ -659,12 +681,17 @@ class RemoteDataHeader(RemoteDataStruct):
             
         for device in self.devices_list:
             package.append(device)
+            
+        for event in self.events:
+            package.append(event)
 
     def pre_pack_trailing_children(self, package):
         for device in self.devices_list:
             device.pre_pack_options_and_actions(package)
 
     def fix_up(self, package):        
+        self.devices_count = len(self.devices_list)
+
         try:
             self.home_activity = package.offsetof(self.home_activity_ref.ref())
         except PackageError:
@@ -719,7 +746,7 @@ class Package:
             binary_obj = obj.binarise()
             packed_objects.append(obj.binarise())
 
-            print "Obj", obj, "at", self.offsets[obj.ref()], packed_offset, "size", len(binary_obj), "fill", fill_size
+            print "Obj", obj, "at", self.offsets[obj.ref()], "size", len(binary_obj), "fill", fill_size
             packed_offset += len(binary_obj) + fill_size
 
         self.align_to(4)
