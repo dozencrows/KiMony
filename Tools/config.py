@@ -82,6 +82,7 @@ sony_bluray.create_action("up", [IrCode(IrEncoding_SIRC, 20, 0x9CB47)])
 sony_bluray.create_action("down", [IrCode(IrEncoding_SIRC, 20, 0x5CB47)])
 sony_bluray.create_action("left", [IrCode(IrEncoding_SIRC, 20, 0xDCB47)])
 sony_bluray.create_action("right", [IrCode(IrEncoding_SIRC, 20, 0x3CB47)])
+sony_bluray.create_action("eject", [IrCode(IrEncoding_SIRC, 20, 0x68B47)])
 
 sony_bluray.create_option("power", Option_Cycled|Option_DefaultToZero|Option_ActionOnDefault, 1, ["powertoggle"])
 
@@ -177,6 +178,7 @@ br_up_event		    = remoteConfig.create_ir_event("br-up", sony_bluray, "up")
 br_down_event		= remoteConfig.create_ir_event("br-down", sony_bluray, "down")
 br_left_event		= remoteConfig.create_ir_event("br-left", sony_bluray, "left")
 br_right_event		= remoteConfig.create_ir_event("br-right", sony_bluray, "right")
+br_eject_event		= remoteConfig.create_ir_event("br-eject", sony_bluray, "eject")
 
 # Activities, button mappings and touch button pages
 watch_tv_activity = Activity(name = "watch-tv")
@@ -232,6 +234,7 @@ watch_movie_activity.create_button_mapping(0x000008, volume_up_event)
 watch_movie_activity.create_button_mapping(0x000004, volume_down_event)
 watch_movie_activity.create_button_mapping(0x001000, surround_event)
 watch_movie_activity.create_button_mapping(0x000010, mute_event)
+watch_movie_activity.create_button_mapping(0x200000, br_eject_event)
     
 watch_movie_activity.create_touch_button_page([
     TouchButton(br_up_event, "U",  (SCREEN_WIDTH - BUTTON_WIDTH) / 2, 2*BUTTON_HEIGHT, BUTTON_WIDTH, BUTTON_HEIGHT, 0xf9e0, True, True),
@@ -240,7 +243,7 @@ watch_movie_activity.create_touch_button_page([
     TouchButton(br_right_event, "R",  (SCREEN_WIDTH - BUTTON_WIDTH) / 2 + BUTTON_WIDTH, int(2.5*BUTTON_HEIGHT), BUTTON_WIDTH, BUTTON_HEIGHT, 0xf9e0, True, True),
     ])
 	    
-watch_movie_activity.create_device_state(sony_tv, { "power": 1, "input": 0 })
+watch_movie_activity.create_device_state(sony_tv, { "power": 1, "input": 1 })
 watch_movie_activity.create_device_state(sony_bluray, { "power": 1 })
 watch_movie_activity.create_device_state(phillips_hts, { "power": 1, "surround": 2 })
 

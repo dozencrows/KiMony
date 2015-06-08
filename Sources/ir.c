@@ -175,14 +175,15 @@ static int irEncodeRC6(IrPacket* packet, uint32_t data, int bitCount)
 #define SIRC_ZERO_SPACE	565
 #define SIRC_GAP_MS		45
 #define SIRC_REPEATS	3
+#define SIRC_REPEATS_20	6
 
-static int irEncodeSIRC(IrPacket* packet, uint32_t data, int bitCount)
+static int irEncodeSIRC(IrPacket* packet, uint32_t data, int bitCount, int repeats)
 {
 	int result = IRENCODER_RESULT_OK;
 	IrEncoder encoder;
 
 	packet->header.start		= 1;
-	packet->header.repeats		= SIRC_REPEATS;
+	packet->header.repeats		= repeats;
 	packet->header.repeat_delay	= SIRC_GAP_MS;
 	irEncoderBegin(&encoder, packet);
 
@@ -231,7 +232,12 @@ static void irSendRC6Code(uint32_t data, int bitCount)
 
 static void irSendSIRCCode(uint32_t data, int bitCount)
 {
-	irEncodeSIRC(&irPacket, data, bitCount);
+	int repeatCount = SIRC_REPEATS;
+
+	if (bitCount == 20) {
+		repeatCount = SIRC_REPEATS_20;
+	}
+	irEncodeSIRC(&irPacket, data, bitCount, repeatCount);
 	sendIrPacketAndWait(&irPacket, 45000);
 }
 
