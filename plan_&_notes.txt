@@ -1,13 +1,22 @@
 Plan
 ====
 * Devices & state management
-  * third activity that uses disjoint device set from first two (e.g. digital music -> Squeezebox and hifi)
-  * conditional pre-actions & actions for option changing - e.g. 
+  ? conditional pre-actions & actions for option changing - e.g. 
      - if option 1 was 0, option 2 pre-action has extra delay (e.g. for post power-on only delays)
      - if option 1 is now 0, skip option 2 (e.g. to avoid forced state changes when power is off)
     OR provide a special 'power' flag with default hard-coded condition checks 
-  * Blu-ray player power-on delay to ensure ready for commands
-  * Device-specific mappings to emulate individual remotes, easily accessible for remedying issues.
+  ? Device-specific mappings to emulate individual remotes, easily accessible for remedying issues.
+  * Smart delay management to minimise overall time for a state switch
+    * E.g. off -> movie doesn't string together 15 sec srrd switch delay AND 17 sec blu-ray startup delay,
+      instead it turns on both, then runs delays in parallel - after 15 sec, does srrd switch then after further 2 secs allows blu-ray control.
+    * Will need more sophisticated option/state change model
+* Round out activities & devices to required functionality
+  * Watch TV
+  * Watch Movie
+  * Watch Digital Video
+  * Watch Chromecast
+  * Listen to Radio
+  * Listen to CD
 * Implement bitmap buttons
   * extend touch buttons to handle this (e.g. flag to switch icon for text, use same offset field)
   * rendering unpressed and pressed state
@@ -22,7 +31,6 @@ Plan
 Work-in-progress
 ================
 * Devices & state management
-  * third device & second activity (e.g. play blue-ray)
 * Reduce standard library footprint but still work with semi-host printf
   * Tried this with workaround from http://mcuoneclipse.com/2014/07/12/printf-for-the-frdm-k64f-board-and-kinetis-design-studio/
     but still only prints first character
@@ -134,6 +142,8 @@ Done
 * Refactored state changing so can switch activities without turning all devices off
   * Home activity now leaves devices unchanged - either select new activity or hit power button
 * Implemented improved remote data compilation error reporting, with naming of objects
+* Added third device & second activity - blu-ray player and watch movie
+* Added fourth device & activities disjoint from first ones - stereo and listen to cd & radio
 
 Notes
 =====

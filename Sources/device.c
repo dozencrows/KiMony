@@ -55,6 +55,10 @@ static void actionOptionToValue(const Device* device, const Option* option, uint
 	}
 
 	if (option->flags & OPTION_CYCLED) {
+		if (option->flags & OPTION_ABSOLUTE_FROM_ZERO) {
+			currentValue = 0;
+		}
+
 		if (option->actionCount == 1) {
 			while (currentValue != newValue) {
 				irDoAction((const IrAction*)GET_FLASH_PTR(actionRefs[0]), &toggleFlag);
@@ -105,7 +109,7 @@ static void setDeviceToDefault(int deviceIndex)
 	uint8_t* optionValues = optionValuesStore + deviceDynamicState[deviceIndex].optionValuesOffset;
 
 	for (int i = 0; i < device->optionCount; i++) {
-		if (options[i].flags & OPTION_DEFAULT_TO_ZERO) {
+		if (options[i].flags & OPTION_DEFAULT_TO_ZERO && optionValues[i] != 0) {
 			if (options[i].flags & OPTION_ACTION_ON_DEFAULT) {
 				actionOptionToValue(device, options + i, optionValues[i], 0);
 			}

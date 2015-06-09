@@ -32,6 +32,7 @@ Option_Cycled           = 0x0001    # Option cycles through values, otherwise se
 Option_DefaultToZero    = 0x0002    # Option is set back to zero if not explicitly set in activity
 Option_ActionOnDefault  = 0x0004    # Option requires actions to be generated when returning to default
 Option_AlwaysSet        = 0x0008    # Always set the value of this option even if unchanged (e.g. to force to a known state)
+Option_AbsoluteFromZero = 0x0010    # For cycled options: when changing, resets to zero and counts up to target
 
 WATERMARK       = 0xBABABEBE
 

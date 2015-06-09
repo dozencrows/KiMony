@@ -82,23 +82,25 @@ phillips_hts.create_option("surround", Option_Cycled|Option_DefaultToZero, 2, ["
 
 sony_bluray = Device("Sony Blu-ray")
 sony_bluray.create_action("powertoggle", [IrCode(IrEncoding_SIRC, 20, 0xA8B47)])
+sony_bluray.create_action("powertoggle-with-delay", [IrCode(IrEncoding_SIRC, 20, 0xA8B47), IrCode(IrEncoding_NOP, 0, 17000)])
 sony_bluray.create_action("up", [IrCode(IrEncoding_SIRC, 20, 0x9CB47)])
 sony_bluray.create_action("down", [IrCode(IrEncoding_SIRC, 20, 0x5CB47)])
 sony_bluray.create_action("left", [IrCode(IrEncoding_SIRC, 20, 0xDCB47)])
 sony_bluray.create_action("right", [IrCode(IrEncoding_SIRC, 20, 0x3CB47)])
 sony_bluray.create_action("eject", [IrCode(IrEncoding_SIRC, 20, 0x68B47)])
 
-sony_bluray.create_option("power", Option_Cycled|Option_DefaultToZero|Option_ActionOnDefault, 1, ["powertoggle"])
+sony_bluray.create_option("power", Option_DefaultToZero|Option_ActionOnDefault, 1, ["powertoggle", "powertoggle-with-delay"])
 
 sony_stereo = Device("Sony Stereo")
-sony_stereo.create_action("powertoggle", [IrCode(IrEncoding_SIRC, 12, 0xA81), IrCode(IrEncoding_NOP, 0, 500)])
-sony_stereo.create_action("cd", [IrCode(IrEncoding_SIRC, 12, 0x511)])
-sony_stereo.create_action("tuner", [IrCode(IrEncoding_SIRC, 12, 0x856)])
+sony_stereo.create_action("power-on", [IrCode(IrEncoding_SIRC, 12, 0xA81), IrCode(IrEncoding_NOP, 0, 2000)])
+sony_stereo.create_action("power-off", [IrCode(IrEncoding_SIRC, 12, 0xA81), IrCode(IrEncoding_NOP, 0, 6000)])
+sony_stereo.create_action("tuner", [IrCode(IrEncoding_SIRC, 12, 0xF16)])
 sony_stereo.create_action("volume_up", [IrCode(IrEncoding_SIRC, 12, 0x481)])
 sony_stereo.create_action("volume_down", [IrCode(IrEncoding_SIRC, 12, 0xC81)])
+sony_stereo.create_action("function", [IrCode(IrEncoding_SIRC, 12, 0x966), IrCode(IrEncoding_NOP, 0, 125)])
 
-sony_stereo.create_option("power", Option_Cycled|Option_DefaultToZero|Option_ActionOnDefault, 1, ["powertoggle"])
-sony_stereo.create_option("source", Option_AlwaysSet, 1, ["cd", "tuner"])
+sony_stereo.create_option("power", Option_DefaultToZero|Option_ActionOnDefault, 1, ["power-off", "power-on"])
+sony_stereo.create_option("source", Option_Cycled|Option_AbsoluteFromZero|Option_AlwaysSet, 6, ["function"], "tuner")                   # values map to: tuner, md, cd, pc, opt, analog, tape
 
 #  post_data_bits  8
 #'post_data      0x47
@@ -271,7 +273,7 @@ listen_cd_activity.create_button_mapping(0x010000, home_activity_event)
 listen_cd_activity.create_button_mapping(0x000008, st_volume_up_event)
 listen_cd_activity.create_button_mapping(0x000004, st_volume_down_event)
     
-listen_cd_activity.create_device_state(sony_stereo, { "power": 1, "source": 0 })
+listen_cd_activity.create_device_state(sony_stereo, { "power": 1, "source": 2 })
 
 listen_radio_activity = Activity(name = "listen-radio")
 
@@ -280,7 +282,7 @@ listen_radio_activity.create_button_mapping(0x010000, home_activity_event)
 listen_radio_activity.create_button_mapping(0x000008, st_volume_up_event)
 listen_radio_activity.create_button_mapping(0x000004, st_volume_down_event)
     
-listen_radio_activity.create_device_state(sony_stereo, { "power": 1, "source": 1 })
+listen_radio_activity.create_device_state(sony_stereo, { "power": 1, "source": 0 })
 
 watch_tv_event = remoteConfig.create_activity_event("watch-tv", watch_tv_activity)
 watch_movie_event = remoteConfig.create_activity_event("watch-movie", watch_movie_activity)
