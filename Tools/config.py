@@ -93,12 +93,12 @@ sony_bluray.create_option("power", Option_Cycled|Option_DefaultToZero|Option_Act
 sony_stereo = Device("Sony Stereo")
 sony_stereo.create_action("powertoggle", [IrCode(IrEncoding_SIRC, 12, 0xA81), IrCode(IrEncoding_NOP, 0, 500)])
 sony_stereo.create_action("cd", [IrCode(IrEncoding_SIRC, 12, 0x511)])
-sony_stereo.create_action("tuner", [IrCode(IrEncoding_SIRC, 12, 0xE96)])
+sony_stereo.create_action("tuner", [IrCode(IrEncoding_SIRC, 12, 0x856)])
 sony_stereo.create_action("volume_up", [IrCode(IrEncoding_SIRC, 12, 0x481)])
 sony_stereo.create_action("volume_down", [IrCode(IrEncoding_SIRC, 12, 0xC81)])
 
 sony_stereo.create_option("power", Option_Cycled|Option_DefaultToZero|Option_ActionOnDefault, 1, ["powertoggle"])
-sony_stereo.create_option("source", 0, 1, ["cd", "tuner"])
+sony_stereo.create_option("source", Option_AlwaysSet, 1, ["cd", "tuner"])
 
 #  post_data_bits  8
 #'post_data      0x47
