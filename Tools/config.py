@@ -90,6 +90,16 @@ sony_bluray.create_action("eject", [IrCode(IrEncoding_SIRC, 20, 0x68B47)])
 
 sony_bluray.create_option("power", Option_Cycled|Option_DefaultToZero|Option_ActionOnDefault, 1, ["powertoggle"])
 
+sony_stereo = Device("Sony Stereo")
+sony_stereo.create_action("powertoggle", [IrCode(IrEncoding_SIRC, 12, 0xA81), IrCode(IrEncoding_NOP, 0, 500)])
+sony_stereo.create_action("cd", [IrCode(IrEncoding_SIRC, 12, 0x511)])
+sony_stereo.create_action("tuner", [IrCode(IrEncoding_SIRC, 12, 0xE96)])
+sony_stereo.create_action("volume_up", [IrCode(IrEncoding_SIRC, 12, 0x481)])
+sony_stereo.create_action("volume_down", [IrCode(IrEncoding_SIRC, 12, 0xC81)])
+
+sony_stereo.create_option("power", Option_Cycled|Option_DefaultToZero|Option_ActionOnDefault, 1, ["powertoggle"])
+sony_stereo.create_option("source", 0, 1, ["cd", "tuner"])
+
 #  post_data_bits  8
 #'post_data      0x47
 #          KEY_EJECTCD              0x68B
@@ -133,6 +143,7 @@ sony_bluray.create_option("power", Option_Cycled|Option_DefaultToZero|Option_Act
 
 remoteConfig.add_device(sony_tv)
 remoteConfig.add_device(sony_bluray)
+remoteConfig.add_device(sony_stereo)
 remoteConfig.add_device(phillips_hts)
 
 # Events
@@ -177,12 +188,14 @@ down_event		    = remoteConfig.create_ir_event("tv-down", sony_tv, "down")
 left_event		    = remoteConfig.create_ir_event("tv-left", sony_tv, "left")
 right_event		    = remoteConfig.create_ir_event("tv-right", sony_tv, "right")
 
-br_power_event      = remoteConfig.create_ir_event("br-power", sony_bluray, "powertoggle")
 br_up_event		    = remoteConfig.create_ir_event("br-up", sony_bluray, "up")
 br_down_event		= remoteConfig.create_ir_event("br-down", sony_bluray, "down")
 br_left_event		= remoteConfig.create_ir_event("br-left", sony_bluray, "left")
 br_right_event		= remoteConfig.create_ir_event("br-right", sony_bluray, "right")
 br_eject_event		= remoteConfig.create_ir_event("br-eject", sony_bluray, "eject")
+
+st_volume_up_event  = remoteConfig.create_ir_event("st-vol-up", sony_stereo, "volume_up")
+st_volume_down_event  = remoteConfig.create_ir_event("st-vol-down", sony_stereo, "volume_down")
 
 # Activities, button mappings and touch button pages
 watch_tv_activity = Activity(name = "watch-tv")
@@ -251,8 +264,28 @@ watch_movie_activity.create_device_state(sony_tv, { "power": 1, "input": 1 })
 watch_movie_activity.create_device_state(sony_bluray, { "power": 1 })
 watch_movie_activity.create_device_state(phillips_hts, { "power": 1, "surround": 2 })
 
+listen_cd_activity = Activity(name = "listen-cd")
+
+listen_cd_activity.create_button_mapping(0x020000, poweroff_event)
+listen_cd_activity.create_button_mapping(0x010000, home_activity_event)
+listen_cd_activity.create_button_mapping(0x000008, st_volume_up_event)
+listen_cd_activity.create_button_mapping(0x000004, st_volume_down_event)
+    
+listen_cd_activity.create_device_state(sony_stereo, { "power": 1, "source": 0 })
+
+listen_radio_activity = Activity(name = "listen-radio")
+
+listen_radio_activity.create_button_mapping(0x020000, poweroff_event)
+listen_radio_activity.create_button_mapping(0x010000, home_activity_event)
+listen_radio_activity.create_button_mapping(0x000008, st_volume_up_event)
+listen_radio_activity.create_button_mapping(0x000004, st_volume_down_event)
+    
+listen_radio_activity.create_device_state(sony_stereo, { "power": 1, "source": 1 })
+
 watch_tv_event = remoteConfig.create_activity_event("watch-tv", watch_tv_activity)
 watch_movie_event = remoteConfig.create_activity_event("watch-movie", watch_movie_activity)
+listen_cd_event = remoteConfig.create_activity_event("listen-cd", listen_cd_activity)
+listen_radio_event = remoteConfig.create_activity_event("listen-radio", listen_radio_activity)
 
 home_activity = Activity(name = "home", flags = Activity_NoDevices)
 
@@ -264,11 +297,15 @@ home_activity.create_button_mapping(0x020000, poweroff_event)
 home_activity.create_touch_button_page([
     TouchButton(watch_tv_event, "Watch TV", 0, 0*BUTTON_HEIGHT, 4*BUTTON_WIDTH, BUTTON_HEIGHT, 0xf9e0, False, True),   
     TouchButton(watch_movie_event, "Watch Movie", 0, 1*BUTTON_HEIGHT, 4*BUTTON_WIDTH, BUTTON_HEIGHT, 0xf9e0, False, True),   
+    TouchButton(listen_cd_event, "Listen to CD", 0, 2*BUTTON_HEIGHT, 4*BUTTON_WIDTH, BUTTON_HEIGHT, 0xf9e0, False, True),   
+    TouchButton(listen_radio_event, "Listen to radio", 0, 3*BUTTON_HEIGHT, 4*BUTTON_WIDTH, BUTTON_HEIGHT, 0xf9e0, False, True),   
     ])
 
 remoteConfig.add_activity(home_activity)
 remoteConfig.add_activity(watch_tv_activity)
 remoteConfig.add_activity(watch_movie_activity)
+remoteConfig.add_activity(listen_cd_activity)
+remoteConfig.add_activity(listen_radio_activity)
 remoteConfig.set_home_activity(home_activity)
 
 package = Package()
