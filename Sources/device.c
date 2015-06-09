@@ -175,7 +175,7 @@ int deviceAreAllOnDefault()
 		const Option* options = (const Option*) GET_FLASH_PTR(activeDevices[i].optionsOffset);
 
 		for (int j = 0; j < activeDevices[i].optionCount; j++) {
-			if (options[i].flags & OPTION_DEFAULT_TO_ZERO) {
+			if (options[j].flags & OPTION_DEFAULT_TO_ZERO) {
 				if (optionValuesStore[deviceDynamicState[i].optionValuesOffset + j]) {
 					return 0;
 				}
