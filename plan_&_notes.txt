@@ -286,3 +286,11 @@ Operation:
           	 
   this should allow basic conditional control over pre-actions.
   Does not allow for conjunctions - if multiple conditions precede an IR action, the last will determine action. 
+  
+Sony Stereo Remote
+==================
+
+Source:
+  - band: selects tuner when on other sources ... will also turn it on. When on tuner, toggles am/fm
+  - function: cycles source - tuner, md, cd, pc, opt, analog, tape
+
