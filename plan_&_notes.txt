@@ -310,5 +310,6 @@ Sony Blu-ray
 ============
 
 Turn-on delay: 17 seconds
+Turn-off delay: 5 seconds
 
 

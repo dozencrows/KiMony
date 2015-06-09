@@ -55,10 +55,6 @@ static void actionOptionToValue(const Device* device, const Option* option, uint
 	}
 
 	if (option->flags & OPTION_CYCLED) {
-		if (option->flags & OPTION_ABSOLUTE_FROM_ZERO) {
-			currentValue = 0;
-		}
-
 		if (option->actionCount == 1) {
 			while (currentValue != newValue) {
 				irDoAction((const IrAction*)GET_FLASH_PTR(actionRefs[0]), &toggleFlag);
@@ -69,6 +65,11 @@ static void actionOptionToValue(const Device* device, const Option* option, uint
 			}
 		}
 		else {
+			if (option->flags & OPTION_ABSOLUTE_FROM_ZERO && currentValue != 0) {
+				irDoAction((const IrAction*)GET_FLASH_PTR(actionRefs[0]), &toggleFlag);
+				currentValue = 0;
+			}
+
 			while (currentValue < newValue) {
 				irDoAction((const IrAction*)GET_FLASH_PTR(actionRefs[1]), &toggleFlag);
 				currentValue++;
