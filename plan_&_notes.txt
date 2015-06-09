@@ -293,4 +293,12 @@ Sony Stereo Remote
 Source:
   - band: selects tuner when on other sources ... will also turn it on. When on tuner, toggles am/fm
   - function: cycles source - tuner, md, cd, pc, opt, analog, tape
+  - turn-off delay: 6 secs
+  - turn-on to source change delay: 2 secs
+  
+Sony Blu-ray
+============
+
+Turn-on delay: 17 seconds
+
 
