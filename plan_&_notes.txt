@@ -1,11 +1,5 @@
 Plan
 ====
-* Devices & state management
-  ? conditional pre-actions & actions for option changing - e.g. 
-     - if option 1 was 0, option 2 pre-action has extra delay (e.g. for post power-on only delays)
-     - if option 1 is now 0, skip option 2 (e.g. to avoid forced state changes when power is off)
-    OR provide a special 'power' flag with default hard-coded condition checks 
-  ? Device-specific mappings to emulate individual remotes, easily accessible for remedying issues.
 * Round out activities & devices to required functionality
   * Watch TV
   * Watch Movie
@@ -26,8 +20,6 @@ Plan
 
 Work-in-progress
 ================
-* Devices & state management
-  * Parallel device state switching to minimise delays
 * Reduce standard library footprint but still work with semi-host printf
   * Tried this with workaround from http://mcuoneclipse.com/2014/07/12/printf-for-the-frdm-k64f-board-and-kinetis-design-studio/
     but still only prints first character
@@ -141,6 +133,7 @@ Done
 * Implemented improved remote data compilation error reporting, with naming of objects
 * Added third device & second activity - blu-ray player and watch movie
 * Added fourth device & activities disjoint from first ones - stereo and listen to cd & radio
+* Implemented parallel device state switching to minimise delays
 
 Notes
 =====
