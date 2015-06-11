@@ -18,6 +18,7 @@
 
 #include "ir.h"
 #include "flash.h"
+#include "timer.h"
 
 #define MAX_OPTIONS	64
 #define MAX_DEVICES 32
@@ -265,8 +266,10 @@ void deviceSetStatesParallel(const DeviceState* states, int stateCount)
 	}
 
 	int finishedCount = 0;
-	uint32_t lastTime = GET_TIME();
+	uint32_t lastTime = 0;
 	uint32_t currTime = lastTime;
+
+	tpmStartMillisecondTimer(0);
 
 	while (finishedCount < activeDeviceCount) {
 		uint32_t elapsedTime = currTime - lastTime;
@@ -306,7 +309,7 @@ void deviceSetStatesParallel(const DeviceState* states, int stateCount)
 								const uint32_t* postDelays = (const uint32_t*)GET_FLASH_PTR(option->postDelaysOffset);
 
 								if (postDelays[actionTaken] > 0) {
-									deviceSwitchingState[i].delay = postDelays[actionTaken] * TIME_CONVERSION();
+									deviceSwitchingState[i].delay = postDelays[actionTaken];
 								}
 							}
 						}
@@ -320,6 +323,6 @@ void deviceSetStatesParallel(const DeviceState* states, int stateCount)
 		}
 
 		lastTime = currTime;
-		currTime = GET_TIME();
+		currTime = tpmGetTime(0);
 	}
 }

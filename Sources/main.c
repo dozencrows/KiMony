@@ -13,6 +13,7 @@
 #include "spi.h"
 #include "interrupts.h"
 #include "uart.h"
+#include "timer.h"
 #include "mathutil.h"
 #include "codeutil.h"
 #include "renderutils.h"
@@ -247,6 +248,7 @@ int main(void)
 {
 	SystemCoreClockUpdate();
 
+	tpmInit();
 	sysTickInit();
 	sysTickSetClockRate(SystemCoreClock);
 

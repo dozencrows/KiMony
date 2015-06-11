@@ -344,3 +344,9 @@ while some devices not finished
 		        	else set device counter to nop time
 		        	advance to next action and possibly option
 	end iteration timing and set last iteration time
+
+Have to use TPM for timer as systick gets used in IR sending.
+- configure TPM to use bus clock (24000000Hz) with prescale of 1, modulo 24000 to overflow every millisecond
+- increment counter on interrupt for a millisecond timer
+
+Implement this as functions in a timer module that take a TPM reg structure ptr as param.
