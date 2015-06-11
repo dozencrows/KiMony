@@ -6,10 +6,6 @@ Plan
      - if option 1 is now 0, skip option 2 (e.g. to avoid forced state changes when power is off)
     OR provide a special 'power' flag with default hard-coded condition checks 
   ? Device-specific mappings to emulate individual remotes, easily accessible for remedying issues.
-  * Smart delay management to minimise overall time for a state switch
-    * E.g. off -> movie doesn't string together 15 sec srrd switch delay AND 17 sec blu-ray startup delay,
-      instead it turns on both, then runs delays in parallel - after 15 sec, does srrd switch then after further 2 secs allows blu-ray control.
-    * Will need more sophisticated option/state change model
 * Round out activities & devices to required functionality
   * Watch TV
   * Watch Movie
@@ -31,6 +27,7 @@ Plan
 Work-in-progress
 ================
 * Devices & state management
+  * Parallel device state switching to minimise delays
 * Reduce standard library footprint but still work with semi-host printf
   * Tried this with workaround from http://mcuoneclipse.com/2014/07/12/printf-for-the-frdm-k64f-board-and-kinetis-design-studio/
     but still only prints first character
@@ -312,4 +309,38 @@ Sony Blu-ray
 Turn-on delay: 17 seconds
 Turn-off delay: 5 seconds
 
+Bitmap button support
+=====================
+* Make touch button flags 16 bit (better structure packing)
+* Extend TouchButton to support images:
+  * Extend offset data to add an array of two - [0] for unpressed [1] for pressed
+  * Rendering - if image offset(s) not zero, render appropriate according to button state
+* Extend image header to add type field, revise to make pixel data ptr an offset
+* Implement 256 colour image rendering (new DLE type)
+* Use PIL in Python to load images -> RGB, convert to 256 colour then embed binary version of header, pixel data and palette.
+* Images should be referenced by name, and embedded only once
 
+Parallel state change on devices
+================================
+Set up:
+* Timer to track elapsed time
+* Finished flag for each device, set to zero
+* Delay counter for each device, set to zero
+* Current option & action for each device 
+
+Set last interation time to zero
+while some devices not finished
+	start iteration timing
+	For each device
+	  	if device not finished
+		    if device counter > 0
+		    	subtract last iteration time, clamped to zero
+		    if device counter = 0
+		    	if no more actions for this device
+		    		set finished flag
+		    	else
+		    		if next action is not nop
+		        		execute next action
+		        	else set device counter to nop time
+		        	advance to next action and possibly option
+	end iteration timing and set last iteration time

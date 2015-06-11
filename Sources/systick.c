@@ -12,7 +12,6 @@
  *      Author: ntuckett
  */
 #include "systick.h"
-#include "MKL26Z4.h"
 
 volatile uint32_t sysTickCounter = 0;
 
@@ -21,9 +20,7 @@ void SysTick_Handler()
 	sysTickCounter++;
 }
 
-#define CLOCK_HZ_TO_CLOCKS_PER_MS(x) (x / 1000)
-
-uint32_t sysTickClocksPerMs = CLOCK_HZ_TO_CLOCKS_PER_MS(DEFAULT_SYSTEM_CLOCK);
+uint32_t sysTickClocksPerMs = DEFAULT_CLOCKS_PER_MS;
 uint32_t sysTickConfig = 0;
 
 void sysTickInit()

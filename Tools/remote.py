@@ -426,16 +426,18 @@ class Option(RemoteDataStruct):
         ("max_value", ct.c_uint8),
         ("action_count", ct.c_uint8),
         ("pre_action", ct.c_uint32),
-        ("actions", ct.c_uint32)
+        ("actions", ct.c_uint32),
+        ("post_delays", ct.c_uint32)
         ]
 
-    def __init__(self, name, flags, max_value, change_actions, pre_action):
+    def __init__(self, name, flags, max_value, change_actions, pre_action, post_delays):
         self.name = name
         self.flags = flags
         self.max_value = max_value
         self.pre_action_ref = pre_action
         self.change_actions = change_actions
         self.action_count = len(self.change_actions)
+        self.post_delays_list = post_delays
 
     def __str__(self):
         return "Option %s" % self.name
@@ -444,10 +446,19 @@ class Option(RemoteDataStruct):
         self.action_refs = RemoteDataRefArray([x.ref() for x in self.change_actions], self.name + "-actions")
         package.append(self.action_refs)
         
+        if self.post_delays_list:
+            self.post_delays_ref = RemoteDataArray(self.post_delays_list, ct.c_uint32, self.name + "-postdelays")
+            package.append(self.post_delays_ref)
+        else:
+            self.post_delays_ref = None
+        
     def fix_up(self, package):
         if self.pre_action_ref:
             self.pre_action = package.offsetof(self.pre_action_ref.ref())
         self.actions = package.offsetof(self.action_refs.ref())
+        
+        if self.post_delays_ref:
+            self.post_delays = package.offsetof(self.post_delays_ref.ref())
 
     def binarise(self):
         return ct.string_at(ct.addressof(self), ct.sizeof(self))
@@ -481,7 +492,7 @@ class Device(RemoteDataStruct):
     def create_action(self, name, codes):
         self.actions[name] = IrAction(codes, self.name + "-" + name)
         
-    def create_option(self, name, flags, max_value, change_action_names, pre_action_name = None):
+    def create_option(self, name, flags, max_value, change_action_names, pre_action_name = None, post_delays = None):
         if pre_action_name:
             try:
                 pre_action = self.actions[pre_action_name]
@@ -496,7 +507,7 @@ class Device(RemoteDataStruct):
             raise RemoteDataError("%s has unrecognised change action name %s" % (self, e))
             
         self.options_lookup[name] = len(self.options_list)
-        self.options_list.append(Option(self.name + "-" + name, flags, max_value, change_actions, pre_action))
+        self.options_list.append(Option(self.name + "-" + name, flags, max_value, change_actions, pre_action, post_delays))
         
     def pre_pack_options_and_actions(self, package):
         for option in self.options_list:

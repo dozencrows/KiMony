@@ -31,6 +31,7 @@ typedef struct _Option {
 	uint8_t		actionCount;
 	uint32_t	preActionOffset;
 	uint32_t	actionsOffset;
+	uint32_t	postDelaysOffset;
 } Option;
 
 typedef struct _Device {

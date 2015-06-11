@@ -75,31 +75,30 @@ phillips_hts.create_action("volume_up", [IrCode(IrEncoding_RC6, 21, 0xEEFEF, 0x1
 phillips_hts.create_action("volume_down", [IrCode(IrEncoding_RC6, 21, 0xEEFEE, 0x10000)])
 phillips_hts.create_action("mute", [IrCode(IrEncoding_RC6, 21, 0xEEFF2, 0x10000)])
 phillips_hts.create_action("surround", [IrCode(IrEncoding_RC6, 21, 0xEEFAD, 0x10000), IrCode(IrEncoding_NOP, 0, 250)])
-phillips_hts.create_action("pre-surround", [IrCode(IrEncoding_NOP, 0, 15000), IrCode(IrEncoding_RC6, 21, 0xEEFAD, 0x10000), IrCode(IrEncoding_NOP, 0, 250)])
 
-phillips_hts.create_option("power", Option_Cycled|Option_DefaultToZero|Option_ActionOnDefault, 1, ["powertoggle"])
-phillips_hts.create_option("surround", Option_Cycled|Option_DefaultToZero, 2, ["surround"], "pre-surround")
+phillips_hts.create_option("power", Option_Cycled|Option_DefaultToZero|Option_ActionOnDefault, 1, ["powertoggle"], post_delays = [15000])
+phillips_hts.create_option("surround", Option_Cycled|Option_DefaultToZero, 2, ["surround"], "surround")
 
 sony_bluray = Device("Sony Blu-ray")
-sony_bluray.create_action("power-off", [IrCode(IrEncoding_SIRC, 20, 0xA8B47), IrCode(IrEncoding_NOP, 0, 5000)])
-sony_bluray.create_action("power-on", [IrCode(IrEncoding_SIRC, 20, 0xA8B47), IrCode(IrEncoding_NOP, 0, 17000)])
+sony_bluray.create_action("power-off", [IrCode(IrEncoding_SIRC, 20, 0xA8B47)])
+sony_bluray.create_action("power-on", [IrCode(IrEncoding_SIRC, 20, 0xA8B47)])
 sony_bluray.create_action("up", [IrCode(IrEncoding_SIRC, 20, 0x9CB47)])
 sony_bluray.create_action("down", [IrCode(IrEncoding_SIRC, 20, 0x5CB47)])
 sony_bluray.create_action("left", [IrCode(IrEncoding_SIRC, 20, 0xDCB47)])
 sony_bluray.create_action("right", [IrCode(IrEncoding_SIRC, 20, 0x3CB47)])
 sony_bluray.create_action("eject", [IrCode(IrEncoding_SIRC, 20, 0x68B47)])
 
-sony_bluray.create_option("power", Option_DefaultToZero|Option_ActionOnDefault, 1, ["power-off", "power-on"])
+sony_bluray.create_option("power", Option_DefaultToZero|Option_ActionOnDefault, 1, ["power-off", "power-on"], post_delays = [5000, 17000])
 
 sony_stereo = Device("Sony Stereo")
-sony_stereo.create_action("power-on", [IrCode(IrEncoding_SIRC, 12, 0xF16), IrCode(IrEncoding_NOP, 0, 4000)]) # Use tuner to turn on to force source to 0
-sony_stereo.create_action("power-off", [IrCode(IrEncoding_SIRC, 12, 0xA81), IrCode(IrEncoding_NOP, 0, 6000)])
+sony_stereo.create_action("power-on", [IrCode(IrEncoding_SIRC, 12, 0xF16)]) # Use tuner to turn on to force source to 0
+sony_stereo.create_action("power-off", [IrCode(IrEncoding_SIRC, 12, 0xA81)])
 sony_stereo.create_action("tuner", [IrCode(IrEncoding_SIRC, 12, 0xF16)])
 sony_stereo.create_action("volume_up", [IrCode(IrEncoding_SIRC, 12, 0x481)])
 sony_stereo.create_action("volume_down", [IrCode(IrEncoding_SIRC, 12, 0xC81)])
 sony_stereo.create_action("function", [IrCode(IrEncoding_SIRC, 12, 0x966), IrCode(IrEncoding_NOP, 0, 125)])
 
-sony_stereo.create_option("power", Option_DefaultToZero|Option_ActionOnDefault, 1, ["power-off", "power-on"])
+sony_stereo.create_option("power", Option_DefaultToZero|Option_ActionOnDefault, 1, ["power-off", "power-on"], post_delays = [4000, 6000])
 # values map to: tuner, md, cd, pc, opt, analog, tape
 #sony_stereo.create_option("source", Option_Cycled|Option_AbsoluteFromZero|Option_AlwaysSet|Option_DefaultToZero, 6, ["tuner", "function"])
 sony_stereo.create_option("source", Option_Cycled|Option_DefaultToZero, 6, ["function"])

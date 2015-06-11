@@ -15,6 +15,10 @@
 #ifndef SYSTICK_H_
 #define SYSTICK_H_
 #include <stdint.h>
+#include "MKL26Z4.h"
+
+#define CLOCK_HZ_TO_CLOCKS_PER_MS(x) (x / 1000)
+#define DEFAULT_CLOCKS_PER_MS (CLOCK_HZ_TO_CLOCKS_PER_MS(DEFAULT_SYSTEM_CLOCK))
 
 extern void sysTickInit();
 extern void sysTickSetClockRate(unsigned int clock_hz);
