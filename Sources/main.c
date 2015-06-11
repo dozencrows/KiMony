@@ -73,7 +73,7 @@ static void backlightOn()
 void turnOffAllDevices()
 {
 	renderMessage("Powering down...", 0xffff);
-	deviceSetStates(NULL, 0);
+	deviceSetStatesParallel(NULL, 0);
 }
 
 void selectActivity(const Activity* activity)
@@ -99,7 +99,7 @@ void selectActivity(const Activity* activity)
 		touchPage = 0;
 
 		if (!(activity->flags & ACTIVITY_NODEVICES)) {
-			deviceSetStates((const DeviceState*)GET_FLASH_PTR(activity->deviceStatesOffset), activity->deviceStateCount);
+			deviceSetStatesParallel((const DeviceState*)GET_FLASH_PTR(activity->deviceStatesOffset), activity->deviceStateCount);
 		}
 
 		rendererClearScreen();
