@@ -51,8 +51,9 @@ static unsigned int getDeviceIndex(const Device* device)
 	return index;
 }
 
-static void actionOptionToValue(const Device* device, const Option* option, uint8_t currentValue, uint8_t newValue)
+static int actionOptionToValue(const Device* device, const Option* option, uint8_t currentValue, uint8_t newValue)
 {
+	int actionTaken = -1;
 	const uint32_t* actionRefs = (const uint32_t*) GET_FLASH_PTR(option->actionsOffset);
 
 	unsigned int deviceIndex = getDeviceIndex(device);
@@ -71,6 +72,8 @@ static void actionOptionToValue(const Device* device, const Option* option, uint
 					currentValue = 0;
 				}
 			}
+
+			actionTaken = 0;
 		}
 		else {
 			if (option->flags & OPTION_ABSOLUTE_FROM_ZERO && currentValue != 0) {
@@ -81,19 +84,25 @@ static void actionOptionToValue(const Device* device, const Option* option, uint
 			while (currentValue < newValue) {
 				irDoAction((const IrAction*)GET_FLASH_PTR(actionRefs[1]), &toggleFlag);
 				currentValue++;
+				actionTaken = 1;
 			}
 
 			while (currentValue > newValue) {
 				irDoAction((const IrAction*)GET_FLASH_PTR(actionRefs[0]), &toggleFlag);
 				currentValue--;
+				actionTaken = 0;
 			}
 		}
 	}
 	else {
 		irDoAction((const IrAction*)GET_FLASH_PTR(actionRefs[newValue]), &toggleFlag);
+
+		actionTaken = newValue;
 	}
 
 	deviceDynamicState[deviceIndex].toggleFlag = toggleFlag ? 1 : 0;
+
+	return actionTaken;
 }
 
 static void setDeviceToState(const DeviceState* state, int deviceIndex)
@@ -211,14 +220,38 @@ static const DeviceState* getStateForDevice(const DeviceState* states, int state
 	return NULL;
 }
 
-static int setDeviceOptionToState(const Device* device, const DeviceState* state, int optionIdx)
+static int setDeviceOptionToState(int deviceIndex, int optionIndex, const DeviceState* state)
 {
-	return -1;
+	const Device* device = activeDevices + deviceIndex;
+	const uint8_t* stateOptionValues = GET_FLASH_PTR(state->optionValuesOffset);
+	const Option* option = ((const Option*) GET_FLASH_PTR(device->optionsOffset)) + optionIndex;
+	uint8_t* optionValues = optionValuesStore + deviceDynamicState[deviceIndex].optionValuesOffset;
+	int actionTaken = -1;
+
+	if (stateOptionValues[optionIndex] != optionValues[optionIndex] || (option->flags & OPTION_ALWAYS_SET)) {
+		actionTaken = actionOptionToValue(device, option, optionValues[optionIndex], stateOptionValues[optionIndex]);
+		optionValues[optionIndex] = stateOptionValues[optionIndex];
+	}
+
+	return actionTaken;
 }
 
-static int setDeviceOptionToDefault(const Device* device, int optionIdx)
+static int setDeviceOptionToDefault(int deviceIndex, int optionIndex)
 {
-	return -1;
+	const Device* device = activeDevices + deviceIndex;
+	const Option* option = ((const Option*) GET_FLASH_PTR(device->optionsOffset)) + optionIndex;
+	uint8_t* optionValues = optionValuesStore + deviceDynamicState[deviceIndex].optionValuesOffset;
+	int actionTaken = -1;
+
+	if (option->flags & OPTION_DEFAULT_TO_ZERO && optionValues[optionIndex] != 0) {
+		if (option->flags & OPTION_ACTION_ON_DEFAULT) {
+			actionTaken = actionOptionToValue(device, option, optionValues[optionIndex], 0);
+		}
+
+		optionValues[optionIndex] = 0;
+	}
+
+	return actionTaken;
 }
 
 void deviceSetStatesParallel(const DeviceState* states, int stateCount)
@@ -256,17 +289,17 @@ void deviceSetStatesParallel(const DeviceState* states, int stateCount)
 						finishedCount++;
 					}
 					else {
-						const Device* device = activeDevices + i;
-						int actionTaken = -1;
+						int actionTaken;
 
 						if (deviceSwitchingState[i].newState) {
-							actionTaken = setDeviceOptionToState(device, deviceSwitchingState[i].newState, deviceSwitchingState[i].currentOption);
+							actionTaken = setDeviceOptionToState(i, deviceSwitchingState[i].currentOption, deviceSwitchingState[i].newState);
 						}
 						else {
-							actionTaken = setDeviceOptionToDefault(device, deviceSwitchingState[i].currentOption);
+							actionTaken = setDeviceOptionToDefault(i, deviceSwitchingState[i].currentOption);
 						}
 
 						if (actionTaken >= 0) {
+							const Device* device = activeDevices + i;
 							const Option* option = ((const Option*) GET_FLASH_PTR(device->optionsOffset)) + deviceSwitchingState[i].currentOption;
 
 							if (option->postDelaysOffset) {
@@ -275,15 +308,10 @@ void deviceSetStatesParallel(const DeviceState* states, int stateCount)
 								if (postDelays[actionTaken] > 0) {
 									deviceSwitchingState[i].delay = postDelays[actionTaken] * TIME_CONVERSION();
 								}
-								else {
-									deviceSwitchingState[i].currentOption++;
-								}
-							}
-							else {
-								deviceSwitchingState[i].currentOption++;
 							}
 						}
-						else {
+
+						if (!deviceSwitchingState[i].delay) {
 							deviceSwitchingState[i].currentOption++;
 						}
 					}
