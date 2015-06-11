@@ -14,6 +14,7 @@
 #include "device.h"
 #include <stddef.h>
 #include <string.h>
+#include <alloca.h>
 
 #include "ir.h"
 #include "flash.h"
@@ -25,6 +26,13 @@ typedef struct _DeviceDynamicState {
 	uint8_t optionValuesOffset;
 	uint8_t toggleFlag;
 } DeviceDynamicState;
+
+typedef struct _DeviceSwitchingState {
+	uint32_t			finished:1;
+	uint32_t			delay:30;
+	uint32_t			currentOption;
+	const DeviceState*	newState;
+} DeviceSwitchingState;
 
 static const Device* activeDevices = NULL;
 static int activeDeviceCount = 0;
@@ -189,4 +197,101 @@ int deviceAreAllOnDefault()
 	}
 
 	return 1;
+}
+
+static const DeviceState* getStateForDevice(const DeviceState* states, int stateCount, const Device* device)
+{
+	for (int j = 0; j < stateCount; j++) {
+		const Device* stateDevice = (const Device*) GET_FLASH_PTR(states[j].deviceOffset);
+		if (stateDevice == device) {
+			return states + j;
+		}
+	}
+
+	return NULL;
+}
+
+static int setDeviceOptionToState(const Device* device, const DeviceState* state, int optionIdx)
+{
+	return -1;
+}
+
+static int setDeviceOptionToDefault(const Device* device, int optionIdx)
+{
+	return -1;
+}
+
+void deviceSetStatesParallel(const DeviceState* states, int stateCount)
+{
+	size_t switchingStateSize = sizeof(DeviceSwitchingState) * activeDeviceCount;
+	DeviceSwitchingState* deviceSwitchingState = alloca(switchingStateSize);
+	memset(deviceSwitchingState, 0, switchingStateSize);
+
+	for (int i = 0; i < activeDeviceCount; i++) {
+		deviceSwitchingState[i].newState = getStateForDevice(states, stateCount, activeDevices + i);
+	}
+
+	int finishedCount = 0;
+	uint32_t lastTime = GET_TIME();
+	uint32_t currTime = lastTime;
+
+	while (finishedCount < activeDeviceCount) {
+		uint32_t elapsedTime = currTime - lastTime;
+
+		for (int i = 0; i < activeDeviceCount; i++) {
+			if (!deviceSwitchingState[i].finished) {
+				if (deviceSwitchingState[i].delay) {
+					if (deviceSwitchingState[i].delay > elapsedTime) {
+						deviceSwitchingState[i].delay -= elapsedTime;
+					}
+					else {
+						deviceSwitchingState[i].delay = 0;
+						deviceSwitchingState[i].currentOption++;
+					}
+				}
+
+				if (!deviceSwitchingState[i].delay) {
+					if (deviceSwitchingState[i].currentOption >= activeDevices[i].optionCount) {
+						deviceSwitchingState[i].finished = 1;
+						finishedCount++;
+					}
+					else {
+						const Device* device = activeDevices + i;
+						int actionTaken = -1;
+
+						if (deviceSwitchingState[i].newState) {
+							actionTaken = setDeviceOptionToState(device, deviceSwitchingState[i].newState, deviceSwitchingState[i].currentOption);
+						}
+						else {
+							actionTaken = setDeviceOptionToDefault(device, deviceSwitchingState[i].currentOption);
+						}
+
+						if (actionTaken >= 0) {
+							const Option* option = ((const Option*) GET_FLASH_PTR(device->optionsOffset)) + deviceSwitchingState[i].currentOption;
+
+							if (option->postDelaysOffset) {
+								const uint32_t* postDelays = (const uint32_t*)GET_FLASH_PTR(option->postDelaysOffset);
+
+								if (postDelays[actionTaken] > 0) {
+									deviceSwitchingState[i].delay = postDelays[actionTaken] * TIME_CONVERSION();
+								}
+								else {
+									deviceSwitchingState[i].currentOption++;
+								}
+							}
+							else {
+								deviceSwitchingState[i].currentOption++;
+							}
+						}
+						else {
+							deviceSwitchingState[i].currentOption++;
+						}
+					}
+				}
+			}
+		}
+
+		lastTime = currTime;
+		currTime = GET_TIME();
+	}
 }
