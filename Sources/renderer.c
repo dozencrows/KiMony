@@ -202,11 +202,6 @@ static void renderScanLine(uint16_t y)
 	int fillWidth = rowMinX[y] - drawListMinX;
 	uint16_t* fillPtr = pixelBuffer;
 
-	if (((uint32_t)fillPtr) & 3) {
-		*fillPtr++ = 0;
-		fillWidth--;
-	}
-
 	if (fillWidth >= 2) {
 		uint32_t  fillDuo = 0;
 		uint32_t* fillPtrDuo = (uint32_t*)fillPtr;
