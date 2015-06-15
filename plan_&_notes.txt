@@ -7,10 +7,7 @@ Plan
   * Watch Chromecast
   * Listen to Radio
   * Listen to CD
-* Implement bitmap buttons
-  * extend touch buttons to handle this (e.g. flag to switch icon for text, use same offset field)
-  * rendering unpressed and pressed state
-  * embed image data in flash download
+  * Images for buttons where required
 * Implement 'status' line
 * Optimise representation of offline remote data
   * Shrink offsets to 16-bit
@@ -134,6 +131,10 @@ Done
 * Added third device & second activity - blu-ray player and watch movie
 * Added fourth device & activities disjoint from first ones - stereo and listen to cd & radio
 * Implemented parallel device state switching to minimise delays
+* Implemented bitmap buttons
+  * extended touch buttons to handle this (e.g. flag to switch icon for text, use same offset field)
+  * rendered unpressed and pressed state
+  * embedded image data in flash download
 
 Notes
 =====
