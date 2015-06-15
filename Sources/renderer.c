@@ -202,6 +202,11 @@ static void renderScanLine(uint16_t y)
 	int fillWidth = rowMinX[y] - drawListMinX;
 	uint16_t* fillPtr = pixelBuffer;
 
+	if (((uint32_t)fillPtr) & 3) {
+		*fillPtr++ = 0;
+		fillWidth--;
+	}
+
 	if (fillWidth >= 2) {
 		uint32_t  fillDuo = 0;
 		uint32_t* fillPtrDuo = (uint32_t*)fillPtr;
@@ -217,8 +222,9 @@ static void renderScanLine(uint16_t y)
 		fillPtr = (uint16_t*)fillPtrDuo;
 	}
 
-	while (fillWidth--) {
+	while (fillWidth > 0) {
 		*fillPtr++ = 0;
+		fillWidth--;
 	}
 
 	//PROFILE_ENTER(primitives);
@@ -355,6 +361,11 @@ static void renderScanLine(uint16_t y)
 	fillWidth = drawListMaxX - rowMaxX[y];
 	fillPtr = pixelBuffer + rowMaxX[y] - drawListMinX;
 
+	if (((uint32_t)fillPtr) & 3) {
+		*fillPtr++ = 0;
+		fillWidth--;
+	}
+
 	if (fillWidth >= 2) {
 		uint32_t  fillDuo = 0;
 		uint32_t* fillPtrDuo = (uint32_t*)fillPtr;
@@ -370,8 +381,9 @@ static void renderScanLine(uint16_t y)
 		fillPtr = (uint16_t*)fillPtrDuo;
 	}
 
-	while (fillWidth--) {
+	while (fillWidth > 0) {
 		*fillPtr++ = 0;
+		fillWidth--;
 	}
 
 	//PROFILE_EXIT(primitives);
