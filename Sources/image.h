@@ -18,9 +18,10 @@
 #include <stdint.h>
 
 typedef struct _Image {
-	const uint16_t *data;
 	uint16_t width;
 	uint16_t height;
+	uint32_t paletteOffset;
+	uint32_t pixelsOffset;
 } Image;
 
 #endif /* IMAGE_H_ */

@@ -14,7 +14,9 @@
 #include "renderer.h"
 #include <string.h>
 #include <stdio.h>
+#include "assertbrk.h"
 #include "lcd.h"
+#include "flash.h"
 #include "systick.h"
 #include "mathutil.h"
 #include "fontdata.h"
@@ -66,7 +68,8 @@ typedef struct _ImageDLE {
 	DrawListEntry	dle;
 	uint16_t		x;
 	const Image*	image;
-	const uint16_t*	data;
+	const uint16_t*	palette;
+	const uint8_t*	pixels;
 } ImageDLE;
 
 uint8_t		drawListBuffer[DRAWLIST_BUFFER_SIZE];
@@ -315,65 +318,22 @@ static void renderScanLine(uint16_t y)
 					dle->next = dle;
 				}
 				else {
-					const uint16_t* imagePix = image->data;
+					const uint8_t* imagePix = image->pixels;
+					const uint16_t* imagePal = image->palette;
 					uint16_t* pixPtr = pixelBuffer + image->x - minX;
 					uint16_t width = image->image->width;
 
-					if (((uint32_t)pixPtr) & 3) {
-						*pixPtr++ = *imagePix++;
-						width--;
-					}
-
-					if (((uint32_t)imagePix) & 3) {
-						// Destination is 32-bit aligned, but source isn't
-						uint32_t pixDuo;
-						uint32_t* pixPtrDuo = (uint32_t*)pixPtr;
-
-						while (width > 3) {
-							pixDuo = *imagePix++ | (*imagePix++ << 16);
-							*pixPtrDuo++ = pixDuo;
-							pixDuo = *imagePix++ | (*imagePix++ << 16);
-							*pixPtrDuo++ = pixDuo;
-							width -= 4;
+					while (width-- > 0) {
+						uint8_t pix = *imagePix++;
+						if (pix) {
+							*pixPtr++ = imagePal[pix];
 						}
-
-						while (width > 1) {
-							pixDuo = *imagePix++ | (*imagePix++ << 16);
-							*pixPtrDuo++ = pixDuo;
-							width -= 2;
-						}
-
-						pixPtr = (uint16_t*)pixPtrDuo;
-					}
-					else {
-						if (width >= 2) {
-							// Source and destination are 32-bit aligned
-							uint32_t* imagePixDuo = (uint32_t*)imagePix;
-							uint32_t* pixPtrDuo = (uint32_t*)pixPtr;
-
-							while(width > 3) {
-								*pixPtrDuo++ = *imagePixDuo++;
-								*pixPtrDuo++ = *imagePixDuo++;
-								width -= 4;
-							}
-							while(width > 1) {
-								*pixPtrDuo++ = *imagePixDuo++;
-								width -= 2;
-							}
-							pixPtr = (uint16_t*)pixPtrDuo;
-							imagePix = (uint16_t*)imagePixDuo;
+						else {
+							pixPtr++;
 						}
 					}
 
-					while (width--) {
-						*pixPtr++ = *imagePix++;
-					}
-
-					if (((uint32_t)imagePix) & 3) {
-						imagePix++;
-					}
-
-					image->data = imagePix;
+					image->pixels = imagePix;
 				}
 				//PROFILE_EXIT(image);
 				break;
@@ -450,6 +410,11 @@ void rendererNewDrawList()
 
 void rendererDrawVLine(uint16_t x, uint16_t y, uint16_t length, uint16_t colour)
 {
+	ASSERTBRK(length > 0);
+	ASSERTBRK(x >= 0 && x < SCREEN_WIDTH);
+	ASSERTBRK(y >= 0 && y < SCREEN_HEIGHT);
+	ASSERTBRK(y + length <= SCREEN_HEIGHT);
+
 	LineDLE* vLine = (LineDLE*) allocDrawListEntry(sizeof(LineDLE));
 
 	if (vLine) {
@@ -464,8 +429,15 @@ void rendererDrawVLine(uint16_t x, uint16_t y, uint16_t length, uint16_t colour)
 	}
 }
 
+#include <assert.h>
+
 void rendererDrawHLine(uint16_t x, uint16_t y, uint16_t length, uint16_t colour)
 {
+	ASSERTBRK(length > 0);
+	ASSERTBRK(x >= 0 && x < SCREEN_WIDTH);
+	ASSERTBRK(y >= 0 && y < SCREEN_HEIGHT);
+	ASSERTBRK(x + length <= SCREEN_WIDTH);
+
 	LineDLE* vLine = (LineDLE*) allocDrawListEntry(sizeof(LineDLE));
 
 	if (vLine) {
@@ -482,6 +454,13 @@ void rendererDrawHLine(uint16_t x, uint16_t y, uint16_t length, uint16_t colour)
 
 void rendererDrawRect(uint16_t x, uint16_t y, uint16_t width, uint16_t height, uint16_t colour)
 {
+	ASSERTBRK(width > 0);
+	ASSERTBRK(height > 0);
+	ASSERTBRK(x >= 0 && x < SCREEN_WIDTH);
+	ASSERTBRK(y >= 0 && y < SCREEN_HEIGHT);
+	ASSERTBRK(x + width <= SCREEN_WIDTH);
+	ASSERTBRK(y + height <= SCREEN_HEIGHT);
+
 	RectDLE* rect = (RectDLE*) allocDrawListEntry(sizeof(RectDLE));
 
 	if (rect) {
@@ -518,6 +497,9 @@ static const Glyph* findGlyph(char c, const Font* font)
 
 void rendererDrawGlyph(const Glyph* glyph, uint16_t x, uint16_t y, uint16_t colour)
 {
+	ASSERTBRK(x >= 0 && x < SCREEN_WIDTH);
+	ASSERTBRK(y >= 0 && y < SCREEN_HEIGHT);
+
 	GlyphDLE* textChar = (GlyphDLE*) allocDrawListEntry(sizeof(GlyphDLE));
 
 	if (textChar) {
@@ -560,8 +542,16 @@ void rendererDrawString(const char* s, uint16_t x, uint16_t y, const Font* font,
 	}
 }
 
-void rendererDrawImage(Image* i, uint16_t x, uint16_t y)
+void rendererDrawImage(const Image* i, uint16_t x, uint16_t y)
 {
+	ASSERTBRK(i != NULL);
+	ASSERTBRK(i->width > 0);
+	ASSERTBRK(i->height > 0);
+	ASSERTBRK(x >= 0 && x < SCREEN_WIDTH);
+	ASSERTBRK(y >= 0 && y < SCREEN_HEIGHT);
+	ASSERTBRK(x + i->width <= SCREEN_WIDTH);
+	ASSERTBRK(y + i->height <= SCREEN_HEIGHT);
+
 	ImageDLE* imageDle = (ImageDLE*) allocDrawListEntry(sizeof(ImageDLE));
 
 	if (imageDle) {
@@ -569,7 +559,8 @@ void rendererDrawImage(Image* i, uint16_t x, uint16_t y)
 		imageDle->dle.y		= y;
 		imageDle->x			= x;
 		imageDle->image		= i;
-		imageDle->data		= i->data;
+		imageDle->palette	= (const uint16_t*)GET_FLASH_PTR(i->paletteOffset);
+		imageDle->pixels	= (const uint8_t*)GET_FLASH_PTR(i->pixelsOffset);
 
 		insertPendingDrawListEntry(&imageDle->dle);
 		updateDrawListBounds(x, y, x + i->width, y + i->height);
@@ -633,8 +624,6 @@ void rendererGetStringBounds(const char* s, const Font* font, uint16_t* width, u
 	}
 }
 
-extern Image PlayButton;
-
 void rendererTest()
 {
 	rendererNewDrawList();
@@ -661,7 +650,7 @@ void rendererTest()
 	rendererDrawRect(9, 91, 6, 1, 0xffff);
 
 //	rendererDrawImage(&PlayButton, 32, 126);
-	rendererDrawImage(&PlayButton, 33, 190);
+//	rendererDrawImage(&PlayButton, 33, 190);
 
 	rendererRenderDrawList();
 }

@@ -277,6 +277,10 @@ void deviceSetStatesParallel(const DeviceState* states, int stateCount)
 		for (int i = 0; i < activeDeviceCount; i++) {
 			if (!deviceSwitchingState[i].finished) {
 				if (deviceSwitchingState[i].delay) {
+#if defined(DELAY_BYPASS)
+					deviceSwitchingState[i].delay = 0;
+					deviceSwitchingState[i].currentOption++;
+#else
 					if (deviceSwitchingState[i].delay > elapsedTime) {
 						deviceSwitchingState[i].delay -= elapsedTime;
 					}
@@ -284,8 +288,8 @@ void deviceSetStatesParallel(const DeviceState* states, int stateCount)
 						deviceSwitchingState[i].delay = 0;
 						deviceSwitchingState[i].currentOption++;
 					}
+#endif
 				}
-
 				if (!deviceSwitchingState[i].delay) {
 					if (deviceSwitchingState[i].currentOption >= activeDevices[i].optionCount) {
 						deviceSwitchingState[i].finished = 1;

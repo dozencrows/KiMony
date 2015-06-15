@@ -17,6 +17,7 @@
 #include "mathutil.h"
 #include "renderer.h"
 #include "fontdata.h"
+#include "image.h"
 #include "touchscreen.h"
 #include "profiler.h"
 
@@ -46,13 +47,23 @@ static int touchState = TOUCH_STATE_IDLE;
 static int touchStateCounter = 0;
 static int currentTouchButton = -1;
 
-static void renderTouchButton(const TouchButton* button, uint16_t colour, uint16_t textColour)
+static void renderTouchButton(const TouchButton* button, ButtonState* state)
 {
+	uint16_t colour = state->pressed ? BUTTON_FLASH_COLOUR : button->colour;
+	uint16_t textColour = state->pressed ? 0x0000 : 0xffff;
+	uint32_t imageOffset = state->pressed ? button->imageOffsets[1] : button->imageOffsets[0];
+
 	rendererDrawHLine(button->x, button->y, button->width, BUTTON_BORDER_COLOUR);
 	rendererDrawVLine(button->x, button->y, button->height, BUTTON_BORDER_COLOUR);
 	rendererDrawVLine(button->x + button->width - 1, button->y, button->height, BUTTON_BORDER_COLOUR);
 	rendererDrawRect(button->x + 1, button->y + 1, button->width - 2, button->height - 2, colour);
 	rendererDrawHLine(button->x, button->y + button->height - 1, button->width, BUTTON_BORDER_COLOUR);
+
+	if (imageOffset) {
+		const Image* image = (const Image*) GET_FLASH_PTR(imageOffset);
+		rendererDrawImage(image, button->x + (button->width / 2) - (image->width / 2), button->y + (button->height / 2) - (image->height / 2));
+	}
+
 	if (button->textOffset) {
 		const char* text = (const char*)GET_FLASH_PTR(button->textOffset);
 		uint16_t textWidth, textHeight;
@@ -114,8 +125,7 @@ void touchbuttonsRender()
 	for(int i = 0; i < activeTouchButtonsCount; i++) {
 		if (buttonState[i].dirty) {
 			const TouchButton* button = buttonState[i].button;
-			renderTouchButton(button, buttonState[i].pressed ? BUTTON_FLASH_COLOUR : button->colour,
-									  buttonState[i].pressed ? 0x0000 : 0xffff);
+			renderTouchButton(button, buttonState + i);
 			buttonState[i].dirty = 0;
 		}
 	}
