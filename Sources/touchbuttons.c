@@ -53,11 +53,21 @@ static void renderTouchButton(const TouchButton* button, ButtonState* state)
 	uint16_t textColour = state->pressed ? 0x0000 : 0xffff;
 	uint32_t imageOffset = state->pressed ? button->imageOffsets[1] : button->imageOffsets[0];
 
-	rendererDrawHLine(button->x, button->y, button->width, BUTTON_BORDER_COLOUR);
-	rendererDrawVLine(button->x, button->y, button->height, BUTTON_BORDER_COLOUR);
-	rendererDrawVLine(button->x + button->width - 1, button->y, button->height, BUTTON_BORDER_COLOUR);
-	rendererDrawRect(button->x + 1, button->y + 1, button->width - 2, button->height - 2, colour);
-	rendererDrawHLine(button->x, button->y + button->height - 1, button->width, BUTTON_BORDER_COLOUR);
+	if (!(button->flags & TB_NO_BORDER)) {
+		rendererDrawHLine(button->x, button->y, button->width, BUTTON_BORDER_COLOUR);
+		rendererDrawVLine(button->x, button->y, button->height, BUTTON_BORDER_COLOUR);
+		rendererDrawVLine(button->x + button->width - 1, button->y, button->height, BUTTON_BORDER_COLOUR);
+		rendererDrawHLine(button->x, button->y + button->height - 1, button->width, BUTTON_BORDER_COLOUR);
+	}
+
+	if (!(button->flags & TB_NO_FILL)) {
+		if (button->flags & TB_NO_BORDER) {
+			rendererDrawRect(button->x, button->y, button->width, button->height, colour);
+		}
+		else {
+			rendererDrawRect(button->x + 1, button->y + 1, button->width - 2, button->height - 2, colour);
+		}
+	}
 
 	if (imageOffset) {
 		const Image* image = (const Image*) GET_FLASH_PTR(imageOffset);

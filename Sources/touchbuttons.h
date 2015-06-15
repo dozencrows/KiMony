@@ -23,6 +23,8 @@ typedef struct _Point Point;
 
 #define TB_PRESS_ACTIVATE	0x01
 #define TB_CENTRE_TEXT		0x02
+#define TB_NO_BORDER		0x04
+#define TB_NO_FILL			0x08
 
 typedef struct _TouchButton {
 	uint32_t	eventOffset;

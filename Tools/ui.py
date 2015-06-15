@@ -96,9 +96,8 @@ class ButtonMapping(RemoteDataStruct):
 # C structure:
 #   offset      event;
 #   offset      text;
-#   uint16_t    x, y, width, height, colour;
-#   uint32_t    press_activate:1;               -- if true, event is fired on press, otherwise release
-#   uint32_t    centre_text:1;                  -- if true, text is centered in the button
+#   uint16_t    x, y, width, height, colour, flags;
+#   offset      image1, image2;
 #
 class TouchButton(RemoteDataStruct):
     _fields_ = [
@@ -109,13 +108,17 @@ class TouchButton(RemoteDataStruct):
         ("width", ct.c_uint16),
         ("height", ct.c_uint16),
         ("colour", ct.c_uint16),
-        ("press_activate", ct.c_uint16, 1),
-        ("centre_text", ct.c_uint16, 1),
+        ("flags", ct.c_uint16),
         ("image1", ct.c_uint32),
         ("image2", ct.c_uint32),
         ]
+
+    FLAGS_PRESS_ACTIVATE = 0x0001
+    FLAGS_CENTRE_TEXT    = 0x0002
+    FLAGS_NO_BORDER      = 0x0004
+    FLAGS_NO_FILL        = 0x0008
         
-    def __init__(self, event, text, x, y, width, height, colour, press_activate, centre_text, image1 = None, image2 = None, name = None):
+    def __init__(self, event, text, x, y, width, height, colour, flags = 0, image1 = None, image2 = None, name = None):
         if name:
             self.name = name
         elif text:
@@ -157,8 +160,7 @@ class TouchButton(RemoteDataStruct):
         self.width = width
         self.height = height
         self.colour = colour
-        self.press_activate = press_activate
-        self.centre_text = centre_text
+        self.flags = flags
         
     def __str__(self):
         return "TouchButton %s" % self.name

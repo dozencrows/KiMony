@@ -93,5 +93,5 @@
 </listAttribute>
 <stringAttribute key="org.eclipse.dsf.launch.MEMORY_BLOCKS" value="&lt;?xml version=&quot;1.0&quot; encoding=&quot;UTF-8&quot; standalone=&quot;no&quot;?&gt;&#10;&lt;memoryBlockExpressionList context=&quot;reserved-for-future-use&quot;/&gt;&#10;"/>
 <stringAttribute key="process_factory_id" value="org.eclipse.cdt.dsf.gdb.GdbProcessFactory"/>
-<stringAttribute key="saved_expressions&lt;seperator&gt;Unknown" value="__FlashStoreBase + 348,__FlashStoreBase + 0x348,pixelBuffer,pixelBuffer + 0x96,pixelBuffer + 0x150,pixelBuffer + 150,pixelBuffer + 146,pixelBuffer + 90,pixelBuffer + 80,pixelBuffer + 0,pixelBuffer + 1,pixelBuffer + 2,pixelBuffer + 3,pixelBuffer + 4,pixelBuffer + 5"/>
+<stringAttribute key="saved_expressions&lt;seperator&gt;Unknown" value="__FlashStoreBase + 0x348,pixelBuffer,pixelBuffer + 0x96,pixelBuffer + 0x150,pixelBuffer + 150,pixelBuffer + 146,pixelBuffer + 90,pixelBuffer + 80,pixelBuffer + 0,pixelBuffer + 1,pixelBuffer + 2,pixelBuffer + 3,pixelBuffer + 4,pixelBuffer + 5,imagePal"/>
 </launchConfiguration>
