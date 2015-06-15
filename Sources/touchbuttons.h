@@ -30,7 +30,8 @@ typedef struct _TouchButton {
 	uint16_t	x, y;
 	uint16_t	width, height;
 	uint16_t	colour;
-	uint32_t	flags;
+	uint16_t	flags;
+	uint32_t	imageOffsets[2];
 } TouchButton;
 
 extern void touchbuttonsInit();

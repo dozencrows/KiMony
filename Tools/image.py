@@ -1,26 +1,31 @@
+#=======================================================================
+# Copyright Nicholas Tuckett 2015.
+# Distributed under the MIT License.
+# (See accompanying file license.txt or copy at
+#  http://opensource.org/licenses/MIT)
+#=======================================================================
 #
 # Image module
 #
 
 import ctypes as ct
 import os.path
-
 from PIL import Image
-from remote import RemoteDataStruct
-from remote import RemoteDataArray
+
+from remote import RemoteDataStruct, RemoteDataArray, RemoteDataBinaryArray
 
 BLACK              = (0,   0,   0)
 TRANSPARENT_COLOUR = (255, 0, 255)
 PALETTE_SIZE       = 256
-
+    
 class RemoteImage(RemoteDataStruct):
     _instances_ = {}
 
     _fields_ = [
         ("width", ct.c_uint16),
         ("height", ct.c_uint16),
-        ("palette", ct.c_uint32),       # store as RemoteDataArray
-        ("pixels", ct.c_uint32)         # store as RemoteDataArray
+        ("palette", ct.c_uint32),
+        ("pixels", ct.c_uint32)
         ]
 
     #
@@ -28,7 +33,7 @@ class RemoteImage(RemoteDataStruct):
     # transparent (taken from magenta)
     #
     @staticmethod
-    def __load_image__(path):
+    def __load_image(path):
         i = Image.open(path)
         p = i.quantize(colors=254).getpalette()
         p = zip(p[0::3], p[1::3], p[2::3])
@@ -44,12 +49,16 @@ class RemoteImage(RemoteDataStruct):
         
         return i.quantize(palette=palette_image)
 
+    @staticmethod
+    def __get_palette_rgb_565(rgb_palette):
+        p = zip(rgb_palette[0::3], rgb_palette[1::3], rgb_palette[2::3])
+        return [((x[0] & 0xf8) << 8)|((x[1] & 0xf8) << 3)|((x[2]) >> 3) for x in p]
     
     def __init__(self, path):
         self.path = path
         self.name = os.path.basename(path)
         
-        self.image_data = RemoteImage.__load_image__(path)
+        self.image_data = RemoteImage.__load_image(path)
             
         self.width = self.image_data.size[0]
         self.height = self.image_data.size[1]
@@ -71,11 +80,13 @@ class RemoteImage(RemoteDataStruct):
             return cls(rpath)
     
     def pre_pack(self, package):
-        # create array for palette and append to package, storing ref. Use list form of palette, converted to 16-bit 565 values
-        # create array for pixel data and append to package, storing ref. Used binarised form of pixels, from self.image_data.tobytes() (may not work)
-        pass
+        rgb565_palette = RemoteImage.__get_palette_rgb_565(self.image_data.getpalette())
+        self.palette_ref = RemoteDataArray(rgb565_palette, ct.c_uint16, self.name + "-palette")
+        package.append(self.palette_ref)
+        self.pixels_ref = RemoteDataBinaryArray(self.image_data.tobytes(), self.name + "-pixels")
+        package.append(self.pixels_ref)
         
-    def fix_up(self, offsets):
-        # Fix up palette and pixel data references
-        pass
+    def fix_up(self, package):
+        self.palette = package.offsetof(self.palette_ref.ref())
+        self.pixels = package.offsetof(self.pixels_ref.ref())
 

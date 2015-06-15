@@ -1,5 +1,3 @@
-#!/usr/bin/python
-
 #=======================================================================
 # Copyright Nicholas Tuckett 2015.
 # Distributed under the MIT License.
@@ -11,6 +9,11 @@
 # KiMony configuration file
 #
 from remote import *
+from ir import *
+from ui import *
+from device import *
+from activity import *
+from remoteconfig import *
 
 SCREEN_WIDTH	= 240
 SCREEN_HEIGHT	= 320
@@ -79,6 +82,7 @@ phillips_hts.create_action("surround", [IrCode(IrEncoding_RC6, 21, 0xEEFAD, 0x10
 phillips_hts.create_option("power", Option_DefaultToZero|Option_ActionOnDefault, 1, ["powertoggle", "powertoggle"], post_delays = [0, 15000])
 phillips_hts.create_option("surround", Option_Cycled|Option_DefaultToZero, 2, ["surround"], "surround")
 
+# Note - has 8 post-data bits constant of 0x47
 sony_bluray = Device("Sony Blu-ray")
 sony_bluray.create_action("power-off", [IrCode(IrEncoding_SIRC, 20, 0xA8B47)])
 sony_bluray.create_action("power-on", [IrCode(IrEncoding_SIRC, 20, 0xA8B47)])
@@ -87,7 +91,7 @@ sony_bluray.create_action("down", [IrCode(IrEncoding_SIRC, 20, 0x5CB47)])
 sony_bluray.create_action("left", [IrCode(IrEncoding_SIRC, 20, 0xDCB47)])
 sony_bluray.create_action("right", [IrCode(IrEncoding_SIRC, 20, 0x3CB47)])
 sony_bluray.create_action("eject", [IrCode(IrEncoding_SIRC, 20, 0x68B47)])
-
+sony_bluray.create_action("play", [IrCode(IrEncoding_SIRC, 20, 0x58B47)])
 sony_bluray.create_option("power", Option_DefaultToZero|Option_ActionOnDefault, 1, ["power-off", "power-on"], post_delays = [5000, 25000])
 
 sony_stereo = Device("Sony Stereo")
@@ -97,52 +101,10 @@ sony_stereo.create_action("tuner", [IrCode(IrEncoding_SIRC, 12, 0xF16)])
 sony_stereo.create_action("volume_up", [IrCode(IrEncoding_SIRC, 12, 0x481)])
 sony_stereo.create_action("volume_down", [IrCode(IrEncoding_SIRC, 12, 0xC81)])
 sony_stereo.create_action("function", [IrCode(IrEncoding_SIRC, 12, 0x966), IrCode(IrEncoding_NOP, 0, 125)])
-
 sony_stereo.create_option("power", Option_DefaultToZero|Option_ActionOnDefault, 1, ["power-off", "power-on"], post_delays = [6000, 8000])
 # values map to: tuner, md, cd, pc, opt, analog, tape
 #sony_stereo.create_option("source", Option_Cycled|Option_AbsoluteFromZero|Option_AlwaysSet|Option_DefaultToZero, 6, ["tuner", "function"])
 sony_stereo.create_option("source", Option_Cycled|Option_DefaultToZero, 6, ["function"])
-
-#  post_data_bits  8
-#'post_data      0x47
-#          KEY_EJECTCD              0x68B
-#          KEY_POWER                0xA8B
-#          KEY_1                    0x00B
-#          KEY_2                    0x80B
-#          KEY_3                    0x40B
-#          KEY_4                    0xC0B
-#          KEY_5                    0x20B
-#          KEY_6                    0xA0B
-#          KEY_7                    0x60B
-#          KEY_8                    0xE0B
-#          KEY_9                    0x10B
-#          KEY_0                    0x90B
-#          KEY_AUDIO                0x26B
-#          KEY_SUBTITLE             0xC6B
-#          KEY_RED                  0xE6B
-#          KEY_GREEN                0x16B
-#          KEY_BLUE                 0x66B
-#          KEY_YELLOW               0x96B
-#          KEY_MENU                 0x34B
-#          KEY_CONTEXT_MENU         0x94B
-#          KEY_UP                   0x9CB
-#          KEY_DOWN                 0x5CB
-#          KEY_LEFT                 0xDCB
-#          KEY_RIGHT                0x3CB
-#          KEY_OK                   0xBCB
-#          KEY_BACK                 0xC2B
-#          KEY_OPTION               0xFCB
-#          KEY_HOME                 0x42B
-#          KEY_RESTART              0xEAB
-#          KEY_PAUSE                0x98B
-#          KEY_END                  0x6AB
-#          KEY_REWIND               0xD8B
-#          KEY_PLAY                 0x58B
-#          KEY_FASTFORWARD          0x38B
-#          KEY_DISPLAYTOGGLE        0x82B
-#          KEY_STOP                 0x18B
-#          KEY_WWW                  0x32B
-
 
 remoteConfig.add_device(sony_tv)
 remoteConfig.add_device(sony_bluray)
@@ -196,6 +158,7 @@ br_down_event		= remoteConfig.create_ir_event("br-down", sony_bluray, "down")
 br_left_event		= remoteConfig.create_ir_event("br-left", sony_bluray, "left")
 br_right_event		= remoteConfig.create_ir_event("br-right", sony_bluray, "right")
 br_eject_event		= remoteConfig.create_ir_event("br-eject", sony_bluray, "eject")
+br_play_event		= remoteConfig.create_ir_event("br-play", sony_bluray, "play")
 
 st_volume_up_event  = remoteConfig.create_ir_event("st-vol-up", sony_stereo, "volume_up")
 st_volume_down_event  = remoteConfig.create_ir_event("st-vol-down", sony_stereo, "volume_down")
@@ -257,6 +220,11 @@ watch_movie_activity.create_button_mapping(0x000010, mute_event)
 watch_movie_activity.create_button_mapping(0x200000, br_eject_event)
     
 watch_movie_activity.create_touch_button_page([
+    #TouchButton(guide_event, "Guide",  		      0, 0, BUTTON_WIDTH, BUTTON_HEIGHT, 0xf9e0, True, True),
+    #TouchButton(enter_event, "Enter",  BUTTON_WIDTH, 0, BUTTON_WIDTH, BUTTON_HEIGHT, 0xf9e0, True, True),
+    TouchButton(br_play_event,  None, 2*BUTTON_WIDTH, 0, BUTTON_WIDTH, BUTTON_HEIGHT, 0xf9e0, True, True, "Resources/play-button-2.png", "Resources/play-button-2-pressed.png"),
+    #TouchButton(home_event,  "Home", 3*BUTTON_WIDTH, 0, BUTTON_WIDTH, BUTTON_HEIGHT, 0xf9e0, True, True),
+
     TouchButton(br_up_event, "U",  (SCREEN_WIDTH - BUTTON_WIDTH) / 2, 2*BUTTON_HEIGHT, BUTTON_WIDTH, BUTTON_HEIGHT, 0xf9e0, True, True),
     TouchButton(br_down_event, "D",  (SCREEN_WIDTH - BUTTON_WIDTH) / 2, 3*BUTTON_HEIGHT, BUTTON_WIDTH, BUTTON_HEIGHT, 0xf9e0, True, True),
     TouchButton(br_left_event, "L",  (SCREEN_WIDTH - BUTTON_WIDTH) / 2 - BUTTON_WIDTH, int(2.5*BUTTON_HEIGHT), BUTTON_WIDTH, BUTTON_HEIGHT, 0xf9e0, True, True),
