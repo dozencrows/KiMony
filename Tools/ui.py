@@ -166,6 +166,8 @@ class TouchButton(RemoteDataStruct):
     def pre_pack(self, package):
         if self.wrapped_text:
             package.append_text(self.wrapped_text)
+            
+    def pre_pack_images(self, package):
         if self.image1_ref:
             package.append(self.image1_obj)
         if self.image2_ref:
@@ -219,6 +221,9 @@ class TouchButtonPage(RemoteDataStruct):
     def pre_pack_touch_buttons(self, package):
         for x in self.touch_buttons:
             package.append(x)
+            
+        for x in self.touch_buttons:
+            x.pre_pack_images(package)
             
     def fix_up(self, package):
         try:
