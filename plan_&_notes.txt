@@ -1,22 +1,28 @@
 Plan
 ====
-* Implement draw priority system, affecting list insert for active DLEs
-* Solve 'in-fill' issue between DLE areas on same scan line
-* Fix download exit
-* Round out activities & devices to required functionality
-  * Watch TV
-  * Watch Movie
-  * Watch Digital Video
-  * Watch Chromecast
-  * Listen to Radio
-  * Listen to CD
-  * Images for buttons where required
-* Implement 'status' line
-* Optimise representation of offline remote data
-  * Shrink offsets to 16-bit
-* Power save mode
-* Wake-up via accelerometer
-* USB serial download of remote data instead of UART
+* Hardware
+  * Try with MKL26Z256VLH4 breakout
+  * Develop LPC812 based IR sender circuit
+  * Create custom main PCB using SMT wherever possible
+  * Create custom keypad PCB
+* Software  
+  * Implement draw priority system, affecting list insert for active DLEs
+  * Solve 'in-fill' issue between DLE areas on same scan line
+  * Fix download exit
+  * Round out activities & devices to required functionality
+    * Watch TV
+    * Watch Movie
+    * Watch Digital Video
+    * Watch Chromecast
+    * Listen to Radio
+    * Listen to CD
+    * Images for buttons where required
+  * Implement 'status' line
+  * Optimise representation of offline remote data
+    * Shrink offsets to 16-bit
+  * Power save mode
+  * Wake-up via accelerometer
+  * USB serial download of remote data instead of UART
 
 Work-in-progress
 ================
