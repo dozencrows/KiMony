@@ -136,17 +136,21 @@ void selectTouchPage(int page)
 	}
 }
 
+const Activity* remoteInit()
+{
+	deviceInit();
+	const RemoteDataHeader* dataHeader = (const RemoteDataHeader*)GET_FLASH_PTR(0);
+	deviceSetActive((const Device*)GET_FLASH_PTR(dataHeader->devicesOffset), dataHeader->deviceCount);
+
+	return (const Activity*)GET_FLASH_PTR(dataHeader->homeActivityOffset);
+}
+
 void mainLoop()
 {
 	buttonsInit();
 	touchbuttonsInit();
-	deviceInit();
 
-	const RemoteDataHeader* dataHeader = (const RemoteDataHeader*)GET_FLASH_PTR(0);
-
-	const Activity* homeActivity = (const Activity*)GET_FLASH_PTR(dataHeader->homeActivityOffset);
-	deviceSetActive((const Device*)GET_FLASH_PTR(dataHeader->devicesOffset), dataHeader->deviceCount);
-
+	const Activity* homeActivity = remoteInit();
 	selectActivity(homeActivity);
 
 //	int frames = 0;
@@ -228,8 +232,12 @@ void mainLoop()
 				selectTouchPage(touchPage - 1);
 			}
 			else if (event->type == EVENT_DOWNLOAD) {
+				if (!deviceAreAllOnDefault()) {
+					turnOffAllDevices();
+				}
 				cpuFlashDownload();
-				selectActivity(homeActivity);
+				remoteInit();
+				forceActivity(homeActivity);
 			}
 			else if (event->type == EVENT_POWEROFF) {
 				if (!deviceAreAllOnDefault()) {

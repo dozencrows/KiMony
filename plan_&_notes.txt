@@ -8,7 +8,6 @@ Plan
 * Software  
   * Implement draw priority system, affecting list insert for active DLEs
   * Solve 'in-fill' issue between DLE areas on same scan line
-  * Fix download exit
   * Round out activities & devices to required functionality
     * Watch TV
     * Watch Movie
