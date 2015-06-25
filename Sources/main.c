@@ -26,6 +26,7 @@
 #include "renderer.h"
 #include "buttons.h"
 #include "touchbuttons.h"
+#include "accelerometer.h"
 #include "device.h"
 #include "activity.h"
 #include "remotedata.h"
@@ -275,6 +276,8 @@ int main(void)
 	if (FLASH_DATA_HEADER->watermark != FLASH_DATA_WATERMARK) {
 		cpuFlashDownload();
 	}
+
+	accelTest();
 
 	mainLoop();
 
