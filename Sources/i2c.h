@@ -26,5 +26,6 @@ extern void i2cSendBlock(uint8_t address, uint8_t* data, size_t length);
 extern void i2cChannelSendByte(int channel, uint8_t address, uint8_t reg, uint8_t data);
 extern uint8_t i2cChannelReadByte(int channel, uint8_t address, uint8_t reg);
 extern void i2cChannelSendBlock(int channel, uint8_t address, uint8_t* data, size_t length);
+extern void i2cChannelReadBlock(int channel, uint8_t address, uint8_t reg, uint8_t* data, size_t length);
 
 #endif /* I2C_H_ */

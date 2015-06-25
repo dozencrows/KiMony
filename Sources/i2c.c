@@ -22,7 +22,7 @@
 //		24 (SCL)
 //		25 (SDA)
 
-static const I2C_Type * i2cChannel[2] = I2C_BASE_PTRS;
+static I2C_Type * const i2cChannel[2] = I2C_BASE_PTRS;
 
 static const PortConfig channel0PortEPins =
 {
@@ -153,6 +153,47 @@ void i2cSendBlockToChannel(I2C_Type * channel, uint8_t address, uint8_t* data, s
 	I2C_C1_REG(channel) &= ~(I2C_C1_MST_MASK|I2C_C1_TX_MASK);	// generate STOP
 }
 
+void i2cReadBlockFromChannel(I2C_Type * channel, uint8_t address, uint8_t reg, uint8_t* data, size_t length)
+{
+	while ((I2C_S_REG(channel) & I2C_S_BUSY_MASK));
+
+	I2C_C1_REG(channel) |= I2C_C1_TX_MASK;					// Set up transmit
+	I2C_C1_REG(channel) |= I2C_C1_MST_MASK;					// Generate START
+	I2C_D_REG(channel)	= address << 1;						// Send address with R/W bit 0 (write)
+	while (!(I2C_S_REG(channel) & I2C_S_BUSY_MASK));
+	while (!(I2C_S_REG(channel) & I2C_S_IICIF_MASK));
+	I2C_S_REG(channel) |= I2C_S_IICIF_MASK;
+
+	I2C_D_REG(channel) = reg;
+	while (!(I2C_S_REG(channel) & I2C_S_IICIF_MASK));
+	I2C_S_REG(channel) |= I2C_S_IICIF_MASK;
+
+	I2C_C1_REG(channel) |= I2C_C1_RSTA_MASK;
+	I2C_D_REG(channel)	= address << 1 | 1;					// Send address with R/W bit 1 (read)
+	while (!(I2C_S_REG(channel) & I2C_S_IICIF_MASK));
+	I2C_S_REG(channel) |= I2C_S_IICIF_MASK;
+
+	I2C_C1_REG(channel) &= ~I2C_C1_TX_MASK;					// Switch to receive
+	uint8_t dummy_read = I2C_D_REG(channel);				// Trigger read of next byte
+
+	while (length > 2) {
+		while (!(I2C_S_REG(channel) & I2C_S_IICIF_MASK));
+		I2C_S_REG(channel) |= I2C_S_IICIF_MASK;
+		*data++ = I2C_D_REG(channel);
+		length--;
+	}
+
+	I2C_C1_REG(channel) |= I2C_C1_TXAK_MASK;
+	while (!(I2C_S_REG(channel) & I2C_S_IICIF_MASK));
+	I2C_S_REG(channel) |= I2C_S_IICIF_MASK;
+	*data++ = I2C_D_REG(channel);
+
+	while (!(I2C_S_REG(channel) & I2C_S_IICIF_MASK));
+	I2C_S_REG(channel) |= I2C_S_IICIF_MASK;
+	I2C_C1_REG(channel) &= ~I2C_C1_MST_MASK;
+	*data++ = I2C_D_REG(channel);
+	I2C_C1_REG(channel) &= ~I2C_C1_TXAK_MASK;
+}
 
 void i2cInit()
 {
@@ -193,4 +234,9 @@ uint8_t i2cChannelReadByte(int channel, uint8_t address, uint8_t reg)
 void i2cChannelSendBlock(int channel, uint8_t address, uint8_t* data, size_t length)
 {
 	i2cSendBlockToChannel(i2cChannel[channel], address, data, length);
+}
+
+void i2cChannelReadBlock(int channel, uint8_t address, uint8_t reg, uint8_t* data, size_t length)
+{
+	i2cReadBlockFromChannel(i2cChannel[channel], address, reg, data, length);
 }
