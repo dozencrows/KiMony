@@ -17,10 +17,23 @@
 #include "ports.h"
 
 // Pins to initialise
-// PTE: 0 (SCLK)
-//		1 (MOSI)
+// PTE: 0 (SCL)
+//		1 (SDA)
+//		24 (SCL)
+//		25 (SDA)
 
-static const PortConfig portEPins =
+static const I2C_Type * i2cChannel[2] = I2C_BASE_PTRS;
+
+static const PortConfig channel0PortEPins =
+{
+	PORTE_BASE_PTR,
+	~(PORT_PCR_ISF_MASK | PORT_PCR_MUX_MASK),
+	PORT_PCR_MUX(5),
+	2,
+	{ 24, 25 }
+};
+
+static const PortConfig channel1PortEPins =
 {
 	PORTE_BASE_PTR,
 	~(PORT_PCR_ISF_MASK | PORT_PCR_MUX_MASK),
@@ -143,10 +156,12 @@ void i2cSendBlockToChannel(I2C_Type * channel, uint8_t address, uint8_t* data, s
 void i2cInit()
 {
 	/* SIM_SCGC4: I2C1=1 */
-	SIM_SCGC4 |= SIM_SCGC4_I2C1_MASK;
+	SIM_SCGC4 |= SIM_SCGC4_I2C0_MASK|SIM_SCGC4_I2C1_MASK;
 	SIM_SCGC5 |= SIM_SCGC5_PORTE_MASK;
-	portInitialise(&portEPins);
+	portInitialise(&channel0PortEPins);
+	portInitialise(&channel1PortEPins);
 
+	i2cInitChannel(I2C0);
 	i2cInitChannel(I2C1);
 }
 
@@ -165,7 +180,17 @@ void i2cSendBlock(uint8_t address, uint8_t* data, size_t length)
 	i2cSendBlockToChannel(I2C1, address, data, length);
 }
 
+void i2cChannelSendByte(int channel, uint8_t address, uint8_t reg, uint8_t data)
+{
+	i2cSendByteToChannel(i2cChannel[channel], address, reg, data);
+}
 
+uint8_t i2cChannelReadByte(int channel, uint8_t address, uint8_t reg)
+{
+	return i2cReadByteFromChannel(i2cChannel[channel], address, reg);
+}
 
-
-
+void i2cChannelSendBlock(int channel, uint8_t address, uint8_t* data, size_t length)
+{
+	i2cSendBlockToChannel(i2cChannel[channel], address, data, length);
+}
