@@ -67,7 +67,8 @@ static void i2cInitChannel(I2C_Type * channel)
 	/* I2C1_C1: IICEN=0,IICIE=0,MST=0,TX=0,TXAK=0,RSTA=0,WUEN=0,DMAEN=0 */
 	I2C_C1_REG(channel) = 0x00U;
 
-	I2C_F_REG(channel)   = (I2C_F_MULT(0x00) | I2C_F_ICR(0x27));		// Mult = 1, Divider = 480 -> 100KHz for 48MHz clock
+	I2C_F_REG(channel)   = (I2C_F_MULT(0x00) | I2C_F_ICR(0x27));		// Mult = 1, Divider = 480 -> 100KHz for 48MHz system clock
+
 	I2C_C1_REG(channel) |= I2C_C1_IICEN_MASK;							// Enable module
 }
 
@@ -119,7 +120,7 @@ static uint8_t i2cReadByteFromChannel(I2C_Type * channel, uint8_t address, uint8
 
 	I2C_C1_REG(channel) &= ~I2C_C1_TX_MASK;					// Switch to receive
 	I2C_C1_REG(channel) |= I2C_C1_TXAK_MASK;
-	uint8_t dummy_read = I2C1_D;				// Trigger read of next byte
+	uint8_t dummy_read = I2C_D_REG(channel);				// Trigger read of next byte
 
 	while (!(I2C_S_REG(channel) & I2C_S_IICIF_MASK));
 	I2C_S_REG(channel) |= I2C_S_IICIF_MASK;
@@ -155,7 +156,6 @@ void i2cSendBlockToChannel(I2C_Type * channel, uint8_t address, uint8_t* data, s
 
 void i2cInit()
 {
-	/* SIM_SCGC4: I2C1=1 */
 	SIM_SCGC4 |= SIM_SCGC4_I2C0_MASK|SIM_SCGC4_I2C1_MASK;
 	SIM_SCGC5 |= SIM_SCGC5_PORTE_MASK;
 	portInitialise(&channel0PortEPins);
