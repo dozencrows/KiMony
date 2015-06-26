@@ -14,6 +14,7 @@
 #include "interrupts.h"
 #include "uart.h"
 #include "timer.h"
+#include "ports.h"
 #include "mathutil.h"
 #include "codeutil.h"
 #include "renderutils.h"
@@ -321,6 +322,43 @@ void mainLoop()
 	}
 }
 
+// On header: PTC0, PTC1, PTC2, PTB1, PTB2, PTB3, PTB19
+// Others: PTB16, PTB17, PTC3, PTE29, PTE31
+
+static const PortConfig unusedPortBPins =
+{
+	PORTB_BASE_PTR,
+	~(PORT_PCR_ISF_MASK | PORT_PCR_MUX_MASK),
+	PORT_PCR_MUX(0),
+	4,
+	{ 1, 2, 3, 16, 17, 19 }
+};
+
+static const PortConfig unusedPortCPins =
+{
+	PORTC_BASE_PTR,
+	~(PORT_PCR_ISF_MASK | PORT_PCR_MUX_MASK),
+	PORT_PCR_MUX(0),
+	4,
+	{ 0, 1, 2, 3 }
+};
+
+static const PortConfig unusedPortEPins =
+{
+	PORTE_BASE_PTR,
+	~(PORT_PCR_ISF_MASK | PORT_PCR_MUX_MASK),
+	PORT_PCR_MUX(0),
+	2,
+	{ 29, 31 }
+};
+
+static void tieDownUnusedPins()
+{
+	portInitialise(&unusedPortBPins);
+	portInitialise(&unusedPortCPins);
+	portInitialise(&unusedPortEPins);
+}
+
 int main(void)
 {
 	SystemCoreClockUpdate();
@@ -346,6 +384,7 @@ int main(void)
 		cpuFlashDownload();
 	}
 
+	tieDownUnusedPins();
 	mainLoop();
 
 	//spiFlashTest();

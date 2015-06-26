@@ -9,6 +9,7 @@
 
 volatile uint32_t tpmCounter[3] = { 0, 0, 0 };
 TPM_Type* const tpmPtrs[] = TPM_BASE_PTRS;
+const uint32_t tpmGateFlags[] = { SIM_SCGC6_TPM0_MASK, SIM_SCGC6_TPM1_MASK, SIM_SCGC6_TPM2_MASK };
 
 #define MILLISECOND_MOD 48000	// Based on PLL divided by 2, which will be 96Mhz
 
@@ -34,12 +35,11 @@ void TPM2_IRQHandler()
 void tpmInit()
 {
 	SIM_SOPT2 = (SIM_SOPT2 & ~SIM_SOPT2_TPMSRC_MASK) | SIM_SOPT2_TPMSRC(1);	// Bus clock for TPM (PLL/2)
-	SIM_SCGC6 = SIM_SCGC6 | (SIM_SCGC6_TPM0_MASK|SIM_SCGC6_TPM1_MASK|SIM_SCGC6_TPM2_MASK);
 }
 
 void tpmStartMillisecondTimer(int timerIndex)
 {
-	tpmStopTimer(timerIndex);
+	SIM_SCGC6 |= tpmGateFlags[timerIndex];
 	tpmPtrs[timerIndex]->MOD = MILLISECOND_MOD;
 	tpmPtrs[timerIndex]->CNT = 0;
 	tpmPtrs[timerIndex]->SC  = TPM_SC_TOIE_MASK|TPM_SC_TOF_MASK;
@@ -55,6 +55,7 @@ uint32_t tpmGetTime(int timerIndex)
 
 void tpmStopTimer(int timerIndex)
 {
+	SIM_SCGC6 &= ~tpmGateFlags[timerIndex];
 	tpmPtrs[timerIndex]->SC = 0;
 	NVIC_DisableIRQ(TPM0_IRQn + timerIndex);
 }

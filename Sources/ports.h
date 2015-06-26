@@ -28,5 +28,6 @@ typedef struct _PortConfig {
 typedef const PortConfig* PortConfigPtr;
 
 extern void portInitialise(PortConfigPtr config);
+extern void portAsGPIOOutput(PortConfigPtr config);
 
 #endif /* PORT_UTIL_H_ */

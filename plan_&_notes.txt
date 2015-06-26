@@ -19,7 +19,7 @@ Plan
   * Implement 'status' line
   * Optimise representation of offline remote data
     * Shrink offsets to 16-bit
-  * Power save mode (including peripherals such as accelerometer).
+  * Power saving
   * USB serial download of remote data instead of UART
 
 Work-in-progress
@@ -143,6 +143,7 @@ Done
   * rendered unpressed and pressed state
   * embedded image data in flash download
 * Implemented wake-up via accelerometer transient detection
+* Implemented power saving measures: LCD controller sleep, VLPS stop for MCU, LP timer for periodic update, disable unused pins, only turn on TPM timers as needed
 
 Notes
 =====
@@ -352,3 +353,37 @@ Have to use TPM for timer as systick gets used in IR sending.
 - increment counter on interrupt for a millisecond timer
 
 Implement this as functions in a timer module that take a TPM reg structure ptr as param.
+
+Power Management Notes
+======================
+Modules enabled:
+	Ports: A, B, C, D, E
+	I2C0
+	I2C1
+	LPTMR
+	SPI1
+	TPM0		(when timer needed)
+	UART2		(on first download)
+
+Other hardware:
+	LPC IR blaster (I2C pullups, transistor, IR LEDs, 0.1uF cap)
+	SPI flash (0.1uF cap)
+	MCP23008 GPIO extender (0.1uF cap)
+	RGB LED (blue cathode on SPI1 clock line)
+	Capacitative touch slider (not used)
+	Ambient light sensor (not used)
+		
+Power management activity:
+	Idle between interrupts -> MCU enters very low power stop state, woken by LP timer, touchscreen, MCP button or accelerometer interrupts.
+	Enters 'sleep' mode if idle for > 5 seconds:
+		MCU in VLPS, woken by touchscreen, MCP button or accelerometer
+		LCD backlight off
+		LCD controller in sleep mode
+		
+Power usage
+	When fully active, current draw is ~160mA.
+	When in sleep, current draw is ~30mA.
+	
+Unused pins:
+	On header: PTC0, PTC1, PTC2, PTB1, PTB2, PTB3, PTB19
+	Others: PTB16, PTB17, PTC3, PTE29, PTE31
