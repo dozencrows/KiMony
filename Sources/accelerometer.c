@@ -36,6 +36,8 @@
 #define FXOS8700CQ_WHOAMI_VAL	0xC7
 #define FXOS8700CQ_PACKET_SIZE	13
 
+#define FXOS8700CQ_INT_TRANS_MASK	0x20
+
 
 
 typedef struct _SensorData {
@@ -62,12 +64,13 @@ static void irqHandlerPortCD(uint32_t portCISFR, uint32_t portDISFR)
 	}
 }
 
-static void accelClearInterrupt()
+void accelClearInterrupts()
 {
 	uint8_t intSource = i2cChannelReadByte(FXOS8700CQ_I2C_CHANNEL, FXOS8700CQ_SLAVE_ADDR, FXOS8700CQ_INT_SOURCE);
 
-	if (intSource & 0x20) {
+	if (intSource & FXOS8700CQ_INT_TRANS_MASK) {
 		volatile uint8_t transientStatus = i2cChannelReadByte(FXOS8700CQ_I2C_CHANNEL, FXOS8700CQ_SLAVE_ADDR, FXOS8700CQ_TRANSIENT_SRC);
+		accelerometerInt1Flag = 0;
 	}
 }
 
@@ -83,8 +86,8 @@ void accelInit()
 		i2cChannelSendByte(FXOS8700CQ_I2C_CHANNEL, FXOS8700CQ_SLAVE_ADDR, FXOS8700CQ_TRANSIENT_CFG, 0x1e);		// Latch, X, Y and Z enabled
 		i2cChannelSendByte(FXOS8700CQ_I2C_CHANNEL, FXOS8700CQ_SLAVE_ADDR, FXOS8700CQ_TRANSIENT_THS, 0x03);		// 0.18g threshold
 		i2cChannelSendByte(FXOS8700CQ_I2C_CHANNEL, FXOS8700CQ_SLAVE_ADDR, FXOS8700CQ_TRANSIENT_COUNT, 0x05);	// Debounce to 50ms
-		i2cChannelSendByte(FXOS8700CQ_I2C_CHANNEL, FXOS8700CQ_SLAVE_ADDR, FXOS8700CQ_CTRL_REG4, 0x20);			// Enable interrupt
-		i2cChannelSendByte(FXOS8700CQ_I2C_CHANNEL, FXOS8700CQ_SLAVE_ADDR, FXOS8700CQ_CTRL_REG5, 0x20);			// Route interrupt
+		i2cChannelSendByte(FXOS8700CQ_I2C_CHANNEL, FXOS8700CQ_SLAVE_ADDR, FXOS8700CQ_CTRL_REG4, FXOS8700CQ_INT_TRANS_MASK);			// Enable interrupt
+		i2cChannelSendByte(FXOS8700CQ_I2C_CHANNEL, FXOS8700CQ_SLAVE_ADDR, FXOS8700CQ_CTRL_REG5, FXOS8700CQ_INT_TRANS_MASK);			// Route interrupt
 
 		interruptRegisterPortCDIRQHandler(irqHandlerPortCD);
 		NVIC_EnableIRQ(PORTC_PORTD_IRQn);
@@ -95,17 +98,7 @@ void accelInit()
 	}
 }
 
-void accelTest()
+int accelCheckTransientInterrupt()
 {
-	accelInit();
-
-	if (accelInitialised) {
-		while (1) {
-			__asm("WFI");
-			if (accelerometerInt1Flag) {
-				accelClearInterrupt();
-				break;
-			}
-		}
-	}
+	return accelerometerInt1Flag > 0;
 }

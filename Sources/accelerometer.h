@@ -8,6 +8,8 @@
 #ifndef ACCELEROMETER_H_
 #define ACCELEROMETER_H_
 
-extern void accelTest();
+extern void accelInit();
+extern int accelCheckTransientInterrupt();
+extern void accelClearInterrupts();
 
 #endif /* ACCELEROMETER_H_ */
