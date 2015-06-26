@@ -64,9 +64,15 @@ static void pitIrqHandler()
 }
 
 static uint32_t backlightCounter = 0;
+static int tftAsleep = 0;
 
 static void backlightOn()
 {
+	if (tftAsleep) {
+		tftWake();
+		tftAsleep = 0;
+	}
+
 	backlightCounter = 0;
 	tftSetBacklight(1);
 }
@@ -212,6 +218,8 @@ void mainLoop()
 			backlightCounter++;
 			if (backlightCounter > BACKLIGHT_OFF_TIMEOUT) {
 				tftSetBacklight(0);
+				tftSleep();
+				tftAsleep = 1;
 				backlightCounter = 0;
 			}
 		}

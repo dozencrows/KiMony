@@ -931,3 +931,15 @@ void tftEndBlit()
 {
 	FGPIO_PSOR_REG(FGPIOA) = TFT_CS_MASK;
 }
+
+void tftSleep()
+{
+	tftWriteCmd(ILI9341_SLPIN);
+	sysTickDelayMs(120);
+}
+
+void tftWake()
+{
+	tftWriteCmd(ILI9341_SLPOUT);
+	sysTickDelayMs(120);
+}
