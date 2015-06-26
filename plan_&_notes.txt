@@ -19,8 +19,7 @@ Plan
   * Implement 'status' line
   * Optimise representation of offline remote data
     * Shrink offsets to 16-bit
-  * Power save mode
-  * Wake-up via accelerometer
+  * Power save mode (including peripherals such as accelerometer).
   * USB serial download of remote data instead of UART
 
 Work-in-progress
@@ -143,6 +142,7 @@ Done
   * extended touch buttons to handle this (e.g. flag to switch icon for text, use same offset field)
   * rendered unpressed and pressed state
   * embedded image data in flash download
+* Implemented wake-up via accelerometer transient detection
 
 Notes
 =====
