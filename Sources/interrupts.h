@@ -17,10 +17,12 @@
 
 #include <stdint.h>
 
+typedef void (*LPTMRIRQHandler)();
 typedef void (*PITIRQHandler)();
 typedef void (*PortAIRQHandler)(uint32_t portAISFR);
 typedef void (*PortCDIRQHandler)(uint32_t portCISFR, uint32_t portDISFR);
 
+void interruptRegisterLPTMRIRQHandler(LPTMRIRQHandler irqHandler);
 void interruptRegisterPITIRQHandler(PITIRQHandler irqHandler);
 void interruptRegisterPortAIRQHandler(PortAIRQHandler irqHandler);
 void interruptRegisterPortCDIRQHandler(PortCDIRQHandler irqHandler);

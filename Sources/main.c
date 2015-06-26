@@ -34,7 +34,7 @@
 #define ARRAY_LENGTH(x) (sizeof(x) / sizeof(x[0]))
 
 // Time until backlight turns off when idle, in hundredths of a second
-#define BACKLIGHT_OFF_TIMEOUT	500
+#define SLEEP_TIMEOUT	500
 
 static int touchPage = 0;
 static const Activity* currentActivity = NULL;
@@ -56,25 +56,56 @@ void waitForButton()
 	}
 }
 
-static volatile uint8_t pitIrqCount = 0;
+static volatile uint8_t periodicTimerIrqCount = 0;
 
-static void pitIrqHandler()
+static void periodicTimerIrqHandler()
 {
-	pitIrqCount++;
+	periodicTimerIrqCount++;
 }
 
-static uint32_t backlightCounter = 0;
-static int tftAsleep = 0;
-
-static void backlightOn()
+static void periodicTimerInit()
 {
-	if (tftAsleep) {
+	// LPTMR version:
+	SIM_SCGC5 |= SIM_SCGC5_LPTMR_MASK;
+
+	interruptRegisterLPTMRIRQHandler(periodicTimerIrqHandler);
+	NVIC_EnableIRQ(LPTimer_IRQn);
+}
+
+static void periodicTimerStart()
+{
+	LPTMR0_CSR = 0;												// Ensure timer is stopped and counter cleared
+	LPTMR0_PSR = LPTMR_PSR_PCS(1) | LPTMR_PSR_PRESCALE(0);		// Counter frequency is 500Hz (1kHz LPO divided by 2)
+	LPTMR0_CMR = 5;												// 100Hz interrupt
+	LPTMR0_CSR = LPTMR_CSR_TIE_MASK | LPTMR_CSR_TEN_MASK;		// Enable with interrupt.
+}
+
+static void periodicTimerStop()
+{
+	LPTMR0_CSR = 0;												// Ensure timer is stopped and counter cleared
+}
+
+static uint32_t sleepCounter = 0;
+static int isAsleep = 0;
+
+static void sleep()
+{
+	isAsleep = 1;
+	tftSetBacklight(0);
+	tftSleep();
+	periodicTimerStop();
+}
+
+static void wakeUp()
+{
+	if (isAsleep) {
 		tftWake();
-		tftAsleep = 0;
+		tftSetBacklight(1);
+		periodicTimerStart();
+		isAsleep = 0;
 	}
 
-	backlightCounter = 0;
-	tftSetBacklight(1);
+	sleepCounter = 0;
 }
 
 void turnOffAllDevices()
@@ -152,6 +183,38 @@ const Activity* remoteInit()
 	return (const Activity*)GET_FLASH_PTR(dataHeader->homeActivityOffset);
 }
 
+void idle()
+{
+	// Enter Very Low Power Stop mode
+	SMC_PMCTRL &= ~SMC_PMCTRL_STOPM_MASK;
+	SMC_PMCTRL |= SMC_PMCTRL_STOPM(2);
+	/*wait for write to complete to SMC before stopping core */
+	volatile uint32_t dummyread = SMC_PMCTRL;
+	dummyread++;
+	SCB->SCR |= SCB_SCR_SLEEPDEEP_Msk;
+	__asm("wfi");
+
+	SCB->SCR &= ~SCB_SCR_SLEEPDEEP_Msk;
+
+	// Switch PLL from PBE mode to PEE
+	uint32_t exitClockMode = (MCG_S & MCG_S_CLKST_MASK) >> MCG_S_CLKST_SHIFT;
+
+	if (exitClockMode != 3) {
+		for (int i = 0 ; i < 2000 ; i++) {
+			if (MCG_S & MCG_S_LOCK0_MASK) break; // jump out early if LOCK sets before loop finishes
+		}
+
+		MCG_C1 &= ~MCG_C1_CLKS_MASK; // clear CLKS to switch CLKS mux to select PLL as MCG_OUT
+
+		// Wait for clock status bits to update
+		for (int i = 0 ; i < 2000 ; i++) {
+			if (((MCG_S & MCG_S_CLKST_MASK) >> MCG_S_CLKST_SHIFT) == 0x3) break; // jump out early if CLKST = 3 before loop finishes
+		}
+	}
+
+	NVIC_EnableIRQ(LPTimer_IRQn);
+}
+
 void mainLoop()
 {
 	buttonsInit();
@@ -171,19 +234,14 @@ void mainLoop()
 //
 //	printf("TouchButtons %d\n", frames);
 
-	// Periodic timer for polling non-matrix keys
-	SIM_SCGC6   |= SIM_SCGC6_PIT_MASK;
-	PIT_MCR 	= PIT_MCR_FRZ_MASK;
-	PIT_LDVAL0	= DEFAULT_SYSTEM_CLOCK / 200;				// 100Hz (uses bus clock, which is half system clock)
-	PIT_TCTRL0	= PIT_TCTRL_TIE_MASK | PIT_TCTRL_TEN_MASK;
-	interruptRegisterPITIRQHandler(pitIrqHandler);
-	NVIC_EnableIRQ(PIT_IRQn);
+	periodicTimerInit();
+	periodicTimerStart();
 
 	keyMatrixClearInterrupt();
 	touchScreenClearInterrupt();
 
 	while (1) {
-		__asm("wfi");
+		idle();
 
 		const Event* event = NULL;
 
@@ -195,7 +253,7 @@ void mainLoop()
 				if (tftGetBacklight()) {
 					touchbuttonsProcessTouch(&touch);
 				}
-				backlightOn();
+				wakeUp();
 			}
 			touchScreenClearInterrupt();
 		}
@@ -207,20 +265,17 @@ void mainLoop()
 
 		if (accelCheckTransientInterrupt()) {
 			accelClearInterrupts();
-			backlightOn();
+			wakeUp();
 		}
 
-		if (pitIrqCount) {
+		if (periodicTimerIrqCount) {
 			buttonsPollState();
 			touchButtonsUpdate(&event);
-			pitIrqCount = 0;
+			periodicTimerIrqCount = 0;
 
-			backlightCounter++;
-			if (backlightCounter > BACKLIGHT_OFF_TIMEOUT) {
-				tftSetBacklight(0);
-				tftSleep();
-				tftAsleep = 1;
-				backlightCounter = 0;
+			sleepCounter++;
+			if (sleepCounter > SLEEP_TIMEOUT) {
+				sleep();
 			}
 		}
 
@@ -228,7 +283,7 @@ void mainLoop()
 		touchbuttonsRender();
 
 		if (event) {
-			backlightOn();
+			wakeUp();
 			rendererRenderDrawList();
 			if (event->type == EVENT_IRACTION) {
 				deviceDoIrAction((const Device*)GET_FLASH_PTR(event->deviceOffset), (const IrAction*)GET_FLASH_PTR(event->irActionOffset));

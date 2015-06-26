@@ -16,12 +16,23 @@
 
 #define MAX_IRQ_HANDLERS	4
 
+static int lptmrIRQHandlerCount = 0;
+static PITIRQHandler lptmrIRQHandlers[MAX_IRQ_HANDLERS];
 static int pitIRQHandlerCount = 0;
 static PITIRQHandler pitIRQHandlers[MAX_IRQ_HANDLERS];
 static int portAIRQHandlerCount = 0;
 static PortAIRQHandler portAIRQHandlers[MAX_IRQ_HANDLERS];
 static int portCDIRQHandlerCount = 0;
 static PortCDIRQHandler portCDIRQHandlers[MAX_IRQ_HANDLERS];
+
+void LPTimer_IRQHandler()
+{
+	for(int i = 0; i < lptmrIRQHandlerCount; i++) {
+		lptmrIRQHandlers[i]();
+	}
+
+	LPTMR0_CSR |= LPTMR_CSR_TCF_MASK;
+}
 
 void PIT_IRQHandler()
 {
@@ -63,6 +74,11 @@ static void addIrqHandler(void* irqHandler, int* irqHandlerCount, void** irqHand
 		irqHandlerArray[*irqHandlerCount] = irqHandler;
 		*irqHandlerCount = *irqHandlerCount + 1;
 	}
+}
+
+void interruptRegisterLPTMRIRQHandler(LPTMRIRQHandler irqHandler)
+{
+	addIrqHandler(irqHandler, &lptmrIRQHandlerCount, (void**)lptmrIRQHandlers);
 }
 
 void interruptRegisterPITIRQHandler(PITIRQHandler irqHandler)
