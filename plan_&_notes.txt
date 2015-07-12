@@ -1,8 +1,6 @@
 Plan
 ====
 * Hardware
-  * Try with MKL26Z256VLH4 breakout
-  * Develop LPC812 based IR sender circuit
   * Create custom main PCB using SMT wherever possible
   * Create custom keypad PCB
 * Software  
@@ -24,9 +22,6 @@ Plan
 
 Work-in-progress
 ================
-* Reduce standard library footprint but still work with semi-host printf
-  * Tried this with workaround from http://mcuoneclipse.com/2014/07/12/printf-for-the-frdm-k64f-board-and-kinetis-design-studio/
-    but still only prints first character
 
 What's smart and/or novel?
 ==========================
@@ -144,6 +139,8 @@ Done
   * embedded image data in flash download
 * Implemented wake-up via accelerometer transient detection
 * Implemented power saving measures: LCD controller sleep, VLPS stop for MCU, LP timer for periodic update, disable unused pins, only turn on TPM timers as needed
+* Tested with MKL26Z256VLH4 breakout board, using Freedom KL26Z board in external device programming configuration via USBDM.
+* Developed LPC812 based IR sender circuit on breadboard
 
 Notes
 =====

@@ -20,7 +20,7 @@
 #include "i2c.h"
 #include "systick.h"
 
-#define IR_I2C_ADDRESS	0x70
+#define IR_I2C_ADDRESS	0x71
 #define IR_STAGE_COUNT  64
 #define IR_PACKET_SIZE(packet) (sizeof(packet->header) + sizeof(uint16_t) * packet->header.length)
 #define IR_MAX_DURATION	65535
