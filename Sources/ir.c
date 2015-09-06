@@ -269,23 +269,14 @@ void irDoAction(const IrAction* action, int* toggleFlag)
 
 		switch (code->encoding) {
 			case IRCODE_NOP: {
-#if defined(_DEBUG)
-				printf("IR: wait %dms\n", code->code);
-#endif
 				sysTickDelayMs(code->code);
 				break;
 			}
 			case IRCODE_RC6: {
-#if defined(_DEBUG)
-				printf("IR: RC6 %x\n", completedCode);
-#endif
 				irSendRC6Code(completedCode, code->bits);
 				break;
 			}
 			case IRCODE_SIRC: {
-#if defined(_DEBUG)
-				printf("IR: SIRC %x\n", completedCode);
-#endif
 				irSendSIRCCode(completedCode, code->bits);
 				break;
 			}
