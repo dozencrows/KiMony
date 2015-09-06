@@ -384,3 +384,30 @@ Power usage
 Unused pins:
 	On header: PTC0, PTC1, PTC2, PTB1, PTB2, PTB3, PTB19
 	Others: PTB16, PTB17, PTC3, PTE29, PTE31
+	
+Port reassignment for custom PCB
+================================
+LCD data:
+	PTC4-11 to PTC0-7. May be tricky to rewire as cables are tied together... might need new cables
+	lcd.c:
+		- change pin assignments
+		- Remove shift.
+	main.c:
+		- change unused port C pins
+	
+LCD control:						old mcu		new mcu		old brkout		new brkout
+	TFT_DC  to PTE30 (was PTA1)		23			18			32				27
+	TFT_RST to PTE31 (was PTA2)		24			19			33				28
+	TFT_CS  to PTE24 (was PTA5)		27			20			36				29
+	TFT_WR  to PTE25 (was PTA13)	29			21			38				30
+	lcd.c:
+		- change pin assignments
+	main.c:
+		- change unused port A pins
+		- change unused port E pins
+		- comment out all accelerometer calls
+	i2c.:
+		- change/disable I2C channel 0 (uses PTE24/25)
+	keymatrix.c:
+		- change PORTE_KEY3 (uses PTE30) to PTE29 (and rewire board connection)
+			(mcu old: 18 new: 17)  (brkout old: 32 new: 26)
