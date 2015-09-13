@@ -340,7 +340,7 @@ static const PortConfig unusedPortCPins =
 	~(PORT_PCR_ISF_MASK | PORT_PCR_MUX_MASK),
 	PORT_PCR_MUX(0),
 	4,
-	{ 0, 1, 2, 3 }
+	{ 8, 9, 10, 11 }
 };
 
 static const PortConfig unusedPortEPins =

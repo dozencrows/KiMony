@@ -141,6 +141,7 @@ Done
 * Implemented power saving measures: LCD controller sleep, VLPS stop for MCU, LP timer for periodic update, disable unused pins, only turn on TPM timers as needed
 * Tested with MKL26Z256VLH4 breakout board, using Freedom KL26Z board in external device programming configuration via USBDM.
 * Developed LPC812 based IR sender circuit on breadboard
+* Rewired LCD data interface to PTC0-7, and updated renderer code to match.
 
 Notes
 =====
@@ -389,9 +390,17 @@ Port reassignment for custom PCB
 ================================
 LCD data:
 	PTC4-11 to PTC0-7. May be tricky to rewire as cables are tied together... might need new cables
+	
+		old mcu		new mcu		old brkout		new brkout
+		49-52		43-46		85-88			70-73
+		53-56		49-52		89-92			85-88
+	
 	lcd.c:
 		- change pin assignments
-		- Remove shift.
+		- Remove shifts & adjust masks across all pixel output code.
+		- Redefine pixel structure
+	renderer.c:
+		- Change pixel format writing - no need to split
 	main.c:
 		- change unused port C pins
 	
