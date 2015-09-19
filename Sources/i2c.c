@@ -199,10 +199,10 @@ void i2cInit()
 {
 	SIM_SCGC4 |= SIM_SCGC4_I2C0_MASK|SIM_SCGC4_I2C1_MASK;
 	SIM_SCGC5 |= SIM_SCGC5_PORTE_MASK;
-	portInitialise(&channel0PortEPins);
+	//portInitialise(&channel0PortEPins);
 	portInitialise(&channel1PortEPins);
 
-	i2cInitChannel(I2C0);
+	//i2cInitChannel(I2C0);
 	i2cInitChannel(I2C1);
 }
 

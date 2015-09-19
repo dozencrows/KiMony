@@ -264,10 +264,10 @@ void mainLoop()
 			keyMatrixClearInterrupt();
 		}
 
-		if (accelCheckTransientInterrupt()) {
-			accelClearInterrupts();
-			wakeUp();
-		}
+//		if (accelCheckTransientInterrupt()) {
+//			accelClearInterrupts();
+//			wakeUp();
+//		}
 
 		if (periodicTimerIrqCount) {
 			buttonsPollState();
@@ -322,8 +322,14 @@ void mainLoop()
 	}
 }
 
-// On header: PTC0, PTC1, PTC2, PTB1, PTB2, PTB3, PTB19
-// Others: PTB16, PTB17, PTC3, PTE29, PTE31
+static const PortConfig unusedPortAPins =
+{
+	PORTA_BASE_PTR,
+	~(PORT_PCR_ISF_MASK | PORT_PCR_MUX_MASK),
+	PORT_PCR_MUX(0),
+	4,
+	{ 1, 2, 5, 13 }
+};
 
 static const PortConfig unusedPortBPins =
 {
@@ -343,20 +349,11 @@ static const PortConfig unusedPortCPins =
 	{ 8, 9, 10, 11 }
 };
 
-static const PortConfig unusedPortEPins =
-{
-	PORTE_BASE_PTR,
-	~(PORT_PCR_ISF_MASK | PORT_PCR_MUX_MASK),
-	PORT_PCR_MUX(0),
-	2,
-	{ 30, 31 }
-};
-
 static void tieDownUnusedPins()
 {
+	portInitialise(&unusedPortAPins);
 	portInitialise(&unusedPortBPins);
 	portInitialise(&unusedPortCPins);
-	portInitialise(&unusedPortEPins);
 }
 
 int main(void)

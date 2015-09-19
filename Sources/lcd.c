@@ -19,21 +19,12 @@
 
 // Ports & pins to initialise:
 //  All as GPIO outputs
-//	PTC: 4->11	(parallel data)
-//	PTA: 1		(data/command)
-//		 2		(reset)
-//		 5		(chip select)
-//       13		(write)
+//	PTC: 0->7	(parallel data)
 //  PTD: 3		(backlight)
-
-static const PortConfig portAPins =
-{
-	PORTA_BASE_PTR,
-	~(PORT_PCR_ISF_MASK | PORT_PCR_MUX_MASK),
-	PORT_PCR_MUX(1),
-	4,
-	{ 1, 2, 5, 13 }
-};
+//	PTE: 24		(chip select)
+//       25		(write)
+//		 30		(data/command)
+//		 31		(reset)
 
 static const PortConfig portCPins =
 {
@@ -53,13 +44,22 @@ static const PortConfig portDPins =
 	{ 3 }
 };
 
+static const PortConfig portEPins =
+{
+	PORTE_BASE_PTR,
+	~(PORT_PCR_ISF_MASK | PORT_PCR_MUX_MASK),
+	PORT_PCR_MUX(1),
+	4,
+	{ 24, 25, 30, 31 }
+};
+
 static int backlightState = 0;
 
-#define TFT_DC_MASK 0x2U
-#define TFT_RS_MASK 0x4U
-#define TFT_BL_MASK 0x8U
-#define TFT_CS_MASK	0x20U
-#define TFT_WR_MASK	0x2000U
+#define TFT_DC_MASK 0x40000000U
+#define TFT_RS_MASK 0x80000000U
+#define TFT_BL_MASK 0x00000008U
+#define TFT_CS_MASK	0x01000000U
+#define TFT_WR_MASK	0x02000000U
 
 #define ILI9341_TFTWIDTH  240
 #define ILI9341_TFTHEIGHT 320
@@ -119,21 +119,21 @@ static int backlightState = 0;
 
 void parallelWrite(unsigned char byte)
 {
-	FGPIO_PCOR_REG(FGPIOA) = TFT_CS_MASK | TFT_WR_MASK;
+	FGPIO_PCOR_REG(FGPIOE) = TFT_CS_MASK | TFT_WR_MASK;
 
 	uint32_t reg_val = byte;
 	uint32_t tog_val = (FGPIO_PDOR_REG(FGPIOC) ^ reg_val) & 0x00FFU;
 	FGPIO_PTOR_REG(FGPIOC) = tog_val;
 
-	FGPIO_PSOR_REG(FGPIOA) = TFT_WR_MASK;
-	FGPIO_PSOR_REG(FGPIOA) = TFT_CS_MASK;
+	FGPIO_PSOR_REG(FGPIOE) = TFT_WR_MASK;
+	FGPIO_PSOR_REG(FGPIOE) = TFT_CS_MASK;
 }
 
 void tftWriteCmd(unsigned char byte)
 {
-	FGPIO_PCOR_REG(FGPIOA) = TFT_DC_MASK;
+	FGPIO_PCOR_REG(FGPIOE) = TFT_DC_MASK;
 	parallelWrite(byte);
-	FGPIO_PSOR_REG(FGPIOA) = TFT_DC_MASK;
+	FGPIO_PSOR_REG(FGPIOE) = TFT_DC_MASK;
 }
 
 void tftWriteData(unsigned char byte)
@@ -145,8 +145,8 @@ void tftReset()
 {
 	FGPIO_PCOR_REG(FGPIOD) = TFT_BL_MASK;	// Turn off backlight
 
-	FGPIO_PCOR_REG(FGPIOA) = TFT_RS_MASK;	// LCD hardware reset
-	FGPIO_PSOR_REG(FGPIOA) = TFT_RS_MASK;
+	FGPIO_PCOR_REG(FGPIOE) = TFT_RS_MASK;	// LCD hardware reset
+	FGPIO_PSOR_REG(FGPIOE) = TFT_RS_MASK;
 
 	tftWriteCmd(0x01);	// SW reset
 	sysTickDelayMs(5);
@@ -310,21 +310,21 @@ void drawTestRect_PEInline_FGPIO(uint16_t colour)
 	uint32_t colour_hi = (colour & 0xff00) >> 8;
 	uint32_t colour_lo = (colour & 0xff);
 
-	FGPIO_PCOR_REG(FGPIOA) = TFT_CS_MASK;
+	FGPIO_PCOR_REG(FGPIOE) = TFT_CS_MASK;
 
 	for (int i = 0; i < 76800; i++) {
-		FGPIO_PCOR_REG(FGPIOA) = TFT_WR_MASK;
+		FGPIO_PCOR_REG(FGPIOE) = TFT_WR_MASK;
 		uint32_t tog_val = (FGPIO_PDOR_REG(FGPIOC) ^ colour_hi) & 0x00FFU;
 		FGPIO_PTOR_REG(FGPIOC) = tog_val;
-		FGPIO_PSOR_REG(FGPIOA) = TFT_WR_MASK;
+		FGPIO_PSOR_REG(FGPIOE) = TFT_WR_MASK;
 
-		FGPIO_PCOR_REG(FGPIOA) = TFT_WR_MASK;
+		FGPIO_PCOR_REG(FGPIOE) = TFT_WR_MASK;
 		tog_val = ((uint32_t)FGPIO_PDOR_REG(FGPIOC) ^ colour_lo) & 0x00FFU;
 		FGPIO_PTOR_REG(FGPIOC) = tog_val;
-		FGPIO_PSOR_REG(FGPIOA) = TFT_WR_MASK;
+		FGPIO_PSOR_REG(FGPIOE) = TFT_WR_MASK;
 	}
 
-	FGPIO_PSOR_REG(FGPIOA) = TFT_CS_MASK;
+	FGPIO_PSOR_REG(FGPIOE) = TFT_CS_MASK;
 }
 
 void drawTestRect_PEInline_BME(uint16_t colour)
@@ -351,19 +351,19 @@ void drawTestRect_PEInline_BME(uint16_t colour)
 	uint32_t colour_hi = (colour & 0xff00) >> 8;
 	uint32_t colour_lo = (colour & 0xff);
 
-	FGPIO_PCOR_REG(FGPIOA) = TFT_CS_MASK;
+	FGPIO_PCOR_REG(FGPIOE) = TFT_CS_MASK;
 
 	for (int i = 0; i < 76800; i++) {
-		FGPIO_PCOR_REG(FGPIOA) = TFT_WR_MASK;
+		FGPIO_PCOR_REG(FGPIOE) = TFT_WR_MASK;
 		((((GPIO_MemMapPtr)0x5238F080))->PDOR) = colour_hi;
-		FGPIO_PSOR_REG(FGPIOA) = TFT_WR_MASK;
+		FGPIO_PSOR_REG(FGPIOE) = TFT_WR_MASK;
 
-		FGPIO_PCOR_REG(FGPIOA) = TFT_WR_MASK;
+		FGPIO_PCOR_REG(FGPIOE) = TFT_WR_MASK;
 		((((GPIO_MemMapPtr)0x5238F080))->PDOR) = colour_lo;
-		FGPIO_PSOR_REG(FGPIOA) = TFT_WR_MASK;
+		FGPIO_PSOR_REG(FGPIOE) = TFT_WR_MASK;
 	}
 
-	FGPIO_PSOR_REG(FGPIOA) = TFT_CS_MASK;
+	FGPIO_PSOR_REG(FGPIOE) = TFT_CS_MASK;
 }
 
 void drawTestRect_PEInline_WROnly(uint16_t colour)
@@ -392,16 +392,16 @@ void drawTestRect_PEInline_WROnly(uint16_t colour)
 
 	((((GPIO_MemMapPtr)0x5238F080))->PDOR) = colour_lo;
 
-	FGPIO_PCOR_REG(FGPIOA) = TFT_CS_MASK;
+	FGPIO_PCOR_REG(FGPIOE) = TFT_CS_MASK;
 
 	for (int i = 0; i < 76800; i++) {
-		FGPIO_PCOR_REG(FGPIOA) = TFT_WR_MASK;
-		FGPIO_PSOR_REG(FGPIOA) = TFT_WR_MASK;
-		FGPIO_PCOR_REG(FGPIOA) = TFT_WR_MASK;
-		FGPIO_PSOR_REG(FGPIOA) = TFT_WR_MASK;
+		FGPIO_PCOR_REG(FGPIOE) = TFT_WR_MASK;
+		FGPIO_PSOR_REG(FGPIOE) = TFT_WR_MASK;
+		FGPIO_PCOR_REG(FGPIOE) = TFT_WR_MASK;
+		FGPIO_PSOR_REG(FGPIOE) = TFT_WR_MASK;
 	}
 
-	FGPIO_PSOR_REG(FGPIOA) = TFT_CS_MASK;
+	FGPIO_PSOR_REG(FGPIOE) = TFT_CS_MASK;
 }
 
 void drawTestRect_PEInline_SRAM(uint16_t colour)
@@ -425,7 +425,7 @@ void drawTestRect_PEInline_SRAM(uint16_t colour)
 
 	tftWriteCmd(ILI9341_RAMWR); // write to RAM
 
-	FGPIO_PCOR_REG(FGPIOA) = TFT_CS_MASK;
+	FGPIO_PCOR_REG(FGPIOE) = TFT_CS_MASK;
 
 	fillPixelBuffer(pixelBuffer, 0x1ff8);
 
@@ -433,19 +433,19 @@ void drawTestRect_PEInline_SRAM(uint16_t colour)
 		uint8_t* pixel_ptr = &pixelBuffer[0].lo;
 
 		for (int x = 0; x < 240; x++, pixel_ptr += 2) {
-			FGPIO_PCOR_REG(FGPIOA) = TFT_WR_MASK;
+			FGPIO_PCOR_REG(FGPIOE) = TFT_WR_MASK;
 			uint32_t tog_val = (FGPIO_PDOR_REG(FGPIOC) ^ *pixel_ptr + 1) & 0x00FFU;
 			FGPIO_PTOR_REG(FGPIOC) = tog_val;
-			FGPIO_PSOR_REG(FGPIOA) = TFT_WR_MASK;
+			FGPIO_PSOR_REG(FGPIOE) = TFT_WR_MASK;
 
-			FGPIO_PCOR_REG(FGPIOA) = TFT_WR_MASK;
+			FGPIO_PCOR_REG(FGPIOE) = TFT_WR_MASK;
 			tog_val = (FGPIO_PDOR_REG(FGPIOC) ^ *(pixel_ptr)) & 0x00FFU;
 			FGPIO_PTOR_REG(FGPIOC) = tog_val;
-			FGPIO_PSOR_REG(FGPIOA) = TFT_WR_MASK;
+			FGPIO_PSOR_REG(FGPIOE) = TFT_WR_MASK;
 		}
 	}
 
-	FGPIO_PSOR_REG(FGPIOA) = TFT_CS_MASK;
+	FGPIO_PSOR_REG(FGPIOE) = TFT_CS_MASK;
 }
 
 void drawTestRect_PEInline_SRAM_PDOR(uint16_t colour)
@@ -469,23 +469,23 @@ void drawTestRect_PEInline_SRAM_PDOR(uint16_t colour)
 
 	tftWriteCmd(ILI9341_RAMWR); // write to RAM
 
-	FGPIO_PCOR_REG(FGPIOA) = TFT_CS_MASK;
+	FGPIO_PCOR_REG(FGPIOE) = TFT_CS_MASK;
 
 	for (int y = 0; y < 320; y++) {
 		uint8_t* pixel_ptr = &pixelBuffer[0].lo;
 
 		for (int x = 0; x < 240; x++, pixel_ptr += 2) {
-			FGPIO_PCOR_REG(FGPIOA) = TFT_WR_MASK;
+			FGPIO_PCOR_REG(FGPIOE) = TFT_WR_MASK;
 			FGPIO_PDOR_REG(FGPIOC) = *(pixel_ptr + 1);
-			FGPIO_PSOR_REG(FGPIOA) = TFT_WR_MASK;
+			FGPIO_PSOR_REG(FGPIOE) = TFT_WR_MASK;
 
-			FGPIO_PCOR_REG(FGPIOA) = TFT_WR_MASK;
+			FGPIO_PCOR_REG(FGPIOE) = TFT_WR_MASK;
 			FGPIO_PDOR_REG(FGPIOC) = *(pixel_ptr);
-			FGPIO_PSOR_REG(FGPIOA) = TFT_WR_MASK;
+			FGPIO_PSOR_REG(FGPIOE) = TFT_WR_MASK;
 		}
 	}
 
-	FGPIO_PSOR_REG(FGPIOA) = TFT_CS_MASK;
+	FGPIO_PSOR_REG(FGPIOE) = TFT_CS_MASK;
 }
 
 void drawTestRect_PEInline_SRAM_PDOR_BufferFill(uint16_t colour)
@@ -509,7 +509,7 @@ void drawTestRect_PEInline_SRAM_PDOR_BufferFill(uint16_t colour)
 
 	tftWriteCmd(ILI9341_RAMWR); // write to RAM
 
-	FGPIO_PCOR_REG(FGPIOA) = TFT_CS_MASK;
+	FGPIO_PCOR_REG(FGPIOE) = TFT_CS_MASK;
 
 	for (int y = 0; y < 320; y++) {
 		fillPixelBuffer(pixelBuffer, colour);
@@ -518,17 +518,17 @@ void drawTestRect_PEInline_SRAM_PDOR_BufferFill(uint16_t colour)
 		uint8_t* pixel_ptr = &pixelBuffer[0].lo;
 
 		for (int x = 0; x < 240; x++, pixel_ptr += 2) {
-			FGPIO_PCOR_REG(FGPIOA) = TFT_WR_MASK;
+			FGPIO_PCOR_REG(FGPIOE) = TFT_WR_MASK;
 			FGPIO_PDOR_REG(FGPIOC) = *(pixel_ptr + 1);
-			FGPIO_PSOR_REG(FGPIOA) = TFT_WR_MASK;
+			FGPIO_PSOR_REG(FGPIOE) = TFT_WR_MASK;
 
-			FGPIO_PCOR_REG(FGPIOA) = TFT_WR_MASK;
+			FGPIO_PCOR_REG(FGPIOE) = TFT_WR_MASK;
 			FGPIO_PDOR_REG(FGPIOC) = *(pixel_ptr);
-			FGPIO_PSOR_REG(FGPIOA) = TFT_WR_MASK;
+			FGPIO_PSOR_REG(FGPIOE) = TFT_WR_MASK;
 		}
 	}
 
-	FGPIO_PSOR_REG(FGPIOA) = TFT_CS_MASK;
+	FGPIO_PSOR_REG(FGPIOE) = TFT_CS_MASK;
 }
 
 extern unsigned char image_raw[];
@@ -553,33 +553,33 @@ void drawTestImage(uint16_t x0, uint16_t y0)
 
 	tftWriteCmd(ILI9341_RAMWR); // write to RAM
 
-	FGPIO_PCOR_REG(FGPIOA) = TFT_CS_MASK;
+	FGPIO_PCOR_REG(FGPIOE) = TFT_CS_MASK;
 
 	unsigned char* pixel_ptr = image_raw;
 
 	for (unsigned int i = 0; i < image_raw_len; i+=4, pixel_ptr+=4) {
-		FGPIO_PCOR_REG(FGPIOA) = TFT_WR_MASK;
+		FGPIO_PCOR_REG(FGPIOE) = TFT_WR_MASK;
 		uint32_t tog_val = ((uint32_t)FGPIO_PDOR_REG(FGPIOC) ^ ((uint32_t)*(pixel_ptr))) & 0x00FFU;
 		FGPIO_PTOR_REG(FGPIOC) = tog_val;
-		FGPIO_PSOR_REG(FGPIOA) = TFT_WR_MASK;
+		FGPIO_PSOR_REG(FGPIOE) = TFT_WR_MASK;
 
-		FGPIO_PCOR_REG(FGPIOA) = TFT_WR_MASK;
+		FGPIO_PCOR_REG(FGPIOE) = TFT_WR_MASK;
 		tog_val = ((uint32_t)FGPIO_PDOR_REG(FGPIOC) ^ ((uint32_t)*(pixel_ptr + 1))) & 0x00FFU;
 		FGPIO_PTOR_REG(FGPIOC) = tog_val;
-		FGPIO_PSOR_REG(FGPIOA) = TFT_WR_MASK;
+		FGPIO_PSOR_REG(FGPIOE) = TFT_WR_MASK;
 
-		FGPIO_PCOR_REG(FGPIOA) = TFT_WR_MASK;
+		FGPIO_PCOR_REG(FGPIOE) = TFT_WR_MASK;
 		tog_val = ((uint32_t)FGPIO_PDOR_REG(FGPIOC) ^ ((uint32_t)*(pixel_ptr + 2))) & 0x00FFU;
 		FGPIO_PTOR_REG(FGPIOC) = tog_val;
-		FGPIO_PSOR_REG(FGPIOA) = TFT_WR_MASK;
+		FGPIO_PSOR_REG(FGPIOE) = TFT_WR_MASK;
 
-		FGPIO_PCOR_REG(FGPIOA) = TFT_WR_MASK;
+		FGPIO_PCOR_REG(FGPIOE) = TFT_WR_MASK;
 		tog_val = ((uint32_t)FGPIO_PDOR_REG(FGPIOC) ^ ((uint32_t)*(pixel_ptr + 3))) & 0x00FFU;
 		FGPIO_PTOR_REG(FGPIOC) = tog_val;
-		FGPIO_PSOR_REG(FGPIOA) = TFT_WR_MASK;
+		FGPIO_PSOR_REG(FGPIOE) = TFT_WR_MASK;
 	}
 
-	FGPIO_PSOR_REG(FGPIOA) = TFT_CS_MASK;
+	FGPIO_PSOR_REG(FGPIOE) = TFT_CS_MASK;
 }
 
 volatile uint32_t tftDmaWriteBitMask = 0x2000;
@@ -699,7 +699,7 @@ void drawTestRectDma()
 
 	tftWriteCmd(ILI9341_RAMWR); // write to RAM
 
-	FGPIO_PCOR_REG(FGPIOA) = TFT_CS_MASK;
+	FGPIO_PCOR_REG(FGPIOE) = TFT_CS_MASK;
 
 	fillPixelBuffer(pixelBuffer, 0x1ff8);
 
@@ -716,23 +716,23 @@ void drawTestRectDma()
 		}
 	}
 
-	FGPIO_PSOR_REG(FGPIOA) = TFT_CS_MASK;
+	FGPIO_PSOR_REG(FGPIOE) = TFT_CS_MASK;
 }
 
 void tftInit()
 {
 	SIM_SCGC5 |= SIM_SCGC5_PORTA_MASK|SIM_SCGC5_PORTC_MASK|SIM_SCGC5_PORTD_MASK;
 
-	portInitialise(&portAPins);
 	portInitialise(&portCPins);
 	portInitialise(&portDPins);
+	portInitialise(&portEPins);
 
-	FGPIOA_PDDR |= TFT_CS_MASK | TFT_WR_MASK | TFT_DC_MASK | TFT_RS_MASK;
 	FGPIOC_PDDR |= 0xffU;
 	FGPIOD_PDDR |= TFT_BL_MASK;
+	FGPIOE_PDDR |= TFT_CS_MASK | TFT_WR_MASK | TFT_RS_MASK | TFT_DC_MASK;
 	backlightState = 1;
 
-	FGPIO_PSOR_REG(FGPIOA) = TFT_CS_MASK | TFT_WR_MASK | TFT_DC_MASK | TFT_RS_MASK;
+	FGPIO_PSOR_REG(FGPIOE) = TFT_CS_MASK | TFT_WR_MASK | TFT_RS_MASK | TFT_DC_MASK;
 	sysTickDelayMs(5);
 
 	tftReset();
@@ -774,7 +774,7 @@ void tftStartBlit(int x, int y, int width, int height)
 	tftWriteData(y1);     // YEND
 
 	tftWriteCmd(ILI9341_RAMWR); // write to RAM
-	FGPIO_PCOR_REG(FGPIOA) = TFT_CS_MASK;
+	FGPIO_PCOR_REG(FGPIOE) = TFT_CS_MASK;
 }
 
 void tftBlit(uint16_t* buffer, size_t pixels)
@@ -782,137 +782,137 @@ void tftBlit(uint16_t* buffer, size_t pixels)
 	uint8_t* pixel_ptr = (uint8_t*)buffer;
 
 	while (pixels >= 8) {
-		FGPIO_PCOR_REG(FGPIOA) = TFT_WR_MASK;
+		FGPIO_PCOR_REG(FGPIOE) = TFT_WR_MASK;
 		FGPIO_PDOR_REG(FGPIOC) = ((uint32_t)*(pixel_ptr++)) & 0x00ffU;
-		FGPIO_PSOR_REG(FGPIOA) = TFT_WR_MASK;
+		FGPIO_PSOR_REG(FGPIOE) = TFT_WR_MASK;
 
-		FGPIO_PCOR_REG(FGPIOA) = TFT_WR_MASK;
+		FGPIO_PCOR_REG(FGPIOE) = TFT_WR_MASK;
 		FGPIO_PDOR_REG(FGPIOC) = ((uint32_t)*(pixel_ptr++)) & 0x00ffU;;
-		FGPIO_PSOR_REG(FGPIOA) = TFT_WR_MASK;
+		FGPIO_PSOR_REG(FGPIOE) = TFT_WR_MASK;
 
-		FGPIO_PCOR_REG(FGPIOA) = TFT_WR_MASK;
+		FGPIO_PCOR_REG(FGPIOE) = TFT_WR_MASK;
 		FGPIO_PDOR_REG(FGPIOC) = ((uint32_t)*(pixel_ptr++)) & 0x00ffU;
-		FGPIO_PSOR_REG(FGPIOA) = TFT_WR_MASK;
+		FGPIO_PSOR_REG(FGPIOE) = TFT_WR_MASK;
 
-		FGPIO_PCOR_REG(FGPIOA) = TFT_WR_MASK;
+		FGPIO_PCOR_REG(FGPIOE) = TFT_WR_MASK;
 		FGPIO_PDOR_REG(FGPIOC) = ((uint32_t)*(pixel_ptr++)) & 0x00ffU;;
-		FGPIO_PSOR_REG(FGPIOA) = TFT_WR_MASK;
+		FGPIO_PSOR_REG(FGPIOE) = TFT_WR_MASK;
 
-		FGPIO_PCOR_REG(FGPIOA) = TFT_WR_MASK;
+		FGPIO_PCOR_REG(FGPIOE) = TFT_WR_MASK;
 		FGPIO_PDOR_REG(FGPIOC) = ((uint32_t)*(pixel_ptr++)) & 0x00ffU;
-		FGPIO_PSOR_REG(FGPIOA) = TFT_WR_MASK;
+		FGPIO_PSOR_REG(FGPIOE) = TFT_WR_MASK;
 
-		FGPIO_PCOR_REG(FGPIOA) = TFT_WR_MASK;
+		FGPIO_PCOR_REG(FGPIOE) = TFT_WR_MASK;
 		FGPIO_PDOR_REG(FGPIOC) = ((uint32_t)*(pixel_ptr++)) & 0x00ffU;;
-		FGPIO_PSOR_REG(FGPIOA) = TFT_WR_MASK;
+		FGPIO_PSOR_REG(FGPIOE) = TFT_WR_MASK;
 
-		FGPIO_PCOR_REG(FGPIOA) = TFT_WR_MASK;
+		FGPIO_PCOR_REG(FGPIOE) = TFT_WR_MASK;
 		FGPIO_PDOR_REG(FGPIOC) = ((uint32_t)*(pixel_ptr++)) & 0x00ffU;
-		FGPIO_PSOR_REG(FGPIOA) = TFT_WR_MASK;
+		FGPIO_PSOR_REG(FGPIOE) = TFT_WR_MASK;
 
-		FGPIO_PCOR_REG(FGPIOA) = TFT_WR_MASK;
+		FGPIO_PCOR_REG(FGPIOE) = TFT_WR_MASK;
 		FGPIO_PDOR_REG(FGPIOC) = ((uint32_t)*(pixel_ptr++)) & 0x00ffU;;
-		FGPIO_PSOR_REG(FGPIOA) = TFT_WR_MASK;
+		FGPIO_PSOR_REG(FGPIOE) = TFT_WR_MASK;
 
-		FGPIO_PCOR_REG(FGPIOA) = TFT_WR_MASK;
+		FGPIO_PCOR_REG(FGPIOE) = TFT_WR_MASK;
 		FGPIO_PDOR_REG(FGPIOC) = ((uint32_t)*(pixel_ptr++)) & 0x00ffU;
-		FGPIO_PSOR_REG(FGPIOA) = TFT_WR_MASK;
+		FGPIO_PSOR_REG(FGPIOE) = TFT_WR_MASK;
 
-		FGPIO_PCOR_REG(FGPIOA) = TFT_WR_MASK;
+		FGPIO_PCOR_REG(FGPIOE) = TFT_WR_MASK;
 		FGPIO_PDOR_REG(FGPIOC) = ((uint32_t)*(pixel_ptr++)) & 0x00ffU;;
-		FGPIO_PSOR_REG(FGPIOA) = TFT_WR_MASK;
+		FGPIO_PSOR_REG(FGPIOE) = TFT_WR_MASK;
 
-		FGPIO_PCOR_REG(FGPIOA) = TFT_WR_MASK;
+		FGPIO_PCOR_REG(FGPIOE) = TFT_WR_MASK;
 		FGPIO_PDOR_REG(FGPIOC) = ((uint32_t)*(pixel_ptr++)) & 0x00ffU;
-		FGPIO_PSOR_REG(FGPIOA) = TFT_WR_MASK;
+		FGPIO_PSOR_REG(FGPIOE) = TFT_WR_MASK;
 
-		FGPIO_PCOR_REG(FGPIOA) = TFT_WR_MASK;
+		FGPIO_PCOR_REG(FGPIOE) = TFT_WR_MASK;
 		FGPIO_PDOR_REG(FGPIOC) = ((uint32_t)*(pixel_ptr++)) & 0x00ffU;;
-		FGPIO_PSOR_REG(FGPIOA) = TFT_WR_MASK;
+		FGPIO_PSOR_REG(FGPIOE) = TFT_WR_MASK;
 
-		FGPIO_PCOR_REG(FGPIOA) = TFT_WR_MASK;
+		FGPIO_PCOR_REG(FGPIOE) = TFT_WR_MASK;
 		FGPIO_PDOR_REG(FGPIOC) = ((uint32_t)*(pixel_ptr++)) & 0x00ffU;
-		FGPIO_PSOR_REG(FGPIOA) = TFT_WR_MASK;
+		FGPIO_PSOR_REG(FGPIOE) = TFT_WR_MASK;
 
-		FGPIO_PCOR_REG(FGPIOA) = TFT_WR_MASK;
+		FGPIO_PCOR_REG(FGPIOE) = TFT_WR_MASK;
 		FGPIO_PDOR_REG(FGPIOC) = ((uint32_t)*(pixel_ptr++)) & 0x00ffU;;
-		FGPIO_PSOR_REG(FGPIOA) = TFT_WR_MASK;
+		FGPIO_PSOR_REG(FGPIOE) = TFT_WR_MASK;
 
-		FGPIO_PCOR_REG(FGPIOA) = TFT_WR_MASK;
+		FGPIO_PCOR_REG(FGPIOE) = TFT_WR_MASK;
 		FGPIO_PDOR_REG(FGPIOC) = ((uint32_t)*(pixel_ptr++)) & 0x00ffU;
-		FGPIO_PSOR_REG(FGPIOA) = TFT_WR_MASK;
+		FGPIO_PSOR_REG(FGPIOE) = TFT_WR_MASK;
 
-		FGPIO_PCOR_REG(FGPIOA) = TFT_WR_MASK;
+		FGPIO_PCOR_REG(FGPIOE) = TFT_WR_MASK;
 		FGPIO_PDOR_REG(FGPIOC) = ((uint32_t)*(pixel_ptr++)) & 0x00ffU;;
-		FGPIO_PSOR_REG(FGPIOA) = TFT_WR_MASK;
+		FGPIO_PSOR_REG(FGPIOE) = TFT_WR_MASK;
 
 		pixels -= 8;
 	}
 
 	while (pixels >= 4) {
-		FGPIO_PCOR_REG(FGPIOA) = TFT_WR_MASK;
+		FGPIO_PCOR_REG(FGPIOE) = TFT_WR_MASK;
 		FGPIO_PDOR_REG(FGPIOC) = ((uint32_t)*(pixel_ptr++)) & 0x00ffU;
-		FGPIO_PSOR_REG(FGPIOA) = TFT_WR_MASK;
+		FGPIO_PSOR_REG(FGPIOE) = TFT_WR_MASK;
 
-		FGPIO_PCOR_REG(FGPIOA) = TFT_WR_MASK;
+		FGPIO_PCOR_REG(FGPIOE) = TFT_WR_MASK;
 		FGPIO_PDOR_REG(FGPIOC) = ((uint32_t)*(pixel_ptr++)) & 0x00ffU;;
-		FGPIO_PSOR_REG(FGPIOA) = TFT_WR_MASK;
+		FGPIO_PSOR_REG(FGPIOE) = TFT_WR_MASK;
 
-		FGPIO_PCOR_REG(FGPIOA) = TFT_WR_MASK;
+		FGPIO_PCOR_REG(FGPIOE) = TFT_WR_MASK;
 		FGPIO_PDOR_REG(FGPIOC) = ((uint32_t)*(pixel_ptr++)) & 0x00ffU;
-		FGPIO_PSOR_REG(FGPIOA) = TFT_WR_MASK;
+		FGPIO_PSOR_REG(FGPIOE) = TFT_WR_MASK;
 
-		FGPIO_PCOR_REG(FGPIOA) = TFT_WR_MASK;
+		FGPIO_PCOR_REG(FGPIOE) = TFT_WR_MASK;
 		FGPIO_PDOR_REG(FGPIOC) = ((uint32_t)*(pixel_ptr++)) & 0x00ffU;;
-		FGPIO_PSOR_REG(FGPIOA) = TFT_WR_MASK;
+		FGPIO_PSOR_REG(FGPIOE) = TFT_WR_MASK;
 
-		FGPIO_PCOR_REG(FGPIOA) = TFT_WR_MASK;
+		FGPIO_PCOR_REG(FGPIOE) = TFT_WR_MASK;
 		FGPIO_PDOR_REG(FGPIOC) = ((uint32_t)*(pixel_ptr++)) & 0x00ffU;
-		FGPIO_PSOR_REG(FGPIOA) = TFT_WR_MASK;
+		FGPIO_PSOR_REG(FGPIOE) = TFT_WR_MASK;
 
-		FGPIO_PCOR_REG(FGPIOA) = TFT_WR_MASK;
+		FGPIO_PCOR_REG(FGPIOE) = TFT_WR_MASK;
 		FGPIO_PDOR_REG(FGPIOC) = ((uint32_t)*(pixel_ptr++)) & 0x00ffU;;
-		FGPIO_PSOR_REG(FGPIOA) = TFT_WR_MASK;
+		FGPIO_PSOR_REG(FGPIOE) = TFT_WR_MASK;
 
-		FGPIO_PCOR_REG(FGPIOA) = TFT_WR_MASK;
+		FGPIO_PCOR_REG(FGPIOE) = TFT_WR_MASK;
 		FGPIO_PDOR_REG(FGPIOC) = ((uint32_t)*(pixel_ptr++)) & 0x00ffU;
-		FGPIO_PSOR_REG(FGPIOA) = TFT_WR_MASK;
+		FGPIO_PSOR_REG(FGPIOE) = TFT_WR_MASK;
 
-		FGPIO_PCOR_REG(FGPIOA) = TFT_WR_MASK;
+		FGPIO_PCOR_REG(FGPIOE) = TFT_WR_MASK;
 		FGPIO_PDOR_REG(FGPIOC) = ((uint32_t)*(pixel_ptr++)) & 0x00ffU;;
-		FGPIO_PSOR_REG(FGPIOA) = TFT_WR_MASK;
+		FGPIO_PSOR_REG(FGPIOE) = TFT_WR_MASK;
 
 		pixels -= 4;
 	}
 
 	while (pixels >= 2) {
-		FGPIO_PCOR_REG(FGPIOA) = TFT_WR_MASK;
+		FGPIO_PCOR_REG(FGPIOE) = TFT_WR_MASK;
 		FGPIO_PDOR_REG(FGPIOC) = ((uint32_t)*(pixel_ptr++)) & 0x00ffU;
-		FGPIO_PSOR_REG(FGPIOA) = TFT_WR_MASK;
+		FGPIO_PSOR_REG(FGPIOE) = TFT_WR_MASK;
 
-		FGPIO_PCOR_REG(FGPIOA) = TFT_WR_MASK;
+		FGPIO_PCOR_REG(FGPIOE) = TFT_WR_MASK;
 		FGPIO_PDOR_REG(FGPIOC) = ((uint32_t)*(pixel_ptr++)) & 0x00ffU;;
-		FGPIO_PSOR_REG(FGPIOA) = TFT_WR_MASK;
+		FGPIO_PSOR_REG(FGPIOE) = TFT_WR_MASK;
 
-		FGPIO_PCOR_REG(FGPIOA) = TFT_WR_MASK;
+		FGPIO_PCOR_REG(FGPIOE) = TFT_WR_MASK;
 		FGPIO_PDOR_REG(FGPIOC) = ((uint32_t)*(pixel_ptr++)) & 0x00ffU;
-		FGPIO_PSOR_REG(FGPIOA) = TFT_WR_MASK;
+		FGPIO_PSOR_REG(FGPIOE) = TFT_WR_MASK;
 
-		FGPIO_PCOR_REG(FGPIOA) = TFT_WR_MASK;
+		FGPIO_PCOR_REG(FGPIOE) = TFT_WR_MASK;
 		FGPIO_PDOR_REG(FGPIOC) = ((uint32_t)*(pixel_ptr++)) & 0x00ffU;;
-		FGPIO_PSOR_REG(FGPIOA) = TFT_WR_MASK;
+		FGPIO_PSOR_REG(FGPIOE) = TFT_WR_MASK;
 
 		pixels -= 2;
 	}
 
 	while (pixels--) {
-		FGPIO_PCOR_REG(FGPIOA) = TFT_WR_MASK;
+		FGPIO_PCOR_REG(FGPIOE) = TFT_WR_MASK;
 		FGPIO_PDOR_REG(FGPIOC) = ((uint32_t)*(pixel_ptr++)) & 0x00ffU;
-		FGPIO_PSOR_REG(FGPIOA) = TFT_WR_MASK;
+		FGPIO_PSOR_REG(FGPIOE) = TFT_WR_MASK;
 
-		FGPIO_PCOR_REG(FGPIOA) = TFT_WR_MASK;
+		FGPIO_PCOR_REG(FGPIOE) = TFT_WR_MASK;
 		FGPIO_PDOR_REG(FGPIOC) = ((uint32_t)*(pixel_ptr++)) & 0x00ffU;;
-		FGPIO_PSOR_REG(FGPIOA) = TFT_WR_MASK;
+		FGPIO_PSOR_REG(FGPIOE) = TFT_WR_MASK;
 	}
 }
 
@@ -920,17 +920,17 @@ void tftClear(size_t pixels)
 {
 	FGPIO_PDOR_REG(FGPIOC) = 0;
 	for (size_t x = 0; x < pixels; x++) {
-		FGPIO_PCOR_REG(FGPIOA) = TFT_WR_MASK;
-		FGPIO_PSOR_REG(FGPIOA) = TFT_WR_MASK;
+		FGPIO_PCOR_REG(FGPIOE) = TFT_WR_MASK;
+		FGPIO_PSOR_REG(FGPIOE) = TFT_WR_MASK;
 
-		FGPIO_PCOR_REG(FGPIOA) = TFT_WR_MASK;
-		FGPIO_PSOR_REG(FGPIOA) = TFT_WR_MASK;
+		FGPIO_PCOR_REG(FGPIOE) = TFT_WR_MASK;
+		FGPIO_PSOR_REG(FGPIOE) = TFT_WR_MASK;
 	}
 }
 
 void tftEndBlit()
 {
-	FGPIO_PSOR_REG(FGPIOA) = TFT_CS_MASK;
+	FGPIO_PSOR_REG(FGPIOE) = TFT_CS_MASK;
 }
 
 void tftSleep()
