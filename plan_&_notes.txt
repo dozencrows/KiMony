@@ -419,4 +419,4 @@ LCD control:						old mcu		new mcu		old brkout		new brkout
 		- change/disable I2C channel 0 (uses PTE24/25)
 	keymatrix.c:
 		- change PORTE_KEY3 (uses PTE30) to PTE29 (and rewire board connection)
-			(mcu old: 18 new: 17)  (brkout old: 32 new: 26)
+			(mcu old: 18 new: 17)  (brkout old: 27 new: 26)

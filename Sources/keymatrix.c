@@ -50,7 +50,7 @@
 #define PORTE_KEY0			21
 #define PORTE_KEY1			22
 #define PORTE_KEY2			23
-#define PORTE_KEY3			30
+#define PORTE_KEY3			29
 
 #define PORTA_KEYBITS		((1<<PORTA_KEY0))
 #define PORTB_KEYBITS		((1<<PORTB_KEY0))
@@ -189,7 +189,7 @@ uint32_t keyNonMatrixPoll()
 	key_data  = ((~portAKeyState & PORTA_KEYBITS) << 12);
 	key_data |= ((~portBKeyState & PORTB_KEYBITS) << 17);
 	key_data |= ((~portEKeyState & ((1<<PORTE_KEY0)|(1<<PORTE_KEY1)|(1<<PORTE_KEY2))) >> 3);
-	key_data |= ((~portEKeyState & (1<<PORTE_KEY3)) >> 9);
+	key_data |= ((~portEKeyState & (1<<PORTE_KEY3)) >> 8);
 
     return key_data;
 }

@@ -349,7 +349,7 @@ static const PortConfig unusedPortEPins =
 	~(PORT_PCR_ISF_MASK | PORT_PCR_MUX_MASK),
 	PORT_PCR_MUX(0),
 	2,
-	{ 29, 31 }
+	{ 30, 31 }
 };
 
 static void tieDownUnusedPins()
