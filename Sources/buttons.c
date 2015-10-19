@@ -35,7 +35,7 @@ void buttonsInit()
 
 void buttonsPollState()
 {
-	buttonsNewState = keyMatrixPoll() | keyNonMatrixPoll();
+	buttonsNewState = keyMatrixPoll();
 }
 
 int buttonsUpdate(const Event** eventTriggered)
