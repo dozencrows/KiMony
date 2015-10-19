@@ -80,6 +80,7 @@ void keyMatrixInit()
 	i2cSendByte(MCP_I2C_ADDR, MCP_REG(MCP_PORTB, MCP_REG_IPOL), MCP_GPIO_SETUP_MASK);
 	i2cSendByte(MCP_I2C_ADDR, MCP_REG(MCP_PORTB, MCP_REG_GPIO), 0);
 	i2cSendByte(MCP_I2C_ADDR, MCP_REG(MCP_PORTB, MCP_REG_GPINTEN), MCP_GPIO_SETUP_MASK);
+	i2cSendByte(MCP_I2C_ADDR, MCP_REG(MCP_PORTB, MCP_REG_IOCON), 1 << 6);	// OR interrupt pins
 
 	interruptRegisterPortAIRQHandler(irqHandlerPortA);
 	NVIC_EnableIRQ(PORTA_IRQn);
