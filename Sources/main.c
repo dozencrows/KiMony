@@ -31,6 +31,7 @@
 #include "device.h"
 #include "activity.h"
 #include "remotedata.h"
+#include "debugutils.h"
 
 #define ARRAY_LENGTH(x) (sizeof(x) / sizeof(x[0]))
 
@@ -221,6 +222,8 @@ void mainLoop()
 	buttonsInit();
 	touchbuttonsInit();
 
+	debugRenderInit();
+
 	const Activity* homeActivity = remoteInit();
 	selectActivity(homeActivity);
 
@@ -319,6 +322,8 @@ void mainLoop()
 		else {
 			rendererRenderDrawList();
 		}
+
+		debugRenderOverlays();
 	}
 }
 

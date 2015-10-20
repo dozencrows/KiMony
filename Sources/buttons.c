@@ -15,6 +15,7 @@
 #include "buttons.h"
 #include "keymatrix.h"
 #include "flash.h"
+#include "debugutils.h"
 
 static const ButtonMapping* activeMapping = NULL;
 static int activeMappingCount = 0;
@@ -44,6 +45,10 @@ int buttonsUpdate(const Event** eventTriggered)
 	uint32_t buttonChange = buttonsState ^ buttonsNewState;
 
 	if (buttonChange) {
+		char buttonDebugInfo[12];
+		debugHex32ToAscii(buttonsNewState, buttonDebugInfo)[0] = '\0';
+		debugSetOverlayText(0, buttonDebugInfo);
+
 		uint32_t buttonsNewOn = buttonsNewState & buttonChange;
 
 		if (buttonsNewOn) {
