@@ -45,9 +45,7 @@ int buttonsUpdate(const Event** eventTriggered)
 	uint32_t buttonChange = buttonsState ^ buttonsNewState;
 
 	if (buttonChange) {
-		char buttonDebugInfo[12];
-		debugHex32ToAscii(buttonsNewState, buttonDebugInfo)[0] = '\0';
-		debugSetOverlayText(0, buttonDebugInfo);
+		debugSetOverlayHex(0, buttonsNewState);
 
 		uint32_t buttonsNewOn = buttonsNewState & buttonChange;
 

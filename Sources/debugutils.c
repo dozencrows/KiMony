@@ -1,3 +1,5 @@
+#ifdef _DEBUG
+
 #include <stdint.h>
 #include <string.h>
 #include "debugutils.h"
@@ -24,6 +26,31 @@ typedef struct _DebugOverlay {
 } DebugOverlay;
 
 static DebugOverlay overlays[DEBUG_OVERLAY_COUNT];
+
+static const char hexdigit[] = "0123456789abcdef";
+
+static char* debugHex8ToAscii(uint8_t v, char* buffer)
+{
+    *buffer++ = hexdigit[(v >> 4) & 0xf];
+    *buffer++ = hexdigit[v & 0xf];
+    return buffer;
+}
+
+static char* debugHex32ToAscii(unsigned int v, char* buffer)
+{
+    for (int i = 28; i >= 0; i-=4) {
+        *buffer++ = hexdigit[(v >> i) & 0xf];
+    }
+    return buffer;
+}
+
+static char* debugHex64ToAscii(uint64_t v, char* buffer)
+{
+    for (int i = 60; i >= 0; i-=4) {
+        *buffer++ = hexdigit[(v >> i) & 0xf];
+    }
+    return buffer;
+}
 
 void debugRenderInit()
 {
@@ -54,6 +81,13 @@ void debugSetOverlayText(int idx, const char* text)
 		strcpy(overlays[idx].text, text);
 		rendererGetStringBounds(text, &KiMony, &overlays[idx].width, &overlays[idx].height);
 	}
+}
+
+void debugSetOverlayHex(int idx, uint32_t value)
+{
+	char debugHex[12];
+	debugHex32ToAscii(value, debugHex)[0] = '\0';
+	debugSetOverlayText(idx, debugHex);
 }
 
 void debugRenderOverlays()
@@ -88,27 +122,4 @@ void debugRenderOverlays()
 	rendererRenderDrawList();
 }
 
-static const char hexdigit[] = "0123456789abcdef";
-
-char* debugHex8ToAscii(uint8_t v, char* buffer)
-{
-    *buffer++ = hexdigit[(v >> 4) & 0xf];
-    *buffer++ = hexdigit[v & 0xf];
-    return buffer;
-}
-
-char* debugHex32ToAscii(unsigned int v, char* buffer)
-{
-    for (int i = 28; i >= 0; i-=4) {
-        *buffer++ = hexdigit[(v >> i) & 0xf];
-    }
-    return buffer;
-}
-
-char* debugHex64ToAscii(uint64_t v, char* buffer)
-{
-    for (int i = 60; i >= 0; i-=4) {
-        *buffer++ = hexdigit[(v >> i) & 0xf];
-    }
-    return buffer;
-}
+#endif // #ifdef _DEBUG
