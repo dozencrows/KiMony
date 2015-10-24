@@ -55,7 +55,7 @@ uint32_t tpmGetTime(int timerIndex)
 
 void tpmStopTimer(int timerIndex)
 {
-	SIM_SCGC6 &= ~tpmGateFlags[timerIndex];
 	tpmPtrs[timerIndex]->SC = 0;
 	NVIC_DisableIRQ(TPM0_IRQn + timerIndex);
+	SIM_SCGC6 &= ~tpmGateFlags[timerIndex];
 }

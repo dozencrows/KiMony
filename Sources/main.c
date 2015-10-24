@@ -187,6 +187,7 @@ const Activity* remoteInit()
 
 void idle()
 {
+	debugLEDOff();
 	// Enter Very Low Power Stop mode
 	SMC_PMCTRL &= ~SMC_PMCTRL_STOPM_MASK;
 	SMC_PMCTRL |= SMC_PMCTRL_STOPM(2);
@@ -215,6 +216,7 @@ void idle()
 	}
 
 	NVIC_EnableIRQ(LPTimer_IRQn);
+	debugLEDOn();
 }
 
 void mainLoop()
@@ -280,9 +282,7 @@ void mainLoop()
 
 			sleepCounter++;
 			if (sleepCounter > SLEEP_TIMEOUT) {
-				debugLEDOff();
 				sleep();
-				debugLEDOn();
 			}
 		}
 

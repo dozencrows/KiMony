@@ -736,7 +736,7 @@ void tftInit()
 	sysTickDelayMs(5);
 
 	tftReset();
-	tftInitDma();
+	//tftInitDma();
 }
 
 void tftSetBacklight(int status)

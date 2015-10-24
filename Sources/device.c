@@ -329,4 +329,6 @@ void deviceSetStatesParallel(const DeviceState* states, int stateCount)
 		lastTime = currTime;
 		currTime = tpmGetTime(0);
 	}
+
+	tpmStopTimer(0);
 }
