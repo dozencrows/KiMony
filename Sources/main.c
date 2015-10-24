@@ -276,7 +276,6 @@ void mainLoop()
 //		}
 
 		if (periodicTimerIrqCount) {
-			buttonsPollState();
 			touchButtonsUpdate(&event);
 			periodicTimerIrqCount = 0;
 
