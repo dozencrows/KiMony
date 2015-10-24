@@ -13,8 +13,8 @@
  */
 #include "ports.h"
 
-static const PORT_Type* portBases[] = PORT_BASE_PTRS;
-static const FGPIO_Type* gpioBases[] = FGPIO_BASE_PTRS;
+static PORT_Type* const portBases[] = PORT_BASE_PTRS;
+static FGPIO_Type* const gpioBases[] = FGPIO_BASE_PTRS;
 
 void portInitialise(PortConfigPtr config)
 {

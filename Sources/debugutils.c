@@ -2,10 +2,14 @@
 
 #include <stdint.h>
 #include <string.h>
+#include "ports.h"
 #include "debugutils.h"
 #include "renderer.h"
 #include "fontdata.h"
 #include "mathutil.h"
+
+#define DEBUG_LED_PIN			20
+#define DEBUG_LED_MASK			(1 << DEBUG_LED_PIN)
 
 #define DEBUG_OVERLAY_COUNT		4
 #define DEBUG_OVERLAY_TEXT_LEN	16
@@ -15,6 +19,15 @@
 
 #define DEBUG_OVERLAY_FLAG_RENDER	0x01
 #define DEBUG_OVERLAY_FLAG_CLEAR	0x02
+
+static const PortConfig portEPins =
+{
+	PORTE_BASE_PTR,
+	~(PORT_PCR_ISF_MASK | PORT_PCR_MUX_MASK),
+	PORT_PCR_MUX(1),
+	1,
+	{ DEBUG_LED_PIN }
+};
 
 typedef struct _DebugOverlay {
 	uint8_t	flags;
@@ -52,9 +65,25 @@ static char* debugHex64ToAscii(uint64_t v, char* buffer)
     return buffer;
 }
 
-void debugRenderInit()
+void debugUtilsInit()
 {
 	memset(overlays, 0, sizeof(overlays));
+
+	SIM_SCGC5 |= SIM_SCGC5_PORTE_MASK;
+
+	portInitialise(&portEPins);
+	portAsGPIOOutput(&portEPins);
+	debugLEDOff();
+}
+
+void debugLEDOn()
+{
+	FGPIO_PSOR_REG(FGPIOE) = DEBUG_LED_MASK;
+}
+
+void debugLEDOff()
+{
+	FGPIO_PCOR_REG(FGPIOE) = DEBUG_LED_MASK;
 }
 
 void debugClearOverlay(int idx)

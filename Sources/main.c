@@ -222,7 +222,7 @@ void mainLoop()
 	buttonsInit();
 	touchbuttonsInit();
 
-	debugRenderInit();
+	debugUtilsInit();
 
 	const Activity* homeActivity = remoteInit();
 	selectActivity(homeActivity);
@@ -243,6 +243,7 @@ void mainLoop()
 
 	keyMatrixClearInterrupt();
 	touchScreenClearInterrupt();
+	debugLEDOn();
 
 	while (1) {
 		idle();
@@ -279,7 +280,9 @@ void mainLoop()
 
 			sleepCounter++;
 			if (sleepCounter > SLEEP_TIMEOUT) {
+				debugLEDOff();
 				sleep();
+				debugLEDOn();
 			}
 		}
 
