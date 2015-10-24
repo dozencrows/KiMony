@@ -2,7 +2,6 @@ Plan
 ====
 * Hardware
   * Create custom main PCB using SMT wherever possible
-  * Create custom keypad PCB
 * Software  
   * Implement draw priority system, affecting list insert for active DLEs
   * Solve 'in-fill' issue between DLE areas on same scan line
@@ -142,6 +141,9 @@ Done
 * Tested with MKL26Z256VLH4 breakout board, using Freedom KL26Z board in external device programming configuration via USBDM.
 * Developed LPC812 based IR sender circuit on breadboard
 * Rewired LCD data interface to PTC0-7, and updated renderer code to match.
+* Created custom keypad PCB and updated software to drive it
+* Added debug rendering overlays
+* Added debug LED
 
 Notes
 =====
