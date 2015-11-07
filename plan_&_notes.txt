@@ -2,6 +2,7 @@ Plan
 ====
 * Hardware
   * Create custom main PCB using SMT wherever possible
+  * Install just accelerometer & supporting components, and test standalone
 * Software  
   * Implement draw priority system, affecting list insert for active DLEs
   * Solve 'in-fill' issue between DLE areas on same scan line
@@ -21,12 +22,14 @@ Plan
 
 Work-in-progress
 ================
+* Testing capacitative slider
 
 What's smart and/or novel?
 ==========================
 * Device state tracking and changing based on activities
 * Wake-up on pickup
 * Programmed activity triggering on timer
+* Capacitative slider
 
 Done
 ====
@@ -422,3 +425,69 @@ LCD control:						old mcu		new mcu		old brkout		new brkout
 	keymatrix.c:
 		- change PORTE_KEY3 (uses PTE30) to PTE29 (and rewire board connection)
 			(mcu old: 18 new: 17)  (brkout old: 27 new: 26)
+
+Capacitative Slider Notes
+=========================
+- Electrode values: 
+  - current capacitance measure - baseline capacitance
+    - read baseline during initialisation (from short period average)
+    - periodically recalculate baseline when slider not being touched
+  - wil need some filtering to avoid jitter; will cause some latency
+- Electrodes have two states:
+  - capacitance <= baseline: untouched
+  - capacitance > baseline:  touched
+- Reading electrodes:
+  - Interrupt driven:
+    - Set up TSI and software state ready to read first electrode.
+    - Kick off an initial read on first electrode.
+    - ISR: 
+      - read & store value for electrode, clear status flag.
+      - advance electrode to next (loop back if at end)
+      - kick off read on next electrode
+- Filtering:
+  - Read electrode values into circular buffers
+  - Initialisation should wait for buffers to fill
+
+Plan:
+Phase 1:
+  - Implement basic electrode system:
+    - configure number of electrodes
+    - baseline calculation
+    - interrupt driven continuous read
+    - periodic interrupt update to determine state
+  - Implement basic slider system
+    - updated on periodic interrupt
+    - calculates slider position
+    
+Phase 2:
+  - Introduce filtering
+  
+Phase 3:
+  - Introduce wake-up
+
+Analogue slider algorithm
+-------------------------
+Constants: slider_range = 128, electrode_count = 2, electrode_range = 64
+
+Preconditions: both electrodes need to be in touched state
+
+1. Read slider electrode values, and determine which is larger and smaller valued: e1, e2
+2. e.range 	 	 = e1.value + e2.value
+3. active.index  = e1.index < e2.index ? e1.index : e2.index
+4. first.value   = e1.index < e2.index ? e2.value : e1.value
+5. value = (active.index * electrode_range) + ((electrode_range * first.value) / e.range)
+
+Analogue slider wakeup
+----------------------
+On sleeping:
+- Configure TSI:
+  - To allow wakeup
+  - Set interrupt mode to 'out-of-range'
+  - Set TSHD threshold values to suit known info about electrode ranges so wakeup is triggered on touch.
+    Probably set low to zero, and high to some value between baseline and known likely maximum
+
+On waking, reconfigure TSI:
+  - Disable wakeup
+  - Set interrupt mode to 'end-of-scan'
+  - Kick off new scan cycle, wait for buffers to fill
+  
