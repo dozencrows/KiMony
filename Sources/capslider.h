@@ -8,11 +8,6 @@
 #ifndef CAPSLIDER_H_
 #define CAPSLIDER_H_
 
-#include <stdint.h>
-
 extern void capSliderInit();
-extern void capSliderStartRead(int channel);
-extern int capSliderReadDone();
-extern int capSliderValue();
 
 #endif /* CAPSLIDER_H_ */

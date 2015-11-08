@@ -32,6 +32,7 @@
 #include "activity.h"
 #include "remotedata.h"
 #include "capslider.h"
+#include "capelectrode.h"
 #include "debugutils.h"
 
 #define ARRAY_LENGTH(x) (sizeof(x) / sizeof(x[0]))
@@ -248,29 +249,9 @@ void mainLoop()
 	touchScreenClearInterrupt();
 	debugLEDOn();
 
-	capSliderStartRead(11);
-	sysTickStartCycleCount();
-	while (!capSliderReadDone());
-	debugSetOverlayHex(3, sysTickStopCycleCount());
-
-	int capSliderChannel = 11;
-	capSliderStartRead(capSliderChannel);
 
 	while (1) {
 		idle();
-
-		if (capSliderReadDone()) {
-			if (capSliderChannel == 11) {
-				debugSetOverlayHex(1, capSliderValue());
-				capSliderChannel = 12;
-			}
-			else {
-				debugSetOverlayHex(2, capSliderValue());
-				capSliderChannel = 11;
-			}
-			capSliderStartRead(capSliderChannel);
-		}
-
 		const Event* event = NULL;
 
 		rendererNewDrawList();
@@ -299,6 +280,9 @@ void mainLoop()
 		if (periodicTimerIrqCount) {
 			touchButtonsUpdate(&event);
 			periodicTimerIrqCount = 0;
+
+			//debugSetOverlayHex(0, capElectrodeGetValue(0));
+			//debugSetOverlayHex(1, capElectrodeGetValue(1));
 
 			sleepCounter++;
 			if (sleepCounter > SLEEP_TIMEOUT) {
@@ -379,6 +363,7 @@ static const PortConfig unusedPortCPins =
 
 static void tieDownUnusedPins()
 {
+	SIM_SCGC5 |= SIM_SCGC5_PORTA_MASK|SIM_SCGC5_PORTB_MASK|SIM_SCGC5_PORTC_MASK;
 	portInitialise(&unusedPortAPins);
 	portInitialise(&unusedPortBPins);
 	portInitialise(&unusedPortCPins);
