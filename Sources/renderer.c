@@ -344,12 +344,13 @@ static void renderScanLine(uint16_t y)
 			}
 		}
 
-		if (dle->next == nextDle) {
+		if (dle->next != dle) {
 			lastDle = &dle->next;
 		}
 		else if (nextDle == NULL) {
 			activeDLETail = lastDle;
 		}
+
 		dle = nextDle;
 	}
 
@@ -410,7 +411,7 @@ void rendererNewDrawList()
 	drawListMaxX = 0;
 	drawListMaxY = 0;
 
-	memset(rowMinX, 255, SCREEN_HEIGHT);
+	memset(rowMinX, SCREEN_WIDTH, SCREEN_HEIGHT);
 	memset(rowMaxX, 0, SCREEN_HEIGHT);
 	PROFILE_BEGIN;
 }
