@@ -281,8 +281,8 @@ void mainLoop()
 			touchButtonsUpdate(&event);
 			periodicTimerIrqCount = 0;
 
-			//debugSetOverlayHex(0, capElectrodeGetValue(0));
-			//debugSetOverlayHex(1, capElectrodeGetValue(1));
+			debugSetOverlayHex(0, capElectrodeGetValue(0));
+			debugSetOverlayHex(1, capElectrodeGetValue(1));
 
 			sleepCounter++;
 			if (sleepCounter > SLEEP_TIMEOUT) {
