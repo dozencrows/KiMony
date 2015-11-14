@@ -12,7 +12,7 @@
 #include "ports.h"
 #include "interrupts.h"
 
-#define FXOS8700CQ_I2C_CHANNEL		0
+#define FXOS8700CQ_I2C_CHANNEL		1
 #define FXOS8700CQ_SLAVE_ADDR		0x1d
 
 #define FXOS8700CQ_STATUS			0x00

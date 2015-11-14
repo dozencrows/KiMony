@@ -272,10 +272,10 @@ void mainLoop()
 			keyMatrixClearInterrupt();
 		}
 
-//		if (accelCheckTransientInterrupt()) {
-//			accelClearInterrupts();
-//			wakeUp();
-//		}
+		if (accelCheckTransientInterrupt()) {
+			accelClearInterrupts();
+			wakeUp();
+		}
 
 		if (periodicTimerIrqCount) {
 			touchButtonsUpdate(&event);
@@ -388,7 +388,7 @@ int main(void)
 	touchScreenInit();
 	keyMatrixInit();
 	//spiFlashInit();
-	//accelInit();
+	accelInit();
 	capSliderInit();
 
 	if (FLASH_DATA_HEADER->watermark != FLASH_DATA_WATERMARK) {
