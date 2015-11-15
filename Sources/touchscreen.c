@@ -47,7 +47,7 @@ static const PortConfig portDPinInterrupts =
 {
 	PORTD_BASE_PTR,
 	~(PORT_PCR_IRQC_MASK),
-	PORT_PCR_IRQC(0x0a),		// falling edge interrupt
+	PORT_PCR_IRQC(0x0a) | PORT_PCR_PS_MASK | PORT_PCR_PE_MASK,		// falling edge interrupt
 	1,
 	{ 2 }
 };
