@@ -11,6 +11,7 @@
 #include "i2c.h"
 #include "ports.h"
 #include "interrupts.h"
+#include "debugutils.h"
 
 #define FXOS8700CQ_I2C_CHANNEL		1
 #define FXOS8700CQ_SLAVE_ADDR		0x1d
@@ -91,6 +92,7 @@ static volatile int accelerometerInt1Flag = 0;
 static void irqHandlerPortCD(uint32_t portCISFR, uint32_t portDISFR)
 {
 	if (portDISFR & 1) {
+		debugLEDOn();
 		accelerometerInt1Flag++;
 	}
 }
@@ -112,6 +114,7 @@ void accelInit()
 	if (whoAmI == FXOS8700CQ_WHOAMI_VAL) {
 		SIM_SCGC5 |= SIM_SCGC5_PORTD_MASK;
 		portInitialise(&portDPins);
+		FGPIOD_PDDR &= ~(3);
 
 		// Set up transient acceleration interrupt on all axes with 100Hz read rate, 0.18g threshold, debounced to 50ms
 		i2cChannelSendByte(FXOS8700CQ_I2C_CHANNEL, FXOS8700CQ_SLAVE_ADDR, FXOS8700CQ_CTRL_REG1, 0);
@@ -119,6 +122,7 @@ void accelInit()
 							FXOS8700CQ_TRANS_CFG_ELE_MASK|FXOS8700CQ_TRANS_CFG_ZEFE_MASK|FXOS8700CQ_TRANS_CFG_YEFE_MASK|FXOS8700CQ_TRANS_CFG_XEFE_MASK);
 		i2cChannelSendByte(FXOS8700CQ_I2C_CHANNEL, FXOS8700CQ_SLAVE_ADDR, FXOS8700CQ_TRANSIENT_THS, FXOS8700CQ_TRANS_THS_THS(3));
 		i2cChannelSendByte(FXOS8700CQ_I2C_CHANNEL, FXOS8700CQ_SLAVE_ADDR, FXOS8700CQ_TRANSIENT_COUNT, 5);
+		// Transient interrupt enabled on INT1 output (MCU input D0)
 		i2cChannelSendByte(FXOS8700CQ_I2C_CHANNEL, FXOS8700CQ_SLAVE_ADDR, FXOS8700CQ_CTRL_REG4, FXOS8700CQ_INT_TRANS_MASK);
 		i2cChannelSendByte(FXOS8700CQ_I2C_CHANNEL, FXOS8700CQ_SLAVE_ADDR, FXOS8700CQ_CTRL_REG5, FXOS8700CQ_INT_TRANS_MASK);
 

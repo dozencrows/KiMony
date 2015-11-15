@@ -189,7 +189,7 @@ const Activity* remoteInit()
 
 void idle()
 {
-	debugLEDOff();
+	//debugLEDOff();
 	// Enter Very Low Power Stop mode
 	SMC_PMCTRL &= ~SMC_PMCTRL_STOPM_MASK;
 	SMC_PMCTRL |= SMC_PMCTRL_STOPM(2);
@@ -218,7 +218,7 @@ void idle()
 	}
 
 	NVIC_EnableIRQ(LPTimer_IRQn);
-	debugLEDOn();
+	//debugLEDOn();
 }
 
 void mainLoop()
@@ -247,7 +247,7 @@ void mainLoop()
 
 	keyMatrixClearInterrupt();
 	touchScreenClearInterrupt();
-	debugLEDOn();
+	//debugLEDOn();
 
 
 	while (1) {
@@ -286,6 +286,7 @@ void mainLoop()
 
 			sleepCounter++;
 			if (sleepCounter > SLEEP_TIMEOUT) {
+				debugLEDOff();
 				sleep();
 			}
 		}
