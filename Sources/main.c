@@ -245,7 +245,7 @@ void mainLoop()
 	periodicTimerInit();
 	periodicTimerStart();
 
-//	keyMatrixClearInterrupt();
+	keyMatrixClearInterrupt();
 	touchScreenClearInterrupt();
 	//debugLEDOn();
 
@@ -281,8 +281,8 @@ void mainLoop()
 			touchButtonsUpdate(&event);
 			periodicTimerIrqCount = 0;
 
-			debugSetOverlayHex(0, capElectrodeGetValue(0));
-			debugSetOverlayHex(1, capElectrodeGetValue(1));
+			//debugSetOverlayHex(0, capElectrodeGetValue(0));
+			//debugSetOverlayHex(1, capElectrodeGetValue(1));
 
 			sleepCounter++;
 			if (sleepCounter > SLEEP_TIMEOUT) {
@@ -387,7 +387,7 @@ int main(void)
 	rendererClearScreen();
 
 	touchScreenInit();
-//	keyMatrixInit();
+	keyMatrixInit();
 	//spiFlashInit();
 //	accelInit();
 //	capSliderInit();
