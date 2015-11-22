@@ -19,12 +19,22 @@
 
 // Ports & pins to initialise:
 //  All as GPIO outputs
+//  PTB: 3		(power switch)
 //	PTC: 0->7	(parallel data)
 //  PTD: 3		(backlight)
 //	PTE: 24		(chip select)
 //       25		(write)
 //		 30		(data/command)
 //		 31		(reset)
+
+static const PortConfig portBPins =
+{
+	PORTB_BASE_PTR,
+	~(PORT_PCR_ISF_MASK | PORT_PCR_MUX_MASK),
+	PORT_PCR_MUX(1),
+	1,
+	{ 3 }
+};
 
 static const PortConfig portCPins =
 {
@@ -55,11 +65,12 @@ static const PortConfig portEPins =
 
 static int backlightState = 0;
 
-#define TFT_DC_MASK 0x40000000U
-#define TFT_RS_MASK 0x80000000U
-#define TFT_BL_MASK 0x00000008U
-#define TFT_CS_MASK	0x01000000U
-#define TFT_WR_MASK	0x02000000U
+#define TFT_PWR_MASK	(1 << 3)
+#define TFT_DC_MASK 	0x40000000U
+#define TFT_RS_MASK 	0x80000000U
+#define TFT_BL_MASK 	0x00000008U
+#define TFT_CS_MASK		0x01000000U
+#define TFT_WR_MASK		0x02000000U
 
 #define ILI9341_TFTWIDTH  240
 #define ILI9341_TFTHEIGHT 320
@@ -119,12 +130,9 @@ static int backlightState = 0;
 
 void parallelWrite(unsigned char byte)
 {
-	FGPIO_PCOR_REG(FGPIOE) = TFT_CS_MASK | TFT_WR_MASK;
-
-	uint32_t reg_val = byte;
-	uint32_t tog_val = (FGPIO_PDOR_REG(FGPIOC) ^ reg_val) & 0x00FFU;
-	FGPIO_PTOR_REG(FGPIOC) = tog_val;
-
+	FGPIO_PCOR_REG(FGPIOE) = TFT_CS_MASK;
+	FGPIO_PCOR_REG(FGPIOE) = TFT_WR_MASK;
+	FGPIO_PDOR_REG(FGPIOC) = byte;
 	FGPIO_PSOR_REG(FGPIOE) = TFT_WR_MASK;
 	FGPIO_PSOR_REG(FGPIOE) = TFT_CS_MASK;
 }
@@ -132,7 +140,11 @@ void parallelWrite(unsigned char byte)
 void tftWriteCmd(unsigned char byte)
 {
 	FGPIO_PCOR_REG(FGPIOE) = TFT_DC_MASK;
-	parallelWrite(byte);
+	FGPIO_PCOR_REG(FGPIOE) = TFT_CS_MASK;
+	FGPIO_PCOR_REG(FGPIOE) = TFT_WR_MASK;
+	FGPIO_PDOR_REG(FGPIOC) = byte;
+	FGPIO_PSOR_REG(FGPIOE) = TFT_WR_MASK;
+	FGPIO_PSOR_REG(FGPIOE) = TFT_CS_MASK;
 	FGPIO_PSOR_REG(FGPIOE) = TFT_DC_MASK;
 }
 
@@ -721,12 +733,15 @@ void drawTestRectDma()
 
 void tftInit()
 {
-	SIM_SCGC5 |= SIM_SCGC5_PORTA_MASK|SIM_SCGC5_PORTC_MASK|SIM_SCGC5_PORTD_MASK;
+	SIM_SCGC5 |= SIM_SCGC5_PORTB_MASK|SIM_SCGC5_PORTC_MASK|SIM_SCGC5_PORTD_MASK|SIM_SCGC5_PORTE_MASK;
 
+	portInitialise(&portBPins);
 	portInitialise(&portCPins);
 	portInitialise(&portDPins);
 	portInitialise(&portEPins);
 
+	FGPIOB_PDDR |= TFT_PWR_MASK;
+	FGPIO_PSOR_REG(FGPIOB) = TFT_PWR_MASK;
 	FGPIOC_PDDR |= 0xffU;
 	FGPIOD_PDDR |= TFT_BL_MASK;
 	FGPIOE_PDDR |= TFT_CS_MASK | TFT_WR_MASK | TFT_RS_MASK | TFT_DC_MASK;
@@ -931,6 +946,7 @@ void tftClear(size_t pixels)
 void tftEndBlit()
 {
 	FGPIO_PSOR_REG(FGPIOE) = TFT_CS_MASK;
+	FGPIO_PDOR_REG(FGPIOC) = 0;
 }
 
 void tftSleep()

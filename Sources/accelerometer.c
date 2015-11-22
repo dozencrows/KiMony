@@ -92,7 +92,7 @@ static volatile int accelerometerInt1Flag = 0;
 static void irqHandlerPortCD(uint32_t portCISFR, uint32_t portDISFR)
 {
 	if (portDISFR & 1) {
-		debugLEDOn();
+		//debugLEDOn();
 		accelerometerInt1Flag++;
 	}
 }

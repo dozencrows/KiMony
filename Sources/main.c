@@ -245,7 +245,7 @@ void mainLoop()
 	periodicTimerInit();
 	periodicTimerStart();
 
-	keyMatrixClearInterrupt();
+//	keyMatrixClearInterrupt();
 	touchScreenClearInterrupt();
 	//debugLEDOn();
 
@@ -286,7 +286,7 @@ void mainLoop()
 
 			sleepCounter++;
 			if (sleepCounter > SLEEP_TIMEOUT) {
-				debugLEDOff();
+				//debugLEDOff();
 				sleep();
 			}
 		}
@@ -349,8 +349,8 @@ static const PortConfig unusedPortBPins =
 	PORTB_BASE_PTR,
 	~(PORT_PCR_ISF_MASK | PORT_PCR_MUX_MASK),
 	PORT_PCR_MUX(0),
-	4,
-	{ 1, 2, 3, 16, 17, 19 }
+	5,
+	{ 1, 2, 16, 17, 19 }
 };
 
 static const PortConfig unusedPortCPins =
@@ -387,10 +387,10 @@ int main(void)
 	rendererClearScreen();
 
 	touchScreenInit();
-	keyMatrixInit();
+//	keyMatrixInit();
 	//spiFlashInit();
-	accelInit();
-	capSliderInit();
+//	accelInit();
+//	capSliderInit();
 
 	if (FLASH_DATA_HEADER->watermark != FLASH_DATA_WATERMARK) {
 		cpuFlashDownload();
