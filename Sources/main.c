@@ -389,7 +389,7 @@ int main(void)
 	touchScreenInit();
 	keyMatrixInit();
 	//spiFlashInit();
-//	accelInit();
+	accelInit();
 	capSliderInit();
 
 	if (FLASH_DATA_HEADER->watermark != FLASH_DATA_WATERMARK) {

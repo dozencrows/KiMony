@@ -9,6 +9,7 @@
 #include <stdint.h>
 #include <stdio.h>
 #include "i2c.h"
+#include "systick.h"
 #include "ports.h"
 #include "interrupts.h"
 #include "debugutils.h"
@@ -109,6 +110,8 @@ void accelClearInterrupts()
 
 void accelInit()
 {
+	sysTickDelayMs(5);
+
 	uint8_t whoAmI = i2cChannelReadByte(FXOS8700CQ_I2C_CHANNEL, FXOS8700CQ_SLAVE_ADDR, FXOS8700CQ_WHOAMI);
 
 	if (whoAmI == FXOS8700CQ_WHOAMI_VAL) {
