@@ -22,6 +22,8 @@ extern void tftSetBacklight(int status);
 extern int tftGetBacklight();
 extern void tftSleep();
 extern void tftWake();
+extern void tftPowerOff();
+extern void tftPowerOn();
 extern void tftStartBlit(int x, int y, int width, int height);
 extern void tftBlit(uint16_t* buffer, size_t pixels);
 extern void tftClear(size_t pixels);

@@ -142,6 +142,13 @@ void touchbuttonsRender()
 	//PROFILE_EXIT(drawlist);
 }
 
+void touchbuttonsRedraw()
+{
+	for(int i = 0; i < activeTouchButtonsCount; i++) {
+		buttonState[i].dirty = 1;
+	}
+}
+
 int touchButtonsUpdate(const Event** eventTriggered)
 {
 	int result = EVENT_NONE;

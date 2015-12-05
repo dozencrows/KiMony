@@ -63,6 +63,33 @@ static const PortConfig portEPins =
 	{ 24, 25, 30, 31 }
 };
 
+static const PortConfig portCPinsOff =
+{
+	PORTC_BASE_PTR,
+	~(PORT_PCR_ISF_MASK | PORT_PCR_MUX_MASK),
+	PORT_PCR_MUX(0),
+	8,
+	{ 0, 1, 2, 3, 4, 5, 6, 7 }
+};
+
+static const PortConfig portDPinsOff =
+{
+	PORTD_BASE_PTR,
+	~(PORT_PCR_ISF_MASK | PORT_PCR_MUX_MASK),
+	PORT_PCR_MUX(0),
+	1,
+	{ 3 }
+};
+
+static const PortConfig portEPinsOff =
+{
+	PORTE_BASE_PTR,
+	~(PORT_PCR_ISF_MASK | PORT_PCR_MUX_MASK),
+	PORT_PCR_MUX(0),
+	4,
+	{ 24, 25, 30, 31 }
+};
+
 static int backlightState = 0;
 
 #define TFT_PWR_MASK	(1 << 3)
@@ -731,25 +758,28 @@ void drawTestRectDma()
 	FGPIO_PSOR_REG(FGPIOE) = TFT_CS_MASK;
 }
 
-void tftInit()
+void tftSetupPorts()
 {
-	SIM_SCGC5 |= SIM_SCGC5_PORTB_MASK|SIM_SCGC5_PORTC_MASK|SIM_SCGC5_PORTD_MASK|SIM_SCGC5_PORTE_MASK;
-
 	portInitialise(&portBPins);
 	portInitialise(&portCPins);
 	portInitialise(&portDPins);
 	portInitialise(&portEPins);
 
 	FGPIOB_PDDR |= TFT_PWR_MASK;
-	FGPIO_PSOR_REG(FGPIOB) = TFT_PWR_MASK;
+	FGPIOB_PSOR  = TFT_PWR_MASK;
 	FGPIOC_PDDR |= 0xffU;
 	FGPIOD_PDDR |= TFT_BL_MASK;
 	FGPIOE_PDDR |= TFT_CS_MASK | TFT_WR_MASK | TFT_RS_MASK | TFT_DC_MASK;
 	backlightState = 1;
 
-	FGPIO_PSOR_REG(FGPIOE) = TFT_CS_MASK | TFT_WR_MASK | TFT_RS_MASK | TFT_DC_MASK;
-	sysTickDelayMs(5);
+	FGPIOE_PSOR = TFT_CS_MASK | TFT_WR_MASK | TFT_RS_MASK | TFT_DC_MASK;
+}
 
+void tftInit()
+{
+	SIM_SCGC5 |= SIM_SCGC5_PORTB_MASK|SIM_SCGC5_PORTC_MASK|SIM_SCGC5_PORTD_MASK|SIM_SCGC5_PORTE_MASK;
+	tftSetupPorts();
+	sysTickDelayMs(5);
 	tftReset();
 	//tftInitDma();
 }
@@ -769,6 +799,24 @@ void tftSetBacklight(int status)
 int tftGetBacklight()
 {
 	return backlightState;
+}
+
+void tftPowerOff()
+{
+	FGPIOB_PCOR = TFT_PWR_MASK;
+	FGPIOC_PCOR = 0xff;
+	FGPIOE_PCOR = TFT_CS_MASK | TFT_WR_MASK | TFT_RS_MASK | TFT_DC_MASK;
+
+	portInitialise(&portCPinsOff);
+	portInitialise(&portDPinsOff);
+	portInitialise(&portEPinsOff);
+}
+
+void tftPowerOn()
+{
+	tftSetupPorts();
+	sysTickDelayMs(5);
+	tftReset();
 }
 
 void tftStartBlit(int x, int y, int width, int height)

@@ -41,6 +41,7 @@
 
 //#define DISABLE_KEYPAD		// Turns off keypad setup via I2C and capacitative slider reading
 //#define ENABLE_TIMER_PIN		// Enables a PWM output on pin A13 to validate timing
+#define TFT_POWER_OFF			// Power off the LCD instead of sleeping it
 
 #define SLEEP_TIMEOUT	500		// Time until backlight turns off when idle, in hundredths of a second
 
@@ -105,14 +106,24 @@ static void sleep()
 {
 	isAsleep = 1;
 	tftSetBacklight(0);
+#ifdef TFT_POWER_OFF
+	tftPowerOff();
+#else
 	tftSleep();
+#endif
 	periodicTimerStop();
 }
 
 static void wakeUp()
 {
 	if (isAsleep) {
+#ifdef TFT_POWER_OFF
+		tftPowerOn();
+		rendererClearScreen();
+		touchbuttonsRedraw();
+#else
 		tftWake();
+#endif
 		tftSetBacklight(1);
 		periodicTimerStart();
 		isAsleep = 0;

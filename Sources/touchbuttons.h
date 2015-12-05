@@ -39,6 +39,7 @@ typedef struct _TouchButton {
 extern void touchbuttonsInit();
 extern void touchbuttonsSetActive(const TouchButton* buttons, int count);
 extern void touchbuttonsRender();
+extern void touchbuttonsRedraw();
 extern void touchbuttonsProcessTouch(const Point* touch);
 extern int touchButtonsUpdate(const Event** eventTriggered);
 
