@@ -20,5 +20,8 @@ extern void spiInit();
 extern void spiSetBitRate(int prescaler, int divider);
 extern void spiWrite(uint8_t byte);
 extern uint8_t spiRead();
+extern void spiPinsDisconnect();
+extern void spiPinsConnect();
 
 #endif /* SPI_H_ */
+

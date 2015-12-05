@@ -31,6 +31,15 @@ static const PortConfig portDPins =
 	{ 5, 6, 7 }
 };
 
+static const PortConfig portDPinsOff =
+{
+	PORTD_BASE_PTR,
+	~(PORT_PCR_ISF_MASK | PORT_PCR_MUX_MASK),
+	PORT_PCR_MUX(0),
+	3,
+	{ 5, 6, 7 }
+};
+
 void spiInit()
 {
 	/* SIM_SCGC4: SPI1=1 */
@@ -77,4 +86,14 @@ void spiSetBitRate(int prescaler, int divider)
 	divider = MIN(MAX(0, divider), 8);
 
 	SPI1_BR = SPI_BR_SPPR(prescaler) | SPI_BR_SPR(divider);
+}
+
+void spiPinsDisconnect()
+{
+	portInitialise(&portDPinsOff);
+}
+
+void spiPinsConnect()
+{
+	portInitialise(&portDPins);
 }

@@ -107,6 +107,8 @@ static void sleep()
 	isAsleep = 1;
 	tftSetBacklight(0);
 #ifdef TFT_POWER_OFF
+	touchScreenDisconnect();
+	spiPinsDisconnect();
 	tftPowerOff();
 #else
 	tftSleep();
@@ -119,6 +121,8 @@ static void wakeUp()
 	if (isAsleep) {
 #ifdef TFT_POWER_OFF
 		tftPowerOn();
+		touchScreenConnect();
+		spiPinsConnect();
 		rendererClearScreen();
 		touchbuttonsRedraw();
 #else

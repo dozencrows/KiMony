@@ -52,6 +52,15 @@ static const PortConfig portDPinInterrupts =
 	{ 2 }
 };
 
+static const PortConfig portDPinsOff =
+{
+	PORTD_BASE_PTR,
+	~(PORT_PCR_ISF_MASK | PORT_PCR_MUX_MASK | PORT_PCR_IRQC_MASK),
+	PORT_PCR_MUX(0),
+	2,
+	{ 2, 4 }
+};
+
 static volatile uint8_t touchScreenIntFlag = 0;
 
 static void irqHandlerPortCD(uint32_t portCISFR, uint32_t portDISFR)
@@ -124,6 +133,17 @@ void touchScreenClearInterrupt()
 int touchScreenCheckInterrupt()
 {
 	return touchScreenIntFlag;
+}
+
+void touchScreenDisconnect()
+{
+	portInitialise(&portDPinsOff);
+}
+
+void touchScreenConnect()
+{
+	portInitialise(&portDPins);
+	portInitialise(&portDPinInterrupts);
 }
 
 static void waitForTouch()
