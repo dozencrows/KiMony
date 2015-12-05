@@ -53,23 +53,6 @@
 static int touchPage = 0;
 static const Activity* currentActivity = NULL;
 
-void waitForButton()
-{
-	uint32_t lastKeys = keyMatrixPoll();
-
-	while (1) {
-		uint32_t keys = keyMatrixPoll();
-		uint32_t change = keys ^ lastKeys;
-		if (keys & change) {
-			lastKeys = keys;
-			break;
-		}
-		else {
-			sysTickDelayMs(100);
-		}
-	}
-}
-
 static volatile uint8_t periodicTimerIrqCount = 0;
 
 static void periodicTimerIrqHandler()
@@ -413,7 +396,7 @@ static void startTimerPin()
 }
 #endif
 
-int main(void)
+void main(void)
 {
 	SystemCoreClockUpdate();
 
@@ -449,105 +432,6 @@ int main(void)
 #endif
 
 	mainLoop();
-
-	//spiFlashTest();
-	//touchScreenTest();
-	//touchScreenCalibrate();
-	//rendererTest();
-
-//	int frames = 0;
-//	sysTickEventInMs(1000);
-//	while (!sysTickCheckEvent()) {
-//		drawTestRectDma();
-//		frames++;
-//	}
-//
-//	printf("DMA %d\n", frames);
-//	waitForButton();
-//	drawTestRect_PEInline_FGPIO(0);
-//
-//	frames = 0;
-//	sysTickEventInMs(1000);
-//	while (!sysTickCheckEvent()) {
-//		drawTestRect_PEInline_FGPIO(0x1ff8);
-//		frames++;
-//	}
-//
-//	printf("FGPIO %d\n", frames);
-//	waitForButton();
-//	drawTestRect_PEInline_FGPIO(0);
-//
-//	frames = 0;
-//	sysTickEventInMs(1000);
-//	while (!sysTickCheckEvent()) {
-//		drawTestRect_PEInline_BME(0x1ff8);
-//		frames++;
-//	}
-//
-//	printf("BME %d\n", frames);
-//	waitForButton();
-//	drawTestRect_PEInline_FGPIO(0);
-//
-//	frames = 0;
-//	sysTickEventInMs(1000);
-//	while (!sysTickCheckEvent()) {
-//		drawTestRect_PEInline_SRAM(0x1ff8);
-//		frames++;
-//	}
-//
-//	printf("FGPIO SRAM %d\n", frames);
-//	waitForButton();
-//	drawTestRect_PEInline_FGPIO(0);
-//
-//	frames = 0;
-//	sysTickEventInMs(1000);
-//	while (!sysTickCheckEvent()) {
-//		drawTestRect_PEInline_SRAM_PDOR(0x1ff8);
-//		frames++;
-//	}
-//
-//	printf("FGPIO SRAM PDOR %d\n", frames);
-//	waitForButton();
-//	drawTestRect_PEInline_FGPIO(0);
-//
-//	frames = 0;
-//	sysTickEventInMs(1000);
-//	while (!sysTickCheckEvent()) {
-//		drawTestRect_PEInline_SRAM_PDOR_BufferFill(0x1ff8);
-//		frames++;
-//	}
-//
-//	printf("FGPIO SRAM PDOR BufferFill %d\n", frames);
-//	waitForButton();
-//	drawTestRect_PEInline_FGPIO(0);
-//
-//	frames = 0;
-//	sysTickEventInMs(1000);
-//	while (!sysTickCheckEvent()) {
-//		drawTestRect_PEInline_WROnly(0x1ff8);
-//		frames++;
-//	}
-//
-//	printf("WROnly %d\n", frames);
-//	waitForButton();
-//	drawTestRect_PEInline_FGPIO(0);
-//
-//	frames = 0;
-//	sysTickEventInMs(1000);
-//	while (!sysTickCheckEvent()) {
-//		drawTestImage(0, 0);
-//		drawTestImage(120, 0);
-//		drawTestImage(0, 160);
-//		drawTestImage(120, 160);
-//		frames++;
-//	}
-//
-//	printf("FGPIO Flash %d\n", frames);
-//
-	for(;;) {
-	}
-
-    return 0;
 }
 ////////////////////////////////////////////////////////////////////////////////
 // EOF
