@@ -18,9 +18,6 @@ Plan
   * Implement 'status' line
   * Optimise representation of offline remote data
     * Shrink offsets to 16-bit
-  * Power saving
-    * Even lower power mode for main MCU
-    * Accelerometer low power mode
   * USB serial download of remote data instead of UART
   * Capacitative slider implementation
 
@@ -153,7 +150,7 @@ Done
 * Created custom main PCB using SMT wherever possible
 * Installed just accelerometer & supporting components, and tested standalone
 * Assembled and tested full custom PCB
-* Full LCD turn off
+* Full LCD turn off as a 'deep sleep' mode
 
 Notes
 =====

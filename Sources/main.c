@@ -42,7 +42,6 @@
 //#define TIME_FRAME_RATE		// Run a short frame rate test on start
 //#define DISABLE_KEYPAD		// Turns off keypad setup via I2C and capacitative slider reading
 //#define ENABLE_TIMER_PIN		// Enables a PWM output on pin A13 to validate timing
-#define TFT_POWER_OFF			// Power off the LCD instead of sleeping it
 
 #define SLEEP_TIMEOUT	500		// Time until backlight turns off when idle, in hundredths of a second
 
