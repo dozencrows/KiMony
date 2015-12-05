@@ -1,8 +1,9 @@
 Plan
 ====
 * Hardware
-  * Create custom main PCB using SMT wherever possible
-  * Install just accelerometer & supporting components, and test standalone
+  * Design and build case
+  * Battery PSU and charging circuit
+  * USB data connection
 * Software  
   * Implement draw priority system, affecting list insert for active DLEs
   * Solve 'in-fill' issue between DLE areas on same scan line
@@ -18,11 +19,14 @@ Plan
   * Optimise representation of offline remote data
     * Shrink offsets to 16-bit
   * Power saving
+    * Full LCD turn off
+    * Even lower power mode for main MCU
+    * Accelerometer low power mode
   * USB serial download of remote data instead of UART
+  * Capacitative slider implementation
 
 Work-in-progress
 ================
-* Testing capacitative slider
 
 What's smart and/or novel?
 ==========================
@@ -147,6 +151,9 @@ Done
 * Created custom keypad PCB and updated software to drive it
 * Added debug rendering overlays
 * Added debug LED
+* Created custom main PCB using SMT wherever possible
+* Installed just accelerometer & supporting components, and tested standalone
+* Assembled and tested full custom PCB
 
 Notes
 =====
