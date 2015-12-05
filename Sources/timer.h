@@ -13,5 +13,6 @@ extern void tpmInit();
 extern void tpmStartMillisecondTimer(int timerIndex);
 extern uint32_t tpmGetTime(int timerIndex);
 extern void tpmStopTimer(int timerIndex);
+extern void tpmStartPwm(int timerIndex, int timerModulo, int pwmChannel, int pwmEdgeCount);
 
 #endif /* TIMER_H_ */

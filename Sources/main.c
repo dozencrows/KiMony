@@ -35,10 +35,19 @@
 #include "capelectrode.h"
 #include "debugutils.h"
 
+//------------------------------------------
+// Build configuration control
+//------------------------------------------
+
+//#define DISABLE_KEYPAD		// Turns off keypad setup via I2C and capacitative slider reading
+//#define ENABLE_TIMER_PIN		// Enables a PWM output on pin A13 to validate timing
+
+#define SLEEP_TIMEOUT	500		// Time until backlight turns off when idle, in hundredths of a second
+
+//------------------------------------------
+
 #define ARRAY_LENGTH(x) (sizeof(x) / sizeof(x[0]))
 
-// Time until backlight turns off when idle, in hundredths of a second
-#define SLEEP_TIMEOUT	500
 
 static int touchPage = 0;
 static const Activity* currentActivity = NULL;
@@ -189,7 +198,6 @@ const Activity* remoteInit()
 
 void idle()
 {
-	//debugLEDOff();
 	// Enter Very Low Power Stop mode
 	SMC_PMCTRL &= ~SMC_PMCTRL_STOPM_MASK;
 	SMC_PMCTRL |= SMC_PMCTRL_STOPM(2);
@@ -218,7 +226,6 @@ void idle()
 	}
 
 	NVIC_EnableIRQ(LPTimer_IRQn);
-	//debugLEDOn();
 }
 
 void mainLoop()
@@ -247,8 +254,6 @@ void mainLoop()
 
 	keyMatrixClearInterrupt();
 	touchScreenClearInterrupt();
-	//debugLEDOn();
-
 
 	while (1) {
 		idle();
@@ -281,12 +286,13 @@ void mainLoop()
 			touchButtonsUpdate(&event);
 			periodicTimerIrqCount = 0;
 
+#ifndef DISABLE_KEYPAD
 			debugSetOverlayHex(0, capElectrodeGetValue(0));
 			debugSetOverlayHex(1, capElectrodeGetValue(1));
+#endif
 
 			sleepCounter++;
 			if (sleepCounter > SLEEP_TIMEOUT) {
-				//debugLEDOff();
 				sleep();
 			}
 		}
@@ -340,8 +346,13 @@ static const PortConfig unusedPortAPins =
 	PORTA_BASE_PTR,
 	~(PORT_PCR_ISF_MASK | PORT_PCR_MUX_MASK),
 	PORT_PCR_MUX(0),
+#ifdef ENABLE_TIMER_PIN
+	3, //4,
+	{ 1, 2, 5 } //{ 1, 2, 5, 13 }
+#else
 	4,
 	{ 1, 2, 5, 13 }
+#endif
 };
 
 static const PortConfig unusedPortBPins =
@@ -370,6 +381,23 @@ static void tieDownUnusedPins()
 	portInitialise(&unusedPortCPins);
 }
 
+static const PortConfig timerPin =
+{
+	PORTA_BASE_PTR,
+	~(PORT_PCR_ISF_MASK | PORT_PCR_MUX_MASK),
+	PORT_PCR_MUX(3),	// TPM 1 CH 1
+	1,
+	{ 13 }
+};
+
+#ifdef ENABLE_TIMER_PIN
+static void startTimerPin()
+{
+	portInitialise(&timerPin);
+	tpmStartPwm(1, 23, 1, 12);
+}
+#endif
+
 int main(void)
 {
 	SystemCoreClockUpdate();
@@ -387,16 +415,24 @@ int main(void)
 	rendererClearScreen();
 
 	touchScreenInit();
+
+#ifndef DISABLE_KEYPAD
 	keyMatrixInit();
-	//spiFlashInit();
-	accelInit();
 	capSliderInit();
+#endif
+
+	accelInit();
 
 	if (FLASH_DATA_HEADER->watermark != FLASH_DATA_WATERMARK) {
 		cpuFlashDownload();
 	}
 
 	tieDownUnusedPins();
+
+#ifdef ENABLE_TIMER_PIN
+	startTimerPin();
+#endif
+
 	mainLoop();
 
 	//spiFlashTest();

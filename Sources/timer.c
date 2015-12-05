@@ -59,3 +59,18 @@ void tpmStopTimer(int timerIndex)
 	NVIC_DisableIRQ(TPM0_IRQn + timerIndex);
 	SIM_SCGC6 &= ~tpmGateFlags[timerIndex];
 }
+
+#define TPM_CnSC_ELS(x) (((uint32_t)(((uint32_t)(x))<<TPM_CnSC_ELSA_SHIFT))&(TPM_CnSC_ELSA_MASK|TPM_CnSC_ELSB_MASK))
+#define TPM_CnSC_MS(x)  (((uint32_t)(((uint32_t)(x))<<TPM_CnSC_MSA_SHIFT))&(TPM_CnSC_MSA_MASK|TPM_CnSC_MSB_MASK))
+
+void tpmStartPwm(int timerIndex, int timerModulo, int pwmChannel, int pwmEdgeCount)
+{
+	SIM_SCGC6 |= tpmGateFlags[timerIndex];
+	tpmPtrs[timerIndex]->CNT = 0;
+	tpmPtrs[timerIndex]->MOD = timerModulo;
+	tpmPtrs[timerIndex]->CONTROLS[pwmChannel].CnSC = TPM_CnSC_ELS(1) | TPM_CnSC_MS(2);	// low on reload, high on match
+	tpmPtrs[timerIndex]->CONTROLS[pwmChannel].CnV = pwmEdgeCount;
+	tpmPtrs[timerIndex]->SC  = TPM_SC_TOF_MASK;
+	tpmCounter[timerIndex] = 0;
+	tpmPtrs[timerIndex]->SC |= TPM_SC_CMOD(1);
+}
