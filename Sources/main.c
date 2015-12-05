@@ -48,6 +48,10 @@
 
 //------------------------------------------
 
+#define ACTIVE_LEVEL_AWAKE		0
+#define ACTIVE_LEVEL_SLEEP		1
+#define ACTIVE_LEVEL_DEEPSLEEP	2
+
 #define ARRAY_LENGTH(x) (sizeof(x) / sizeof(x[0]))
 
 
@@ -78,43 +82,59 @@ static void periodicTimerStart()
 	LPTMR0_CSR = LPTMR_CSR_TIE_MASK | LPTMR_CSR_TEN_MASK;		// Enable with interrupt.
 }
 
+static void periodicTimerStartSlow()
+{
+	LPTMR0_CSR = 0;												// Ensure timer is stopped and counter cleared
+	LPTMR0_PSR = LPTMR_PSR_PCS(1) | LPTMR_PSR_PRESCALE(8);		// Counter frequency is 1.95Hz (1kHz LPO divided by 512)
+	LPTMR0_CMR = 20;											// Interrupt every 10 seconds or so
+	LPTMR0_CSR = LPTMR_CSR_TIE_MASK | LPTMR_CSR_TEN_MASK;		// Enable with interrupt.
+}
+
 static void periodicTimerStop()
 {
 	LPTMR0_CSR = 0;												// Ensure timer is stopped and counter cleared
+	periodicTimerIrqCount = 0;
 }
 
 static uint32_t sleepCounter = 0;
-static int isAsleep = 0;
+static int activeLevel = ACTIVE_LEVEL_AWAKE;
 
 static void sleep()
 {
-	isAsleep = 1;
+	activeLevel = ACTIVE_LEVEL_SLEEP;
 	tftSetBacklight(0);
-#ifdef TFT_POWER_OFF
+	tftSleep();
+	periodicTimerStop();
+	periodicTimerStartSlow();
+}
+
+static void deepSleep()
+{
+	activeLevel = ACTIVE_LEVEL_DEEPSLEEP;
 	touchScreenDisconnect();
 	spiPinsDisconnect();
 	tftPowerOff();
-#else
-	tftSleep();
-#endif
 	periodicTimerStop();
 }
 
 static void wakeUp()
 {
-	if (isAsleep) {
-#ifdef TFT_POWER_OFF
-		tftPowerOn();
-		touchScreenConnect();
-		spiPinsConnect();
-		rendererClearScreen();
-		touchbuttonsRedraw();
-#else
-		tftWake();
-#endif
+	if (activeLevel != ACTIVE_LEVEL_AWAKE) {
+		if (activeLevel == ACTIVE_LEVEL_DEEPSLEEP) {
+			tftPowerOn();
+			touchScreenConnect();
+			spiPinsConnect();
+			rendererClearScreen();
+			touchbuttonsRedraw();
+		}
+		else {
+			tftWake();
+		}
+
 		tftSetBacklight(1);
+		periodicTimerStop();
 		periodicTimerStart();
-		isAsleep = 0;
+		activeLevel = ACTIVE_LEVEL_AWAKE;
 	}
 
 	sleepCounter = 0;
@@ -282,6 +302,7 @@ void mainLoop()
 		if (keyMatrixCheckInterrupt()) {
 			buttonsPollState();
 			keyMatrixClearInterrupt();
+			wakeUp();
 		}
 
 		if (accelCheckTransientInterrupt()) {
@@ -290,17 +311,22 @@ void mainLoop()
 		}
 
 		if (periodicTimerIrqCount) {
-			touchButtonsUpdate(&event);
-			periodicTimerIrqCount = 0;
+			if (activeLevel == ACTIVE_LEVEL_SLEEP) {
+				deepSleep();
+			}
+			else {
+				touchButtonsUpdate(&event);
+				periodicTimerIrqCount = 0;
 
 #ifndef DISABLE_KEYPAD
-			debugSetOverlayHex(0, capElectrodeGetValue(0));
-			debugSetOverlayHex(1, capElectrodeGetValue(1));
+				debugSetOverlayHex(0, capElectrodeGetValue(0));
+				debugSetOverlayHex(1, capElectrodeGetValue(1));
 #endif
 
-			sleepCounter++;
-			if (sleepCounter > SLEEP_TIMEOUT) {
-				sleep();
+				sleepCounter++;
+				if (sleepCounter > SLEEP_TIMEOUT) {
+					sleep();
+				}
 			}
 		}
 
@@ -308,7 +334,6 @@ void mainLoop()
 		touchbuttonsRender();
 
 		if (event) {
-			wakeUp();
 			rendererRenderDrawList();
 			if (event->type == EVENT_IRACTION) {
 				deviceDoIrAction((const Device*)GET_FLASH_PTR(event->deviceOffset), (const IrAction*)GET_FLASH_PTR(event->irActionOffset));
