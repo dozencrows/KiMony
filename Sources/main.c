@@ -39,6 +39,7 @@
 // Build configuration control
 //------------------------------------------
 
+//#define TIME_FRAME_RATE		// Run a short frame rate test on start
 //#define DISABLE_KEYPAD		// Turns off keypad setup via I2C and capacitative slider reading
 //#define ENABLE_TIMER_PIN		// Enables a PWM output on pin A13 to validate timing
 #define TFT_POWER_OFF			// Power off the LCD instead of sleeping it
@@ -236,16 +237,24 @@ void mainLoop()
 	const Activity* homeActivity = remoteInit();
 	selectActivity(homeActivity);
 
-//	int frames = 0;
-//	sysTickEventInMs(1000);
-//	while (!sysTickCheckEvent()) {
-//		rendererNewDrawList();
-//		touchbuttonsRender();
-//		rendererRenderDrawList();
-//		frames++;
-//	}
-//
-//	printf("TouchButtons %d\n", frames);
+#ifdef TIME_FRAME_RATE
+	volatile int frames = 0;
+	sysTickEventInMs(1000);
+	while (!sysTickCheckEvent()) {
+		touchbuttonsRedraw();
+		rendererNewDrawList();
+		touchbuttonsRender();
+		rendererRenderDrawList();
+		frames++;
+	}
+
+	debugSetOverlayHex(0, frames);
+	debugRenderOverlays();
+
+	sysTickEventInMs(2000);
+	while (!sysTickCheckEvent());
+	touchbuttonsRedraw();
+#endif
 
 	periodicTimerInit();
 	periodicTimerStart();
@@ -345,8 +354,8 @@ static const PortConfig unusedPortAPins =
 	~(PORT_PCR_ISF_MASK | PORT_PCR_MUX_MASK),
 	PORT_PCR_MUX(0),
 #ifdef ENABLE_TIMER_PIN
-	3, //4,
-	{ 1, 2, 5 } //{ 1, 2, 5, 13 }
+	3,
+	{ 1, 2, 5 }
 #else
 	4,
 	{ 1, 2, 5, 13 }
