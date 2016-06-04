@@ -75,6 +75,7 @@ sony_tv.create_action("down", [IrCode(IrEncoding_SIRC, 12, 0xAF0)])
 sony_tv.create_action("left", [IrCode(IrEncoding_SIRC, 12, 0x2D0)])
 sony_tv.create_action("right", [IrCode(IrEncoding_SIRC, 12, 0xCD0)])
 
+sony_tv.create_action("tvpause", [IrCode(IrEncoding_SIRC, 15, 0x7358)])
 sony_tv.create_action("pause", [IrCode(IrEncoding_SIRC, 15, 0x4CE9)])
 sony_tv.create_action("play", [IrCode(IrEncoding_SIRC, 15, 0x2CE9)])
 sony_tv.create_action("stop", [IrCode(IrEncoding_SIRC, 15, 0x0CE9)])
@@ -171,9 +172,10 @@ home_event		    = remoteConfig.create_ir_event("tv-home", sony_tv, "home")
 options_event	    = remoteConfig.create_ir_event("options", sony_tv, "options")
 tv_play_event		= remoteConfig.create_ir_event("tv-play", sony_tv, "play")
 tv_stop_event		= remoteConfig.create_ir_event("tv-stop", sony_tv, "stop")
-tv_pause_event		= remoteConfig.create_ir_event("tv-pause", sony_tv, "pause")
+tv_pause_event		= remoteConfig.create_ir_event("tv-pause", sony_tv, "tvpause")
 tv_ffwd_event		= remoteConfig.create_ir_event("tv-ffwd", sony_tv, "ffwd")
 tv_rewind_event		= remoteConfig.create_ir_event("tv-rewind", sony_tv, "rewind")
+pause_event         = remoteConfig.create_ir_event("pause", sony_tv, "pause")
 
 up_event		    = remoteConfig.create_ir_event("tv-up", sony_tv, "up")
 down_event		    = remoteConfig.create_ir_event("tv-down", sony_tv, "down")
@@ -235,9 +237,8 @@ watch_tv_activity.create_touch_button_page([
 
     TouchButton(tv_play_event,      "Play",              0, 4*BUTTON_HEIGHT, BUTTON_WIDTH, BUTTON_HEIGHT, 0xf9e0, TouchButton.FLAGS_PRESS_ACTIVATE|TouchButton.FLAGS_CENTRE_TEXT),
     TouchButton(tv_stop_event,      "Stop",   BUTTON_WIDTH, 4*BUTTON_HEIGHT, BUTTON_WIDTH, BUTTON_HEIGHT, 0xf9e0, TouchButton.FLAGS_PRESS_ACTIVATE|TouchButton.FLAGS_CENTRE_TEXT),
-    TouchButton(next_input_event,  "FFwd", 2*BUTTON_WIDTH, 4*BUTTON_HEIGHT, BUTTON_WIDTH, BUTTON_HEIGHT, 0xf9e0, TouchButton.FLAGS_PRESS_ACTIVATE|TouchButton.FLAGS_CENTRE_TEXT),
-    TouchButton(source_event,     "Rwnd", 3*BUTTON_WIDTH, 4*BUTTON_HEIGHT, BUTTON_WIDTH, BUTTON_HEIGHT, 0xf9e0, TouchButton.FLAGS_PRESS_ACTIVATE|TouchButton.FLAGS_CENTRE_TEXT),
-
+    TouchButton(next_input_event,  "Input", 2*BUTTON_WIDTH, 4*BUTTON_HEIGHT, BUTTON_WIDTH, BUTTON_HEIGHT, 0xf9e0, TouchButton.FLAGS_PRESS_ACTIVATE|TouchButton.FLAGS_CENTRE_TEXT),
+    TouchButton(source_event,       "Srce", 3*BUTTON_WIDTH, 4*BUTTON_HEIGHT, BUTTON_WIDTH, BUTTON_HEIGHT, 0xf9e0, TouchButton.FLAGS_PRESS_ACTIVATE|TouchButton.FLAGS_CENTRE_TEXT),
     ])
 
 watch_tv_activity.create_device_state(sony_tv, { "power": 1, "input": 0 })  
@@ -271,8 +272,8 @@ watch_video_activity.create_touch_button_page([
 
     TouchButton(tv_play_event,  "Play",              0, 4*BUTTON_HEIGHT, BUTTON_WIDTH, BUTTON_HEIGHT, 0xf9e0, TouchButton.FLAGS_PRESS_ACTIVATE|TouchButton.FLAGS_CENTRE_TEXT),
     TouchButton(tv_stop_event,  "Stop",   BUTTON_WIDTH, 4*BUTTON_HEIGHT, BUTTON_WIDTH, BUTTON_HEIGHT, 0xf9e0, TouchButton.FLAGS_PRESS_ACTIVATE|TouchButton.FLAGS_CENTRE_TEXT),
-    TouchButton(tv_ffwd_event,    ">>", 2*BUTTON_WIDTH, 4*BUTTON_HEIGHT, BUTTON_WIDTH, BUTTON_HEIGHT, 0xf9e0, TouchButton.FLAGS_PRESS_ACTIVATE|TouchButton.FLAGS_CENTRE_TEXT),
-    TouchButton(tv_rewind_event,  "<<", 3*BUTTON_WIDTH, 4*BUTTON_HEIGHT, BUTTON_WIDTH, BUTTON_HEIGHT, 0xf9e0, TouchButton.FLAGS_PRESS_ACTIVATE|TouchButton.FLAGS_CENTRE_TEXT),
+    TouchButton(tv_rewind_event,  "<<", 2*BUTTON_WIDTH, 4*BUTTON_HEIGHT, BUTTON_WIDTH, BUTTON_HEIGHT, 0xf9e0, TouchButton.FLAGS_PRESS_ACTIVATE|TouchButton.FLAGS_CENTRE_TEXT),
+    TouchButton(tv_ffwd_event,    ">>", 3*BUTTON_WIDTH, 4*BUTTON_HEIGHT, BUTTON_WIDTH, BUTTON_HEIGHT, 0xf9e0, TouchButton.FLAGS_PRESS_ACTIVATE|TouchButton.FLAGS_CENTRE_TEXT),
     ])
 
 watch_video_activity.create_device_state(sony_tv, { "power": 1, "input": 4 })  
@@ -280,7 +281,7 @@ watch_video_activity.create_device_state(phillips_hts, { "power": 1, "surround":
 
 watch_movie_activity = Activity(name = "watch-movie")
 
-watch_movie_activity.create_button_mapping(BUTTON_GRID[0][0], tv_pause_event)
+watch_movie_activity.create_button_mapping(BUTTON_GRID[0][0], pause_event)
 watch_movie_activity.create_button_mapping(BUTTON_GRID[0][3], poweroff_event)
 watch_movie_activity.create_button_mapping(BUTTON_GRID[0][4], home_activity_event)
 watch_movie_activity.create_button_mapping(BUTTON_GRID[3][1], volume_up_event)
