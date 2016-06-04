@@ -23,6 +23,15 @@ BUTTON_ROWS	    = 6
 BUTTON_WIDTH	= SCREEN_WIDTH/BUTTON_COLUMNS
 BUTTON_HEIGHT	= SCREEN_HEIGHT/BUTTON_ROWS
 
+BUTTON_GRID     = [
+    [ 0x00400000, 0x00040000, 0x00200000, 0x00020000, 0x00100000, 0x00010000 ],
+    [ 0x00000000, 0x00000001, 0x00000010, 0x00000100, 0x00001000, 0x00000000 ],
+    [ 0x00000000, 0x00000002, 0x00000020, 0x00000200, 0x00002000, 0x00000000 ],
+    [ 0x00000000, 0x00000004, 0x00000040, 0x00000400, 0x00004000, 0x00000000 ],
+    [ 0x00000000, 0x00000008, 0x00000080, 0x00000800, 0x00008000, 0x00000000 ],
+    [ 0x00800000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00080000 ],
+]
+
 remoteConfig = RemoteConfig()
 
 sony_tv = Device("Sony TV")
@@ -33,6 +42,7 @@ sony_tv.create_action("hdmi1input", [IrCode(IrEncoding_SIRC, 15, 0x4D58)])
 sony_tv.create_action("hdmi2input", [IrCode(IrEncoding_SIRC, 15, 0xCD58)])
 sony_tv.create_action("hdmi3input", [IrCode(IrEncoding_SIRC, 15, 0x1D58)])
 sony_tv.create_action("hdmi4input", [IrCode(IrEncoding_SIRC, 15, 0x5D58)])
+sony_tv.create_action("nextinput", [IrCode(IrEncoding_SIRC, 12, 0xA50)])
 
 sony_tv.create_action("numeric1", [IrCode(IrEncoding_SIRC, 12, 0x010)])
 sony_tv.create_action("numeric2", [IrCode(IrEncoding_SIRC, 12, 0x810)])
@@ -58,11 +68,18 @@ sony_tv.create_action("guide", [IrCode(IrEncoding_SIRC, 15, 0x6D25)])
 sony_tv.create_action("enter", [IrCode(IrEncoding_SIRC, 12, 0xA70)])
 sony_tv.create_action("back", [IrCode(IrEncoding_SIRC, 12, 0xC70)])
 sony_tv.create_action("home", [IrCode(IrEncoding_SIRC, 12, 0x070)])
+sony_tv.create_action("options", [IrCode(IrEncoding_SIRC, 15, 0x36E9)])
 
 sony_tv.create_action("up", [IrCode(IrEncoding_SIRC, 12, 0x2F0)])
 sony_tv.create_action("down", [IrCode(IrEncoding_SIRC, 12, 0xAF0)])
 sony_tv.create_action("left", [IrCode(IrEncoding_SIRC, 12, 0x2D0)])
 sony_tv.create_action("right", [IrCode(IrEncoding_SIRC, 12, 0xCD0)])
+
+sony_tv.create_action("pause", [IrCode(IrEncoding_SIRC, 15, 0x4CE9)])
+sony_tv.create_action("play", [IrCode(IrEncoding_SIRC, 15, 0x2CE9)])
+sony_tv.create_action("stop", [IrCode(IrEncoding_SIRC, 15, 0x0CE9)])
+sony_tv.create_action("ffwd", [IrCode(IrEncoding_SIRC, 15, 0x1CE9)])
+sony_tv.create_action("rewind", [IrCode(IrEncoding_SIRC, 15, 0x6CE9)])
 
 sony_tv.create_option(name = "power", flags = Option_Cycled|Option_DefaultToZero|Option_ActionOnDefault, max_value = 1, change_action_names = ["powertoggle"])
 sony_tv.create_option(name = "input", flags = Option_AlwaysSet, max_value = 4, change_action_names = ["tvinput", "hdmi1input", "hdmi2input", "hdmi3input", "hdmi4input"])
@@ -78,6 +95,7 @@ phillips_hts.create_action("volume_up", [IrCode(IrEncoding_RC6, 21, 0xEEFEF, 0x1
 phillips_hts.create_action("volume_down", [IrCode(IrEncoding_RC6, 21, 0xEEFEE, 0x10000)])
 phillips_hts.create_action("mute", [IrCode(IrEncoding_RC6, 21, 0xEEFF2, 0x10000)])
 phillips_hts.create_action("surround", [IrCode(IrEncoding_RC6, 21, 0xEEFAD, 0x10000), IrCode(IrEncoding_NOP, 0, 250)])
+phillips_hts.create_action("source", [IrCode(IrEncoding_RC6, 21, 0xEEAC0, 0x10000)])
 
 phillips_hts.create_option("power", Option_DefaultToZero|Option_ActionOnDefault, 1, ["powertoggle", "powertoggle"], post_delays = [0, 15000])
 phillips_hts.create_option("surround", Option_Cycled|Option_DefaultToZero, 2, ["surround"], "surround")
@@ -134,10 +152,12 @@ volume_up_event 	= remoteConfig.create_ir_event("vol-up", phillips_hts, "volume_
 volume_down_event 	= remoteConfig.create_ir_event("vol-down", phillips_hts, "volume_down")
 mute_event 		    = remoteConfig.create_ir_event("mute", phillips_hts, "mute")
 surround_event		= remoteConfig.create_ir_event("surround", phillips_hts, "surround")
+source_event		= remoteConfig.create_ir_event("source", phillips_hts, "source")
 
 channel_up_event 	= remoteConfig.create_ir_event("ch-up", sony_tv, "channel_up")
 channel_down_event	= remoteConfig.create_ir_event("ch-down", sony_tv, "channel_down")
 info_event		    = remoteConfig.create_ir_event("info", sony_tv, "info")
+next_input_event    = remoteConfig.create_ir_event("next-input", sony_tv, "nextinput")
 
 red_event		    = remoteConfig.create_ir_event("red", sony_tv, "red")
 yellow_event		= remoteConfig.create_ir_event("yellow", sony_tv, "yellow")
@@ -148,6 +168,12 @@ guide_event		    = remoteConfig.create_ir_event("guide", sony_tv, "guide")
 enter_event		    = remoteConfig.create_ir_event("enter", sony_tv, "enter")
 back_event		    = remoteConfig.create_ir_event("back", sony_tv, "back")
 home_event		    = remoteConfig.create_ir_event("tv-home", sony_tv, "home")
+options_event	    = remoteConfig.create_ir_event("options", sony_tv, "options")
+tv_play_event		= remoteConfig.create_ir_event("tv-play", sony_tv, "play")
+tv_stop_event		= remoteConfig.create_ir_event("tv-stop", sony_tv, "stop")
+tv_pause_event		= remoteConfig.create_ir_event("tv-pause", sony_tv, "pause")
+tv_ffwd_event		= remoteConfig.create_ir_event("tv-ffwd", sony_tv, "ffwd")
+tv_rewind_event		= remoteConfig.create_ir_event("tv-rewind", sony_tv, "rewind")
 
 up_event		    = remoteConfig.create_ir_event("tv-up", sony_tv, "up")
 down_event		    = remoteConfig.create_ir_event("tv-down", sony_tv, "down")
@@ -168,28 +194,28 @@ st_volume_down_event  = remoteConfig.create_ir_event("st-vol-down", sony_stereo,
 # Activities, button mappings and touch button pages
 watch_tv_activity = Activity(name = "watch-tv")
 
-watch_tv_activity.create_button_mapping(0x200000, info_event)
-#watch_tv_activity.create_button_mapping(0x100000, blue_event)
-#watch_tv_activity.create_button_mapping(0x080000, green_event)
-#watch_tv_activity.create_button_mapping(0x040000, yellow_event)
-watch_tv_activity.create_button_mapping(0x020000, poweroff_event)
-watch_tv_activity.create_button_mapping(0x010000, home_activity_event)
-watch_tv_activity.create_button_mapping(0x008000, numeric1_event)
-watch_tv_activity.create_button_mapping(0x004000, numeric4_event)
-watch_tv_activity.create_button_mapping(0x002000, numeric7_event)
-watch_tv_activity.create_button_mapping(0x001000, surround_event)
-watch_tv_activity.create_button_mapping(0x000800, numeric2_event)
-watch_tv_activity.create_button_mapping(0x000400, numeric5_event)
-watch_tv_activity.create_button_mapping(0x000200, numeric8_event)
-watch_tv_activity.create_button_mapping(0x000100, numeric0_event)
-watch_tv_activity.create_button_mapping(0x000080, numeric3_event)
-watch_tv_activity.create_button_mapping(0x000040, numeric6_event)
-watch_tv_activity.create_button_mapping(0x000020, numeric9_event)
-watch_tv_activity.create_button_mapping(0x000010, mute_event)
-watch_tv_activity.create_button_mapping(0x000008, volume_up_event)
-watch_tv_activity.create_button_mapping(0x000004, volume_down_event)
-watch_tv_activity.create_button_mapping(0x000002, channel_up_event)
-watch_tv_activity.create_button_mapping(0x000001, channel_down_event)
+watch_tv_activity.create_button_mapping(BUTTON_GRID[0][0], tv_pause_event)
+watch_tv_activity.create_button_mapping(BUTTON_GRID[0][1], options_event)
+watch_tv_activity.create_button_mapping(BUTTON_GRID[0][2], info_event)
+watch_tv_activity.create_button_mapping(BUTTON_GRID[0][3], poweroff_event)
+watch_tv_activity.create_button_mapping(BUTTON_GRID[0][4], home_activity_event)
+watch_tv_activity.create_button_mapping(BUTTON_GRID[0][5], home_event)
+watch_tv_activity.create_button_mapping(BUTTON_GRID[1][2], numeric1_event)
+watch_tv_activity.create_button_mapping(BUTTON_GRID[1][3], numeric2_event)
+watch_tv_activity.create_button_mapping(BUTTON_GRID[1][4], numeric3_event)
+watch_tv_activity.create_button_mapping(BUTTON_GRID[2][2], numeric4_event)
+watch_tv_activity.create_button_mapping(BUTTON_GRID[2][3], numeric5_event)
+watch_tv_activity.create_button_mapping(BUTTON_GRID[2][4], numeric6_event)
+watch_tv_activity.create_button_mapping(BUTTON_GRID[3][2], numeric7_event)
+watch_tv_activity.create_button_mapping(BUTTON_GRID[3][3], numeric8_event)
+watch_tv_activity.create_button_mapping(BUTTON_GRID[3][4], numeric9_event)
+watch_tv_activity.create_button_mapping(BUTTON_GRID[4][2], mute_event)
+watch_tv_activity.create_button_mapping(BUTTON_GRID[4][3], numeric0_event)
+watch_tv_activity.create_button_mapping(BUTTON_GRID[4][4], surround_event)
+watch_tv_activity.create_button_mapping(BUTTON_GRID[3][1], volume_up_event)
+watch_tv_activity.create_button_mapping(BUTTON_GRID[4][1], volume_down_event)
+watch_tv_activity.create_button_mapping(BUTTON_GRID[1][1], channel_up_event)
+watch_tv_activity.create_button_mapping(BUTTON_GRID[2][1], channel_down_event)
 
 watch_tv_activity.create_touch_button_page([
     TouchButton(guide_event, "Guide",  		      0, 0, BUTTON_WIDTH, BUTTON_HEIGHT, 0xf9e0, TouchButton.FLAGS_PRESS_ACTIVATE|TouchButton.FLAGS_CENTRE_TEXT),
@@ -202,24 +228,66 @@ watch_tv_activity.create_touch_button_page([
     TouchButton(yellow_event, None, 2*BUTTON_WIDTH, BUTTON_HEIGHT, BUTTON_WIDTH, BUTTON_HEIGHT, 0xffe0, TouchButton.FLAGS_PRESS_ACTIVATE, name = "Yellow"),
     TouchButton(blue_event,   None, 3*BUTTON_WIDTH, BUTTON_HEIGHT, BUTTON_WIDTH, BUTTON_HEIGHT, 0x001f, TouchButton.FLAGS_PRESS_ACTIVATE, name = "Blue"),
 
-    TouchButton(up_event, "U",  (SCREEN_WIDTH - BUTTON_WIDTH) / 2, 2*BUTTON_HEIGHT, BUTTON_WIDTH, BUTTON_HEIGHT, 0xf9e0, TouchButton.FLAGS_PRESS_ACTIVATE|TouchButton.FLAGS_CENTRE_TEXT),
-    TouchButton(down_event, "D",  (SCREEN_WIDTH - BUTTON_WIDTH) / 2, 3*BUTTON_HEIGHT, BUTTON_WIDTH, BUTTON_HEIGHT, 0xf9e0, TouchButton.FLAGS_PRESS_ACTIVATE|TouchButton.FLAGS_CENTRE_TEXT),
-    TouchButton(left_event, "L",  (SCREEN_WIDTH - BUTTON_WIDTH) / 2 - BUTTON_WIDTH, int(2.5*BUTTON_HEIGHT), BUTTON_WIDTH, BUTTON_HEIGHT, 0xf9e0, TouchButton.FLAGS_PRESS_ACTIVATE|TouchButton.FLAGS_CENTRE_TEXT),
+    TouchButton(up_event,    "U",  (SCREEN_WIDTH - BUTTON_WIDTH) / 2, 2*BUTTON_HEIGHT, BUTTON_WIDTH, BUTTON_HEIGHT, 0xf9e0, TouchButton.FLAGS_PRESS_ACTIVATE|TouchButton.FLAGS_CENTRE_TEXT),
+    TouchButton(down_event,  "D",  (SCREEN_WIDTH - BUTTON_WIDTH) / 2, 3*BUTTON_HEIGHT, BUTTON_WIDTH, BUTTON_HEIGHT, 0xf9e0, TouchButton.FLAGS_PRESS_ACTIVATE|TouchButton.FLAGS_CENTRE_TEXT),
+    TouchButton(left_event,  "L",  (SCREEN_WIDTH - BUTTON_WIDTH) / 2 - BUTTON_WIDTH, int(2.5*BUTTON_HEIGHT), BUTTON_WIDTH, BUTTON_HEIGHT, 0xf9e0, TouchButton.FLAGS_PRESS_ACTIVATE|TouchButton.FLAGS_CENTRE_TEXT),
     TouchButton(right_event, "R",  (SCREEN_WIDTH - BUTTON_WIDTH) / 2 + BUTTON_WIDTH, int(2.5*BUTTON_HEIGHT), BUTTON_WIDTH, BUTTON_HEIGHT, 0xf9e0, TouchButton.FLAGS_PRESS_ACTIVATE|TouchButton.FLAGS_CENTRE_TEXT),
+
+    TouchButton(tv_play_event,      "Play",              0, 4*BUTTON_HEIGHT, BUTTON_WIDTH, BUTTON_HEIGHT, 0xf9e0, TouchButton.FLAGS_PRESS_ACTIVATE|TouchButton.FLAGS_CENTRE_TEXT),
+    TouchButton(tv_stop_event,      "Stop",   BUTTON_WIDTH, 4*BUTTON_HEIGHT, BUTTON_WIDTH, BUTTON_HEIGHT, 0xf9e0, TouchButton.FLAGS_PRESS_ACTIVATE|TouchButton.FLAGS_CENTRE_TEXT),
+    TouchButton(next_input_event,  "FFwd", 2*BUTTON_WIDTH, 4*BUTTON_HEIGHT, BUTTON_WIDTH, BUTTON_HEIGHT, 0xf9e0, TouchButton.FLAGS_PRESS_ACTIVATE|TouchButton.FLAGS_CENTRE_TEXT),
+    TouchButton(source_event,     "Rwnd", 3*BUTTON_WIDTH, 4*BUTTON_HEIGHT, BUTTON_WIDTH, BUTTON_HEIGHT, 0xf9e0, TouchButton.FLAGS_PRESS_ACTIVATE|TouchButton.FLAGS_CENTRE_TEXT),
+
     ])
 
 watch_tv_activity.create_device_state(sony_tv, { "power": 1, "input": 0 })  
 watch_tv_activity.create_device_state(phillips_hts, { "power": 1, "surround": 2 })
 
+watch_video_activity = Activity(name = "watch-video")
+
+watch_video_activity.create_button_mapping(BUTTON_GRID[0][0], tv_pause_event)
+watch_video_activity.create_button_mapping(BUTTON_GRID[0][3], poweroff_event)
+watch_video_activity.create_button_mapping(BUTTON_GRID[0][4], home_activity_event)
+watch_video_activity.create_button_mapping(BUTTON_GRID[4][2], mute_event)
+watch_video_activity.create_button_mapping(BUTTON_GRID[4][4], surround_event)
+watch_video_activity.create_button_mapping(BUTTON_GRID[3][1], volume_up_event)
+watch_video_activity.create_button_mapping(BUTTON_GRID[4][1], volume_down_event)
+
+watch_video_activity.create_touch_button_page([
+    TouchButton(guide_event, "Guide",  		      0, 0, BUTTON_WIDTH, BUTTON_HEIGHT, 0xf9e0, TouchButton.FLAGS_PRESS_ACTIVATE|TouchButton.FLAGS_CENTRE_TEXT),
+    TouchButton(enter_event, "Enter",  BUTTON_WIDTH, 0, BUTTON_WIDTH, BUTTON_HEIGHT, 0xf9e0, TouchButton.FLAGS_PRESS_ACTIVATE|TouchButton.FLAGS_CENTRE_TEXT),
+    TouchButton(back_event,  "Back", 2*BUTTON_WIDTH, 0, BUTTON_WIDTH, BUTTON_HEIGHT, 0xf9e0, TouchButton.FLAGS_PRESS_ACTIVATE|TouchButton.FLAGS_CENTRE_TEXT),
+    TouchButton(home_event,  "Home", 3*BUTTON_WIDTH, 0, BUTTON_WIDTH, BUTTON_HEIGHT, 0xf9e0, TouchButton.FLAGS_PRESS_ACTIVATE|TouchButton.FLAGS_CENTRE_TEXT),
+
+    TouchButton(red_event,    None,  	         0, BUTTON_HEIGHT, BUTTON_WIDTH, BUTTON_HEIGHT, 0xf800, TouchButton.FLAGS_PRESS_ACTIVATE, name = "Red"),
+    TouchButton(green_event,  None,   BUTTON_WIDTH, BUTTON_HEIGHT, BUTTON_WIDTH, BUTTON_HEIGHT, 0x07e0, TouchButton.FLAGS_PRESS_ACTIVATE, name = "Green"),
+    TouchButton(yellow_event, None, 2*BUTTON_WIDTH, BUTTON_HEIGHT, BUTTON_WIDTH, BUTTON_HEIGHT, 0xffe0, TouchButton.FLAGS_PRESS_ACTIVATE, name = "Yellow"),
+    TouchButton(blue_event,   None, 3*BUTTON_WIDTH, BUTTON_HEIGHT, BUTTON_WIDTH, BUTTON_HEIGHT, 0x001f, TouchButton.FLAGS_PRESS_ACTIVATE, name = "Blue"),
+
+    TouchButton(up_event,    "U",  (SCREEN_WIDTH - BUTTON_WIDTH) / 2, 2*BUTTON_HEIGHT, BUTTON_WIDTH, BUTTON_HEIGHT, 0xf9e0, TouchButton.FLAGS_PRESS_ACTIVATE|TouchButton.FLAGS_CENTRE_TEXT),
+    TouchButton(down_event,  "D",  (SCREEN_WIDTH - BUTTON_WIDTH) / 2, 3*BUTTON_HEIGHT, BUTTON_WIDTH, BUTTON_HEIGHT, 0xf9e0, TouchButton.FLAGS_PRESS_ACTIVATE|TouchButton.FLAGS_CENTRE_TEXT),
+    TouchButton(left_event,  "L",  (SCREEN_WIDTH - BUTTON_WIDTH) / 2 - BUTTON_WIDTH, int(2.5*BUTTON_HEIGHT), BUTTON_WIDTH, BUTTON_HEIGHT, 0xf9e0, TouchButton.FLAGS_PRESS_ACTIVATE|TouchButton.FLAGS_CENTRE_TEXT),
+    TouchButton(right_event, "R",  (SCREEN_WIDTH - BUTTON_WIDTH) / 2 + BUTTON_WIDTH, int(2.5*BUTTON_HEIGHT), BUTTON_WIDTH, BUTTON_HEIGHT, 0xf9e0, TouchButton.FLAGS_PRESS_ACTIVATE|TouchButton.FLAGS_CENTRE_TEXT),
+
+    TouchButton(tv_play_event,  "Play",              0, 4*BUTTON_HEIGHT, BUTTON_WIDTH, BUTTON_HEIGHT, 0xf9e0, TouchButton.FLAGS_PRESS_ACTIVATE|TouchButton.FLAGS_CENTRE_TEXT),
+    TouchButton(tv_stop_event,  "Stop",   BUTTON_WIDTH, 4*BUTTON_HEIGHT, BUTTON_WIDTH, BUTTON_HEIGHT, 0xf9e0, TouchButton.FLAGS_PRESS_ACTIVATE|TouchButton.FLAGS_CENTRE_TEXT),
+    TouchButton(tv_ffwd_event,    ">>", 2*BUTTON_WIDTH, 4*BUTTON_HEIGHT, BUTTON_WIDTH, BUTTON_HEIGHT, 0xf9e0, TouchButton.FLAGS_PRESS_ACTIVATE|TouchButton.FLAGS_CENTRE_TEXT),
+    TouchButton(tv_rewind_event,  "<<", 3*BUTTON_WIDTH, 4*BUTTON_HEIGHT, BUTTON_WIDTH, BUTTON_HEIGHT, 0xf9e0, TouchButton.FLAGS_PRESS_ACTIVATE|TouchButton.FLAGS_CENTRE_TEXT),
+    ])
+
+watch_video_activity.create_device_state(sony_tv, { "power": 1, "input": 4 })  
+watch_video_activity.create_device_state(phillips_hts, { "power": 1, "surround": 2 })
+
 watch_movie_activity = Activity(name = "watch-movie")
 
-watch_movie_activity.create_button_mapping(0x020000, poweroff_event)
-watch_movie_activity.create_button_mapping(0x010000, home_activity_event)
-watch_movie_activity.create_button_mapping(0x000008, volume_up_event)
-watch_movie_activity.create_button_mapping(0x000004, volume_down_event)
-watch_movie_activity.create_button_mapping(0x001000, surround_event)
-watch_movie_activity.create_button_mapping(0x000010, mute_event)
-watch_movie_activity.create_button_mapping(0x200000, br_eject_event)
+watch_movie_activity.create_button_mapping(BUTTON_GRID[0][0], tv_pause_event)
+watch_movie_activity.create_button_mapping(BUTTON_GRID[0][3], poweroff_event)
+watch_movie_activity.create_button_mapping(BUTTON_GRID[0][4], home_activity_event)
+watch_movie_activity.create_button_mapping(BUTTON_GRID[3][1], volume_up_event)
+watch_movie_activity.create_button_mapping(BUTTON_GRID[4][1], volume_down_event)
+watch_movie_activity.create_button_mapping(BUTTON_GRID[4][4], surround_event)
+watch_movie_activity.create_button_mapping(BUTTON_GRID[4][2], mute_event)
+watch_movie_activity.create_button_mapping(BUTTON_GRID[0][5], br_eject_event)
 
 TRANSPORT_BUTTON_WIDTH  = 55
 TRANSPORT_BUTTON_HEIGHT = 55
@@ -242,43 +310,45 @@ watch_movie_activity.create_device_state(phillips_hts, { "power": 1, "surround":
 
 listen_cd_activity = Activity(name = "listen-cd")
 
-listen_cd_activity.create_button_mapping(0x020000, poweroff_event)
-listen_cd_activity.create_button_mapping(0x010000, home_activity_event)
-listen_cd_activity.create_button_mapping(0x000008, st_volume_up_event)
-listen_cd_activity.create_button_mapping(0x000004, st_volume_down_event)
+listen_cd_activity.create_button_mapping(BUTTON_GRID[0][3], poweroff_event)
+listen_cd_activity.create_button_mapping(BUTTON_GRID[0][4], home_activity_event)
+listen_cd_activity.create_button_mapping(BUTTON_GRID[3][1], st_volume_up_event)
+listen_cd_activity.create_button_mapping(BUTTON_GRID[4][1], st_volume_down_event)
     
 listen_cd_activity.create_device_state(sony_stereo, { "power": 1, "source": 2 })
 
 listen_radio_activity = Activity(name = "listen-radio")
 
-listen_radio_activity.create_button_mapping(0x020000, poweroff_event)
-listen_radio_activity.create_button_mapping(0x010000, home_activity_event)
-listen_radio_activity.create_button_mapping(0x000008, st_volume_up_event)
-listen_radio_activity.create_button_mapping(0x000004, st_volume_down_event)
+listen_radio_activity.create_button_mapping(BUTTON_GRID[0][3], poweroff_event)
+listen_radio_activity.create_button_mapping(BUTTON_GRID[0][4], home_activity_event)
+listen_radio_activity.create_button_mapping(BUTTON_GRID[3][1], st_volume_up_event)
+listen_radio_activity.create_button_mapping(BUTTON_GRID[4][1], st_volume_down_event)
     
 listen_radio_activity.create_device_state(sony_stereo, { "power": 1, "source": 0 })
 
 watch_tv_event = remoteConfig.create_activity_event("watch-tv", watch_tv_activity)
+watch_video_event = remoteConfig.create_activity_event("watch-video", watch_video_activity)
 watch_movie_event = remoteConfig.create_activity_event("watch-movie", watch_movie_activity)
 listen_cd_event = remoteConfig.create_activity_event("listen-cd", listen_cd_activity)
 listen_radio_event = remoteConfig.create_activity_event("listen-radio", listen_radio_activity)
 
 home_activity = Activity(name = "home", flags = Activity_NoDevices)
 
-home_activity.create_button_mapping(0x010000, prev_event)
-home_activity.create_button_mapping(0x040000, next_event)
-home_activity.create_button_mapping(0x100000, download_event)
-home_activity.create_button_mapping(0x020000, poweroff_event)
+home_activity.create_button_mapping(BUTTON_GRID[0][0], prev_event)
+home_activity.create_button_mapping(BUTTON_GRID[0][5], next_event)
+home_activity.create_button_mapping(BUTTON_GRID[0][3], poweroff_event)
 
 home_activity.create_touch_button_page([
     TouchButton(watch_tv_event, "Watch TV", 0, 0*BUTTON_HEIGHT, 4*BUTTON_WIDTH, BUTTON_HEIGHT, 0xf9e0, TouchButton.FLAGS_CENTRE_TEXT),   
-    TouchButton(watch_movie_event, "Watch Movie", 0, 1*BUTTON_HEIGHT, 4*BUTTON_WIDTH, BUTTON_HEIGHT, 0xf9e0, TouchButton.FLAGS_CENTRE_TEXT),   
-    TouchButton(listen_cd_event, "Listen to CD", 0, 2*BUTTON_HEIGHT, 4*BUTTON_WIDTH, BUTTON_HEIGHT, 0xf9e0, TouchButton.FLAGS_CENTRE_TEXT),   
-    TouchButton(listen_radio_event, "Listen to radio", 0, 3*BUTTON_HEIGHT, 4*BUTTON_WIDTH, BUTTON_HEIGHT, 0xf9e0, TouchButton.FLAGS_CENTRE_TEXT),   
+    TouchButton(watch_video_event, "Watch Video", 0, 1*BUTTON_HEIGHT, 4*BUTTON_WIDTH, BUTTON_HEIGHT, 0xf9e0, TouchButton.FLAGS_CENTRE_TEXT),   
+    TouchButton(watch_movie_event, "Watch Movie", 0, 2*BUTTON_HEIGHT, 4*BUTTON_WIDTH, BUTTON_HEIGHT, 0xf9e0, TouchButton.FLAGS_CENTRE_TEXT),   
+    TouchButton(listen_cd_event, "Listen to CD", 0, 3*BUTTON_HEIGHT, 4*BUTTON_WIDTH, BUTTON_HEIGHT, 0xf9e0, TouchButton.FLAGS_CENTRE_TEXT),   
+    TouchButton(listen_radio_event, "Listen to radio", 0, 4*BUTTON_HEIGHT, 4*BUTTON_WIDTH, BUTTON_HEIGHT, 0xf9e0, TouchButton.FLAGS_CENTRE_TEXT),   
     ])
 
 remoteConfig.add_activity(home_activity)
 remoteConfig.add_activity(watch_tv_activity)
+remoteConfig.add_activity(watch_video_activity)
 remoteConfig.add_activity(watch_movie_activity)
 remoteConfig.add_activity(listen_cd_activity)
 remoteConfig.add_activity(listen_radio_activity)

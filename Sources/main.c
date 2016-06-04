@@ -318,8 +318,8 @@ void mainLoop()
 				periodicTimerIrqCount = 0;
 
 #ifndef DISABLE_KEYPAD
-				debugSetOverlayHex(0, capElectrodeGetValue(0));
-				debugSetOverlayHex(1, capElectrodeGetValue(1));
+//				debugSetOverlayHex(0, capElectrodeGetValue(0));
+//				debugSetOverlayHex(1, capElectrodeGetValue(1));
 #endif
 
 				sleepCounter++;
