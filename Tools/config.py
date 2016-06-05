@@ -246,7 +246,7 @@ watch_tv_activity.create_device_state(phillips_hts, { "power": 1, "surround": 2 
 
 watch_video_activity = Activity(name = "watch-video")
 
-watch_video_activity.create_button_mapping(BUTTON_GRID[0][0], tv_pause_event)
+watch_video_activity.create_button_mapping(BUTTON_GRID[0][0], pause_event)
 watch_video_activity.create_button_mapping(BUTTON_GRID[0][3], poweroff_event)
 watch_video_activity.create_button_mapping(BUTTON_GRID[0][4], home_activity_event)
 watch_video_activity.create_button_mapping(BUTTON_GRID[4][2], mute_event)
