@@ -43,7 +43,8 @@
 //#define DISABLE_KEYPAD		// Turns off keypad setup via I2C and capacitative slider reading
 //#define ENABLE_TIMER_PIN		// Enables a PWM output on pin A13 to validate timing
 
-#define SLEEP_TIMEOUT	500		// Time until backlight turns off when idle, in hundredths of a second
+#define SLEEP_TIMEOUT		500		// Time until backlight turns off when idle, in hundredths of a second
+#define SLEEP_TIMEOUT_LONG	1000	// Time until backlight turns off when idle after touching screen, in hundredths of a second
 
 //------------------------------------------
 
@@ -95,7 +96,7 @@ static void periodicTimerStop()
 	periodicTimerIrqCount = 0;
 }
 
-static uint32_t sleepCounter = 0;
+static uint32_t sleepCounter = SLEEP_TIMEOUT;
 static int activeLevel = ACTIVE_LEVEL_AWAKE;
 
 static void sleep()
@@ -116,7 +117,7 @@ static void deepSleep()
 	periodicTimerStop();
 }
 
-static void wakeUp()
+static void wakeUp(uint32_t wake_time_hs)
 {
 	if (activeLevel != ACTIVE_LEVEL_AWAKE) {
 		if (activeLevel == ACTIVE_LEVEL_DEEPSLEEP) {
@@ -136,7 +137,9 @@ static void wakeUp()
 		activeLevel = ACTIVE_LEVEL_AWAKE;
 	}
 
-	sleepCounter = 0;
+	if (sleepCounter < wake_time_hs) {
+		sleepCounter = wake_time_hs;
+	}
 }
 
 void turnOffAllDevices()
@@ -293,7 +296,7 @@ void mainLoop()
 				if (tftGetBacklight()) {
 					touchbuttonsProcessTouch(&touch);
 				}
-				wakeUp();
+				wakeUp(SLEEP_TIMEOUT_LONG);
 			}
 			touchScreenClearInterrupt();
 		}
@@ -301,12 +304,12 @@ void mainLoop()
 		if (keyMatrixCheckInterrupt()) {
 			buttonsPollState();
 			keyMatrixClearInterrupt();
-			wakeUp();
+			wakeUp(SLEEP_TIMEOUT);
 		}
 
 		if (accelCheckTransientInterrupt()) {
 			accelClearInterrupts();
-			wakeUp();
+			wakeUp(SLEEP_TIMEOUT);
 		}
 
 		if (periodicTimerIrqCount) {
@@ -322,8 +325,8 @@ void mainLoop()
 //				debugSetOverlayHex(1, capElectrodeGetValue(1));
 #endif
 
-				sleepCounter++;
-				if (sleepCounter > SLEEP_TIMEOUT) {
+				sleepCounter--;
+				if (sleepCounter == 0) {
 					sleep();
 				}
 			}

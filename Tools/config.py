@@ -112,6 +112,8 @@ sony_bluray.create_action("right", [IrCode(IrEncoding_SIRC, 20, 0x3CB47)])
 sony_bluray.create_action("eject", [IrCode(IrEncoding_SIRC, 20, 0x68B47)])
 sony_bluray.create_action("play", [IrCode(IrEncoding_SIRC, 20, 0x58B47)])
 sony_bluray.create_action("stop", [IrCode(IrEncoding_SIRC, 20, 0x18B47)])
+sony_bluray.create_action("ffwd", [IrCode(IrEncoding_SIRC, 20, 0x38B47)])
+sony_bluray.create_action("rewind", [IrCode(IrEncoding_SIRC, 20, 0xD8B47)])
 sony_bluray.create_option("power", Option_DefaultToZero|Option_ActionOnDefault, 1, ["power-off", "power-on"], post_delays = [5000, 25000])
 
 sony_stereo = Device("Sony Stereo")
@@ -189,6 +191,8 @@ br_right_event		= remoteConfig.create_ir_event("br-right", sony_bluray, "right")
 br_eject_event		= remoteConfig.create_ir_event("br-eject", sony_bluray, "eject")
 br_play_event		= remoteConfig.create_ir_event("br-play", sony_bluray, "play")
 br_stop_event		= remoteConfig.create_ir_event("br-stop", sony_bluray, "stop")
+br_ffwd_event		= remoteConfig.create_ir_event("br-ffwd", sony_bluray, "ffwd")
+br_rewind_event		= remoteConfig.create_ir_event("br-rewind", sony_bluray, "rewind")
 
 st_volume_up_event  = remoteConfig.create_ir_event("st-vol-up", sony_stereo, "volume_up")
 st_volume_down_event  = remoteConfig.create_ir_event("st-vol-down", sony_stereo, "volume_down")
@@ -299,10 +303,14 @@ watch_movie_activity.create_touch_button_page([
     TouchButton(br_play_event,  None, 2*BUTTON_WIDTH + ((BUTTON_WIDTH - TRANSPORT_BUTTON_WIDTH) / 2), 0, TRANSPORT_BUTTON_WIDTH, TRANSPORT_BUTTON_HEIGHT, 0x0000, TouchButton.FLAGS_PRESS_ACTIVATE|TouchButton.FLAGS_NO_BORDER, "Resources/play-button-3.png", "Resources/play-button-3-pressed.png"),
     #TouchButton(home_event,  "Home", 3*BUTTON_WIDTH, 0, BUTTON_WIDTH, BUTTON_HEIGHT, 0xf9e0, True, True),
 
-    TouchButton(br_up_event, "U",  (SCREEN_WIDTH - BUTTON_WIDTH) / 2, 2*BUTTON_HEIGHT, BUTTON_WIDTH, BUTTON_HEIGHT, 0xf9e0, TouchButton.FLAGS_PRESS_ACTIVATE|TouchButton.FLAGS_CENTRE_TEXT),
-    TouchButton(br_down_event, "D",  (SCREEN_WIDTH - BUTTON_WIDTH) / 2, 3*BUTTON_HEIGHT, BUTTON_WIDTH, BUTTON_HEIGHT, 0xf9e0, TouchButton.FLAGS_PRESS_ACTIVATE|TouchButton.FLAGS_CENTRE_TEXT),
-    TouchButton(br_left_event, "L",  (SCREEN_WIDTH - BUTTON_WIDTH) / 2 - BUTTON_WIDTH, int(2.5*BUTTON_HEIGHT), BUTTON_WIDTH, BUTTON_HEIGHT, 0xf9e0, TouchButton.FLAGS_PRESS_ACTIVATE|TouchButton.FLAGS_CENTRE_TEXT),
+    TouchButton(br_up_event,    "U",  (SCREEN_WIDTH - BUTTON_WIDTH) / 2, 2*BUTTON_HEIGHT, BUTTON_WIDTH, BUTTON_HEIGHT, 0xf9e0, TouchButton.FLAGS_PRESS_ACTIVATE|TouchButton.FLAGS_CENTRE_TEXT),
+    TouchButton(br_down_event,  "D",  (SCREEN_WIDTH - BUTTON_WIDTH) / 2, 3*BUTTON_HEIGHT, BUTTON_WIDTH, BUTTON_HEIGHT, 0xf9e0, TouchButton.FLAGS_PRESS_ACTIVATE|TouchButton.FLAGS_CENTRE_TEXT),
+    TouchButton(br_left_event,  "L",  (SCREEN_WIDTH - BUTTON_WIDTH) / 2 - BUTTON_WIDTH, int(2.5*BUTTON_HEIGHT), BUTTON_WIDTH, BUTTON_HEIGHT, 0xf9e0, TouchButton.FLAGS_PRESS_ACTIVATE|TouchButton.FLAGS_CENTRE_TEXT),
     TouchButton(br_right_event, "R",  (SCREEN_WIDTH - BUTTON_WIDTH) / 2 + BUTTON_WIDTH, int(2.5*BUTTON_HEIGHT), BUTTON_WIDTH, BUTTON_HEIGHT, 0xf9e0, TouchButton.FLAGS_PRESS_ACTIVATE|TouchButton.FLAGS_CENTRE_TEXT),
+
+    TouchButton(enter_event,   "Enter", (SCREEN_WIDTH - BUTTON_WIDTH) / 2 - BUTTON_WIDTH, 4*BUTTON_HEIGHT, BUTTON_WIDTH, BUTTON_HEIGHT, 0xf9e0, TouchButton.FLAGS_PRESS_ACTIVATE|TouchButton.FLAGS_CENTRE_TEXT),
+    TouchButton(br_rewind_event,  "<<", (SCREEN_WIDTH - BUTTON_WIDTH) / 2,                4*BUTTON_HEIGHT, BUTTON_WIDTH, BUTTON_HEIGHT, 0xf9e0, TouchButton.FLAGS_PRESS_ACTIVATE|TouchButton.FLAGS_CENTRE_TEXT),
+    TouchButton(br_ffwd_event,    ">>", (SCREEN_WIDTH - BUTTON_WIDTH) / 2 + BUTTON_WIDTH, 4*BUTTON_HEIGHT, BUTTON_WIDTH, BUTTON_HEIGHT, 0xf9e0, TouchButton.FLAGS_PRESS_ACTIVATE|TouchButton.FLAGS_CENTRE_TEXT),
     ])
 	    
 watch_movie_activity.create_device_state(sony_tv, { "power": 1, "input": 1 })
