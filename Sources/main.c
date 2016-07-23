@@ -117,6 +117,12 @@ static void deepSleep()
 	periodicTimerStop();
 }
 
+static void sleepNow()
+{
+	sleepCounter = 0;
+	sleep();
+}
+
 static void wakeUp(uint32_t wake_time_hs)
 {
 	if (activeLevel != ACTIVE_LEVEL_AWAKE) {
@@ -364,6 +370,7 @@ void mainLoop()
 				if (!deviceAreAllOnDefault()) {
 					turnOffAllDevices();
 					forceActivity(homeActivity);
+					sleepNow();
 				}
 			}
 		}
