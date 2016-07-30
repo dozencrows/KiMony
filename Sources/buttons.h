@@ -25,7 +25,8 @@ typedef struct _ButtonMapping {
 
 extern void buttonsInit();
 extern void buttonsSetActiveMapping(const ButtonMapping* mapping, int count);
-extern void buttonsPollState();
+extern int buttonsPollState();
+extern void buttonsClearState();
 extern int buttonsUpdate(const Event** eventTriggered);
 
 #endif /* BUTTONS_H_ */

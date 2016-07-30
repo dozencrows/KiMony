@@ -34,9 +34,15 @@ void buttonsInit()
 	buttonsState = buttonsNewState;
 }
 
-void buttonsPollState()
+int buttonsPollState()
 {
 	buttonsNewState = keyMatrixPoll();
+	return (buttonsState ^ buttonsNewState) != 0;
+}
+
+void buttonsClearState()
+{
+	buttonsState = 0;
 }
 
 int buttonsUpdate(const Event** eventTriggered)

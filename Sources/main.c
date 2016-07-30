@@ -119,6 +119,7 @@ static void deepSleep()
 
 static void sleepNow()
 {
+	buttonsClearState();
 	sleepCounter = 0;
 	sleep();
 }
@@ -308,9 +309,11 @@ void mainLoop()
 		}
 
 		if (keyMatrixCheckInterrupt()) {
-			buttonsPollState();
+			int changed = buttonsPollState();
 			keyMatrixClearInterrupt();
-			wakeUp(SLEEP_TIMEOUT);
+			if (changed) {
+				wakeUp(SLEEP_TIMEOUT);
+			}
 		}
 
 		if (accelCheckTransientInterrupt()) {
