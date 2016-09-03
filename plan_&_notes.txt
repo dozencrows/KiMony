@@ -19,10 +19,18 @@ Plan
   * Optimise representation of offline remote data
     * Shrink offsets to 16-bit
   * USB serial download of remote data instead of UART
-  * Capacitative slider implementation
 
 Work-in-progress
 ================
+* Capacitative slider implementation
+  * Works in testbed with simple gesture recognition
+  * Misbehaves in KiMony - appears that baseline shifts so gets stuck at 100%
+  * Affected by other stuff; e.g. debug rendering makes it work better! Timing related?
+  * Ideas:
+    * Baseline recalibration periodically (see https://github.com/jgillick/DiscoDanceFloor/blob/master/Arduino/DiscoFloorNode/CapacitiveTouch.cpp)
+    * Switch to Kalman filter from averaging
+    * Reduce scan count
+    * Don't divide by scan count
 
 What's smart and/or novel?
 ==========================
