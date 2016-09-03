@@ -7,7 +7,7 @@
 
 import ctypes as ct
 from remote import RemoteDataStruct, RemoteDataArray, RemoteDataRefArray
-from ui import ButtonMapping, TouchButtonPage
+from ui import ButtonMapping, GestureMapping, TouchButtonPage
 from device import DeviceState
 
 #
@@ -16,13 +16,15 @@ from device import DeviceState
 # C structure:
 #       int     button_mapping_count;
 #       offset  button_mappings;            -- offset to contiguous array of button mappings
+#       int     gesture_mapping_count;
+#       offset  gesture_mappings;           -- offset to contiguous array of gesture mappings
 #       int     touch_button_page_count;
 #       offset  touch_button_pages;         -- offset to contiguous array of button pages
 #       int     device_state_count;
 #       offset  device_states;              -- offset to contiguous array of device states
 #
-# The button mappings, touch button pages and device states arrays will immediately follow on from the
-# activity structure in the packed file.
+# The button mappings, gesture mappings, touch button pages and device states arrays will immediately
+# follow on from the activity structure in the packed file.
 #
 # As each touch button page can have a varying number of touch buttons, the 'pre-pack trailing children'
 # hook is used to ensure that the touch buttons are packed after the pages. This means that each entry
@@ -36,6 +38,8 @@ class Activity(RemoteDataStruct):
         ("flags", ct.c_uint32),
         ("button_mapping_count", ct.c_int),
         ("button_mappings", ct.c_uint32),
+        ("gesture_mapping_count", ct.c_int),
+        ("gesture_mappings", ct.c_uint32),
         ("touch_button_page_count", ct.c_int),
         ("touch_button_pages", ct.c_uint32),
         ("device_state_count", ct.c_int),
@@ -47,6 +51,7 @@ class Activity(RemoteDataStruct):
         self.flags = flags
         self.button_mapping_objs = []
         self.touch_button_page_objs = []
+        self.gesture_mapping_objs = []
         self.device_state_objs = []
 
     def __str__(self):
@@ -58,11 +63,17 @@ class Activity(RemoteDataStruct):
     def create_button_mapping(self, button_mask, event):
         self.button_mapping_objs.append(ButtonMapping(button_mask, event))
 
+    def create_gesture_mapping(self, gesture, event):
+        self.gesture_mapping_objs.append(GestureMapping(gesture, event))
+
     def create_touch_button_page(self, touch_buttons):
         self.touch_button_page_objs.append(TouchButtonPage(touch_buttons, self.name + "-page-" + str(len(self.touch_button_page_objs) + 1)))
         
     def pre_pack(self, package):
         for x in self.button_mapping_objs:
+            package.append(x)
+           
+        for x in self.gesture_mapping_objs:
             package.append(x)
             
         for x in self.touch_button_page_objs:
@@ -85,6 +96,13 @@ class Activity(RemoteDataStruct):
                 self.button_mappings = package.offsetof(self.button_mapping_objs[0].ref())
             except PackageError:
                 print self, "has reference to missing button mappings array"
+
+        self.gesture_mapping_count = len(self.gesture_mapping_objs)
+        if self.gesture_mapping_count > 0:
+            try:
+                self.gesture_mappings = package.offsetof(self.gesture_mapping_objs[0].ref())
+            except PackageError:
+                print self, "has reference to missing gesture mappings array"
         
         self.touch_button_page_count = len(self.touch_button_page_objs)
         if self.touch_button_page_count > 0:

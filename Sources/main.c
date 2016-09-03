@@ -31,8 +31,7 @@
 #include "device.h"
 #include "activity.h"
 #include "remotedata.h"
-#include "capslider.h"
-#include "capelectrode.h"
+#include "slidergesture.h"
 #include "debugutils.h"
 
 //------------------------------------------
@@ -163,6 +162,7 @@ void selectActivity(const Activity* activity)
 		}
 
 		buttonsSetActiveMapping((const ButtonMapping*)GET_FLASH_PTR(activity->buttonMappingOffset), activity->buttonMappingCount);
+		sliderGestureSetActiveMapping((const GestureMapping*) GET_FLASH_PTR(activity->gestureMappingOffset), activity->gestureMappingCount);
 
 		const TouchButton* touchButtons = NULL;
 		int touchButtonCount = 0;
@@ -291,6 +291,8 @@ void mainLoop()
 	keyMatrixClearInterrupt();
 	touchScreenClearInterrupt();
 
+	uint32_t frameCounter = 0;
+
 	while (1) {
 		idle();
 		const Event* event = NULL;
@@ -326,12 +328,19 @@ void mainLoop()
 				deepSleep();
 			}
 			else {
+				frameCounter += periodicTimerIrqCount;
+
+				debugSetOverlayHex(0, periodicTimerIrqCount);
+				debugSetOverlayHex(1, frameCounter);
+
 				touchButtonsUpdate(&event);
 				periodicTimerIrqCount = 0;
 
 #ifndef DISABLE_KEYPAD
-//				debugSetOverlayHex(0, capElectrodeGetValue(0));
 //				debugSetOverlayHex(1, capElectrodeGetValue(1));
+				if (sliderGestureUpdate(frameCounter, &event) != EVENT_NONE) {
+					wakeUp(SLEEP_TIMEOUT_LONG);
+				}
 #endif
 
 				sleepCounter--;
@@ -462,7 +471,7 @@ void main(void)
 
 #ifndef DISABLE_KEYPAD
 	keyMatrixInit();
-	capSliderInit();
+	sliderGestureInit();
 #endif
 
 	accelInit();

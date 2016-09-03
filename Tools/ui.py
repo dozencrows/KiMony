@@ -19,6 +19,12 @@ Event_HOME      = 5
 Event_DOWNLOAD  = 6
 Event_POWEROFF  = 7
 
+Gesture_TAP         = 1
+Gesture_DRAGLEFT    = 2
+Gesture_DRAGRIGHT   = 3
+Gesture_SWIPELEFT   = 4
+Gesture_SWIPERIGHT  = 5
+
 #
 # KiMony event - e.g. an IrAction, Activity selection
 #
@@ -82,6 +88,38 @@ class ButtonMapping(RemoteDataStruct):
         
     def __str__(self):
         return "Button Mapping %08x to %s" % (self.button_mask, self.event_ref.name)
+        
+    def fix_up(self, package):
+        if self.event_ref:
+            try:
+                self.event = package.offsetof(self.event_ref.ref())
+            except PackageError:
+                print self, "has reference to missing event"
+
+#
+# Capacitive slider gesture mapping
+#
+# C structure:
+#   uint32_t    gesture;
+#   offset      event;
+#
+# If detected gesture matches, the given event is fired.
+#
+class GestureMapping(RemoteDataStruct):
+    _fields_ = [
+        ("gesture", ct.c_uint32),
+        ("event", ct.c_uint32)
+        ]
+    
+    def __init__(self, gesture, event):
+        self.gesture = gesture
+        if event:
+            self.event_ref = event
+        else:
+            self.event_ref = None
+        
+    def __str__(self):
+        return "Gesture Mapping %08x to %s" % (self.gesture, self.event_ref.name)
         
     def fix_up(self, package):
         if self.event_ref:

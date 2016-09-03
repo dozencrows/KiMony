@@ -27,6 +27,8 @@ typedef struct _Activity {
 	uint32_t flags;
 	int buttonMappingCount;
 	uint32_t buttonMappingOffset;
+	int gestureMappingCount;
+	uint32_t gestureMappingOffset;
 	int touchButtonPageCount;
 	uint32_t touchButtonPagesOffset;
 	int deviceStateCount;

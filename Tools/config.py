@@ -223,6 +223,12 @@ watch_tv_activity.create_button_mapping(BUTTON_GRID[4][1], volume_down_event)
 watch_tv_activity.create_button_mapping(BUTTON_GRID[1][1], channel_up_event)
 watch_tv_activity.create_button_mapping(BUTTON_GRID[2][1], channel_down_event)
 
+watch_tv_activity.create_gesture_mapping(Gesture_TAP, mute_event)
+watch_tv_activity.create_gesture_mapping(Gesture_DRAGLEFT, volume_up_event)
+watch_tv_activity.create_gesture_mapping(Gesture_DRAGRIGHT, volume_down_event)
+watch_tv_activity.create_gesture_mapping(Gesture_SWIPELEFT, channel_up_event)
+watch_tv_activity.create_gesture_mapping(Gesture_SWIPERIGHT, channel_down_event)
+
 watch_tv_activity.create_touch_button_page([
     TouchButton(guide_event, "Guide",  		      0, 0, BUTTON_WIDTH, BUTTON_HEIGHT, 0xf9e0, TouchButton.FLAGS_PRESS_ACTIVATE|TouchButton.FLAGS_CENTRE_TEXT),
     TouchButton(enter_event, "Enter",  BUTTON_WIDTH, 0, BUTTON_WIDTH, BUTTON_HEIGHT, 0xf9e0, TouchButton.FLAGS_PRESS_ACTIVATE|TouchButton.FLAGS_CENTRE_TEXT),

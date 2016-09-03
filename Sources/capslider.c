@@ -30,9 +30,23 @@ void capSliderInit()
 
 	portInitialise(&portBPins);
 
-	electrodes[0].channel = 11;
-	electrodes[1].channel = 12;
+	electrodes[0].channel = 12;
+	electrodes[1].channel = 11;
 
 	capElectrodeInit();
 	capElectrodeSetElectrodes(2, electrodes);
+}
+
+uint8_t capSliderGetPercentage()
+{
+	uint32_t c0 = capElectrodeGetValue(0);
+	uint32_t c1 = capElectrodeGetValue(1);
+
+	if (c0 > 0 || c1 > 0) {
+		uint32_t percentage0 = (c0 * 100) / (c0 + c1);
+		uint32_t percentage1 = (c1 * 100) / (c0 + c1);
+		return ((100 - percentage0) + percentage1) / 2;
+	} else {
+		return 0;
+	}
 }
