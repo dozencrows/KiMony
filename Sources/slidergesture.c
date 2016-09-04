@@ -37,6 +37,7 @@ typedef struct _SliderGesture {
 	uint8_t 		resolution;
 	uint8_t			tapTimeThreshold;
 	uint8_t			swipeThreshold;
+	uint8_t			swipeTimeThreshold;
 	uint8_t			settleDelay;
 
 	// State
@@ -50,10 +51,11 @@ static SliderGesture sliderGesture;
 
 static void initSliderGesture(SliderGesture* sliderGesture)
 {
-	sliderGesture->resolution		= 20;	// units: percentage
-	sliderGesture->tapTimeThreshold = 20;	// units: time (roughly 100Hz base frequency)
-	sliderGesture->swipeThreshold	= 30;	// units: percentage (delta threshold in tap time threshold)
-	sliderGesture->settleDelay		= 40;	// units: time (roughly 100Hz base frequency)
+	sliderGesture->resolution			= 20;	// units: percentage (delta threshold in one frame)
+	sliderGesture->tapTimeThreshold 	= 20;	// units: time (roughly 100Hz base frequency)
+	sliderGesture->swipeThreshold		= 30;	// units: percentage (delta threshold in one frame)
+	sliderGesture->swipeTimeThreshold	= 40;	// units: time (roughly 100Hz base frequency)
+	sliderGesture->settleDelay			= 40;	// units: time (roughly 100Hz base frequency)
 
 	sliderGesture->state 		= IDLE;
 	sliderGesture->touchTime	= 0;
@@ -108,7 +110,8 @@ static Gesture updateSliderGesture(SliderGesture* sliderGesture, uint8_t sliderV
 			}
 
 			DEBUG_TT('D');
-			sliderGesture->state = DRAGGING;
+			sliderGesture->state 		= DRAGGING;
+			sliderGesture->touchTime 	= time;
 		}
 
 		case DRAGGING: {
@@ -124,7 +127,7 @@ static Gesture updateSliderGesture(SliderGesture* sliderGesture, uint8_t sliderV
 			int sliderDelta = sliderValue - sliderGesture->firstValue;
 			int sliderDeltaAbs = abs(sliderDelta);
 
-			if (sliderDeltaAbs >= sliderGesture->swipeThreshold && sliderTimeElapsed < sliderGesture->tapTimeThreshold) {
+			if (sliderDeltaAbs >= sliderGesture->swipeThreshold && sliderTimeElapsed < sliderGesture->swipeTimeThreshold) {
 				sliderGesture->state 		= SETTLING;
 				sliderGesture->firstValue 	= 0;
 				sliderGesture->lastValue 	= 0;
@@ -211,4 +214,13 @@ int sliderGestureUpdate(uint32_t time, const Event** eventTriggered)
 	}
 
 	return result;
+}
+
+void sliderGestureFlush()
+{
+	DEBUG_TT_BEGIN;
+	sliderGesture.state 		= IDLE;
+	sliderGesture.touchTime		= 0;
+	sliderGesture.firstValue	= 0;
+	sliderGesture.lastValue		= 0;
 }

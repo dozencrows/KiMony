@@ -104,6 +104,7 @@ static void sleep()
 	activeLevel = ACTIVE_LEVEL_SLEEP;
 	tftSetBacklight(0);
 	tftSleep();
+	sliderGestureFlush();
 	periodicTimerStop();
 	periodicTimerStartSlow();
 }
@@ -115,6 +116,7 @@ static void deepSleep()
 	spiPinsDisconnect();
 	tftPowerOff();
 	capElectrodeSleep();
+	sliderGestureFlush();
 	periodicTimerStop();
 }
 

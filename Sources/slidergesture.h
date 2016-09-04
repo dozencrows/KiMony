@@ -28,5 +28,6 @@ typedef enum {
 extern void sliderGestureInit();
 extern void sliderGestureSetActiveMapping(const GestureMapping* mapping, int count);
 extern int sliderGestureUpdate(uint32_t time, const Event** eventTriggered);
+extern void sliderGestureFlush();
 
 #endif /* SLIDERGESTURE_H_ */
