@@ -8,7 +8,7 @@
 #include "MKL26Z4.h"
 #include <stddef.h>
 
-#define TSI_SCAN_COUNT		32
+#define TSI_SCAN_COUNT		16
 
 static int electrodeCount = 0;
 static Electrode* electrodeList = NULL;
@@ -38,10 +38,20 @@ void capElectrodeInit()
 
 	TSI0_GENCS = // Fields to clear
 				 TSI_GENCS_OUTRGF_MASK | TSI_GENCS_EOSF_MASK |
-				 // Fields to set: int on end scan, 16uA ref charge, 8uA ext charge, 0.73V DVolt, 31 scans, enable interrupt & module, enable in low power
-				 TSI_GENCS_ESOR_MASK | TSI_GENCS_REFCHRG(5) | TSI_GENCS_DVOLT(1) | TSI_GENCS_EXTCHRG(4) | TSI_GENCS_STPE_MASK |
+				 // Fields to set: int on end scan, 16uA ref charge, 8uA ext charge, 0.43V DVolt, 31 scans, enable interrupt & module, enable in low power
+				 TSI_GENCS_ESOR_MASK | TSI_GENCS_REFCHRG(5) | TSI_GENCS_DVOLT(2) | TSI_GENCS_EXTCHRG(4) | TSI_GENCS_STPE_MASK |
 				 TSI_GENCS_PS(1) | TSI_GENCS_NSCN(TSI_SCAN_COUNT - 1) | TSI_GENCS_TSIEN_MASK | TSI_GENCS_TSIIEN_MASK;
 	TSI0_TSHD  = TSI_TSHD_THRESL(100) | TSI_TSHD_THRESH(200);
+}
+
+void capElectrodeSleep()
+{
+	TSI0_GENCS &= ~TSI_GENCS_STPE_MASK;
+}
+
+void capElectrodeWake()
+{
+	TSI0_GENCS |= TSI_GENCS_STPE_MASK;
 }
 
 void capElectrodeSetElectrodes(int count, Electrode* electrodes)

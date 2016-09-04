@@ -138,7 +138,7 @@ void debugRenderOverlays()
 			clear_height = MAX(clear_height, overlays[i].clear_height);
 		}
 
-		if (overlays[i].flags) {
+		if (overlays[i].flags && clear_width > 0 && clear_height > 0) {
 			rendererDrawRect(x, y, clear_width, clear_height, 0x0000);
 		}
 

@@ -31,6 +31,7 @@
 #include "device.h"
 #include "activity.h"
 #include "remotedata.h"
+#include "capelectrode.h"
 #include "slidergesture.h"
 #include "debugutils.h"
 
@@ -113,6 +114,7 @@ static void deepSleep()
 	touchScreenDisconnect();
 	spiPinsDisconnect();
 	tftPowerOff();
+	capElectrodeSleep();
 	periodicTimerStop();
 }
 
@@ -127,6 +129,7 @@ static void wakeUp(uint32_t wake_time_hs)
 {
 	if (activeLevel != ACTIVE_LEVEL_AWAKE) {
 		if (activeLevel == ACTIVE_LEVEL_DEEPSLEEP) {
+			capElectrodeWake();
 			tftPowerOn();
 			touchScreenConnect();
 			spiPinsConnect();
