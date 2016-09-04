@@ -330,14 +330,13 @@ void mainLoop()
 			else {
 				frameCounter += periodicTimerIrqCount;
 
-				debugSetOverlayHex(0, periodicTimerIrqCount);
-				debugSetOverlayHex(1, frameCounter);
+//				debugSetOverlayHex(0, periodicTimerIrqCount);
+//				debugSetOverlayHex(1, frameCounter);
 
 				touchButtonsUpdate(&event);
 				periodicTimerIrqCount = 0;
 
 #ifndef DISABLE_KEYPAD
-//				debugSetOverlayHex(1, capElectrodeGetValue(1));
 				if (sliderGestureUpdate(frameCounter, &event) != EVENT_NONE) {
 					wakeUp(SLEEP_TIMEOUT_LONG);
 				}
