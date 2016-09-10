@@ -389,6 +389,9 @@ void mainLoop()
 					sleepNow();
 				}
 			}
+			else if (event->type == EVENT_KEEPAWAKE) {
+				wakeUp(SLEEP_TIMEOUT_LONG);
+			}
 		}
 		else {
 			rendererRenderDrawList();

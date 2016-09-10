@@ -37,7 +37,6 @@ typedef struct _SliderGesture {
 	uint8_t 		resolution;
 	uint8_t			tapTimeThreshold;
 	uint8_t			swipeThreshold;
-	uint8_t			swipeTimeThreshold;
 	uint8_t			settleDelay;
 
 	// State
@@ -45,22 +44,23 @@ typedef struct _SliderGesture {
 	uint32_t		touchTime;
 	uint8_t 		firstValue;
 	uint8_t 		lastValue;
+	uint16_t		dragCount;
 } SliderGesture;
 
 static SliderGesture sliderGesture;
 
 static void initSliderGesture(SliderGesture* sliderGesture)
 {
-	sliderGesture->resolution			= 20;	// units: percentage (delta threshold in one frame)
+	sliderGesture->resolution			= 20;	// units: percentage (delta threshold from first touch point)
 	sliderGesture->tapTimeThreshold 	= 20;	// units: time (roughly 100Hz base frequency)
-	sliderGesture->swipeThreshold		= 30;	// units: percentage (delta threshold in one frame)
-	sliderGesture->swipeTimeThreshold	= 40;	// units: time (roughly 100Hz base frequency)
+	sliderGesture->swipeThreshold		= 10;	// units: percentage (delta threshold in one frame)
 	sliderGesture->settleDelay			= 40;	// units: time (roughly 100Hz base frequency)
 
 	sliderGesture->state 		= IDLE;
 	sliderGesture->touchTime	= 0;
 	sliderGesture->firstValue	= 0;
 	sliderGesture->lastValue	= 0;
+	sliderGesture->dragCount	= 0;
 }
 
 static Gesture updateSliderGesture(SliderGesture* sliderGesture, uint8_t sliderValue, uint32_t time)
@@ -105,13 +105,13 @@ static Gesture updateSliderGesture(SliderGesture* sliderGesture, uint8_t sliderV
 			int sliderDelta = sliderGesture->lastValue - sliderGesture->firstValue;
 
 			if (abs(sliderDelta) <= sliderGesture->resolution && sliderTimeElapsed < sliderGesture->tapTimeThreshold) {
-				result = NONE;
+				result = TOUCH;
 				break;
 			}
 
 			DEBUG_TT('D');
 			sliderGesture->state 		= DRAGGING;
-			sliderGesture->touchTime 	= time;
+			sliderGesture->dragCount 	= 0;
 		}
 
 		case DRAGGING: {
@@ -124,10 +124,10 @@ static Gesture updateSliderGesture(SliderGesture* sliderGesture, uint8_t sliderV
 				break;
 			}
 
-			int sliderDelta = sliderValue - sliderGesture->firstValue;
+			int sliderDelta = sliderValue - sliderGesture->lastValue;
 			int sliderDeltaAbs = abs(sliderDelta);
 
-			if (sliderDeltaAbs >= sliderGesture->swipeThreshold && sliderTimeElapsed < sliderGesture->swipeTimeThreshold) {
+			if (sliderDeltaAbs >= sliderGesture->swipeThreshold && sliderGesture->dragCount == 0) {
 				sliderGesture->state 		= SETTLING;
 				sliderGesture->firstValue 	= 0;
 				sliderGesture->lastValue 	= 0;
@@ -141,7 +141,12 @@ static Gesture updateSliderGesture(SliderGesture* sliderGesture, uint8_t sliderV
 				}
 				break;
 			}
+
+			sliderDelta = sliderValue - sliderGesture->firstValue;
+			sliderDeltaAbs = abs(sliderDelta);
+
 			if (sliderDeltaAbs >= sliderGesture->resolution) {
+				sliderGesture->dragCount++;
 				if (sliderDelta < 0 && sliderGesture->firstValue > sliderGesture->resolution) {
 					sliderGesture->firstValue -= sliderGesture->resolution;
 					DEBUG_TT('l');
@@ -155,6 +160,7 @@ static Gesture updateSliderGesture(SliderGesture* sliderGesture, uint8_t sliderV
 				}
 			}
 
+			result = TOUCH;
 			break;
 		}
 
@@ -197,6 +203,9 @@ int sliderGestureUpdate(uint32_t time, const Event** eventTriggered)
 	Gesture gesture = updateSliderGesture(&sliderGesture, sliderValue, time);
 	switch (gesture) {
 		case NONE:
+			break;
+		case TOUCH:
+			result = EVENT_KEEPAWAKE;
 			break;
 		case TAP:
 		case DRAG_LEFT:

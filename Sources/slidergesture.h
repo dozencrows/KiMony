@@ -22,7 +22,8 @@ typedef enum {
 	DRAG_LEFT	= 2,
 	DRAG_RIGHT	= 3,
 	SWIPE_LEFT	= 4,
-	SWIPE_RIGHT	= 5
+	SWIPE_RIGHT	= 5,
+	TOUCH		= 127
 } Gesture;
 
 extern void sliderGestureInit();
