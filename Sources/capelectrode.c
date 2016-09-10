@@ -13,23 +13,30 @@
 static int electrodeCount = 0;
 static Electrode* electrodeList = NULL;
 static Electrode* activeElectrode = NULL;
+static uint8_t isSleeping = 0;
+static uint8_t outOfRangeInterruptCount = 0;
 
 void TSI0_IRQHandler()
 {
-	activeElectrode->buffer[activeElectrode->bufferWriteIndex++] = (TSI0_DATA & TSI_DATA_TSICNT_MASK) / TSI_SCAN_COUNT;
-	TSI0_GENCS |= TSI_GENCS_EOSF_MASK;
-	activeElectrode->bufferWriteIndex %= ELECTRODE_BUFFER_SIZE;
+	if (TSI0_GENCS & TSI_GENCS_OUTRGF_MASK && isSleeping) {
+		TSI0_GENCS |= TSI_GENCS_OUTRGF_MASK | TSI_GENCS_EOSF_MASK;
+		outOfRangeInterruptCount++;
+	} else {
+		activeElectrode->buffer[activeElectrode->bufferWriteIndex++] = (TSI0_DATA & TSI_DATA_TSICNT_MASK) / TSI_SCAN_COUNT;
+		TSI0_GENCS |= TSI_GENCS_EOSF_MASK;
+		activeElectrode->bufferWriteIndex %= ELECTRODE_BUFFER_SIZE;
 
-	if (!(activeElectrode->flags & ELECTRODE_FLAGS_ACTIVE) && !activeElectrode->bufferWriteIndex) {
-		activeElectrode->baseline = (activeElectrode->buffer[0] + activeElectrode->buffer[1] + activeElectrode->buffer[2] + activeElectrode->buffer[3]) / 4;
-		activeElectrode->flags |= ELECTRODE_FLAGS_ACTIVE;
-	}
+		if (!(activeElectrode->flags & ELECTRODE_FLAGS_ACTIVE) && !activeElectrode->bufferWriteIndex) {
+			activeElectrode->baseline = (activeElectrode->buffer[0] + activeElectrode->buffer[1] + activeElectrode->buffer[2] + activeElectrode->buffer[3]) / 4;
+			activeElectrode->flags |= ELECTRODE_FLAGS_ACTIVE;
+		}
 
-	activeElectrode++;
-	if (electrodeCount == activeElectrode - electrodeList) {
-		activeElectrode = electrodeList;
+		activeElectrode++;
+		if (electrodeCount == activeElectrode - electrodeList) {
+			activeElectrode = electrodeList;
+		}
+		TSI0_DATA = TSI_DATA_TSICH(activeElectrode->channel) | TSI_DATA_SWTS_MASK;
 	}
-	TSI0_DATA = TSI_DATA_TSICH(activeElectrode->channel) | TSI_DATA_SWTS_MASK;
 }
 
 void capElectrodeInit()
@@ -38,10 +45,9 @@ void capElectrodeInit()
 
 	TSI0_GENCS = // Fields to clear
 				 TSI_GENCS_OUTRGF_MASK | TSI_GENCS_EOSF_MASK |
-				 // Fields to set: int on end scan, 16uA ref charge, 8uA ext charge, 0.43V DVolt, 31 scans, enable interrupt & module, enable in low power
+				 // Fields to set: int on end scan, 16uA ref charge, 8uA ext charge, 0.43V DVolt, X scans, enable interrupt & module, enable in low power
 				 TSI_GENCS_ESOR_MASK | TSI_GENCS_REFCHRG(5) | TSI_GENCS_DVOLT(2) | TSI_GENCS_EXTCHRG(4) | TSI_GENCS_STPE_MASK |
 				 TSI_GENCS_PS(1) | TSI_GENCS_NSCN(TSI_SCAN_COUNT - 1) | TSI_GENCS_TSIEN_MASK | TSI_GENCS_TSIIEN_MASK;
-	TSI0_TSHD  = TSI_TSHD_THRESL(100) | TSI_TSHD_THRESH(200);
 }
 
 void capElectrodeSleep()
@@ -49,9 +55,39 @@ void capElectrodeSleep()
 	TSI0_GENCS &= ~TSI_GENCS_STPE_MASK;
 }
 
+void capElectrodeWakeableSleep(int electrodeIdx)
+{
+	Electrode* wakeElectrode = electrodeList + electrodeIdx;
+
+	TSI0_GENCS &= ~TSI_GENCS_TSIEN_MASK;
+
+	isSleeping  = 1;
+	TSI0_TSHD  	= TSI_TSHD_THRESL(wakeElectrode->baseline / 2) | TSI_TSHD_THRESH(wakeElectrode->baseline + 5);
+	TSI0_DATA = TSI_DATA_TSICH(wakeElectrode->channel);
+	TSI0_GENCS 	= // Fields to clear
+				 TSI_GENCS_OUTRGF_MASK | TSI_GENCS_EOSF_MASK |
+				 // Fields to set: 16uA ref charge, 8uA ext charge, 0.43V DVolt, 1 scans, enable interrupt & module, enable in low power, hardware trigger
+				 TSI_GENCS_REFCHRG(5) | TSI_GENCS_DVOLT(2) | TSI_GENCS_EXTCHRG(4) | TSI_GENCS_STPE_MASK |
+				 TSI_GENCS_PS(1) | TSI_GENCS_NSCN(0) | TSI_GENCS_TSIEN_MASK | TSI_GENCS_TSIIEN_MASK | TSI_GENCS_STM_MASK;
+}
+
+int capElectrodeCheckWakeInterrupt()
+{
+	return outOfRangeInterruptCount > 0;
+}
+
+void capElectrodeClearWakeInterrupt()
+{
+	outOfRangeInterruptCount = 0;
+}
+
 void capElectrodeWake()
 {
-	TSI0_GENCS |= TSI_GENCS_STPE_MASK;
+	capElectrodeInit();
+	isSleeping = 0;
+	if (activeElectrode) {
+		TSI0_DATA = TSI_DATA_TSICH(activeElectrode->channel) | TSI_DATA_SWTS_MASK;
+	}
 }
 
 void capElectrodeSetElectrodes(int count, Electrode* electrodes)

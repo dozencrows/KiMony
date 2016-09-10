@@ -78,16 +78,24 @@ static void periodicTimerStart()
 {
 	LPTMR0_CSR = 0;												// Ensure timer is stopped and counter cleared
 	LPTMR0_PSR = LPTMR_PSR_PCS(1) | LPTMR_PSR_PRESCALE(0);		// Counter frequency is 500Hz (1kHz LPO divided by 2)
-	LPTMR0_CMR = 5;												// 100Hz interrupt
+	LPTMR0_CMR = 5;												// 100Hz timer
 	LPTMR0_CSR = LPTMR_CSR_TIE_MASK | LPTMR_CSR_TEN_MASK;		// Enable with interrupt.
 }
 
-static void periodicTimerStartSlow()
+static void periodicTimerStartSleep()
 {
 	LPTMR0_CSR = 0;												// Ensure timer is stopped and counter cleared
-	LPTMR0_PSR = LPTMR_PSR_PCS(1) | LPTMR_PSR_PRESCALE(8);		// Counter frequency is 1.95Hz (1kHz LPO divided by 512)
-	LPTMR0_CMR = 20;											// Interrupt every 10 seconds or so
+	LPTMR0_PSR = LPTMR_PSR_PCS(1) | LPTMR_PSR_PRESCALE(4);		// Counter frequency is 31.25Hz (1kHz LPO divided by 32)
+	LPTMR0_CMR = 2;												// 15Hz timer
 	LPTMR0_CSR = LPTMR_CSR_TIE_MASK | LPTMR_CSR_TEN_MASK;		// Enable with interrupt.
+}
+
+static void periodicTimerStartDeepSleep()
+{
+	LPTMR0_CSR = 0;												// Ensure timer is stopped and counter cleared
+	LPTMR0_PSR = LPTMR_PSR_PCS(1) | LPTMR_PSR_PRESCALE(4);		// Counter frequency is 31.25Hz (1kHz LPO divided by 32)
+	LPTMR0_CMR = 2;												// 15Hz timer
+	LPTMR0_CSR = LPTMR_CSR_TEN_MASK;							// Enable without interrupt.
 }
 
 static void periodicTimerStop()
@@ -106,7 +114,8 @@ static void sleep()
 	tftSleep();
 	sliderGestureFlush();
 	periodicTimerStop();
-	periodicTimerStartSlow();
+	periodicTimerStartSleep();
+	capElectrodeWakeableSleep(0);
 }
 
 static void deepSleep()
@@ -115,9 +124,8 @@ static void deepSleep()
 	touchScreenDisconnect();
 	spiPinsDisconnect();
 	tftPowerOff();
-	capElectrodeSleep();
-	sliderGestureFlush();
 	periodicTimerStop();
+	periodicTimerStartDeepSleep();
 }
 
 static void sleepNow()
@@ -130,8 +138,9 @@ static void sleepNow()
 static void wakeUp(uint32_t wake_time_hs)
 {
 	if (activeLevel != ACTIVE_LEVEL_AWAKE) {
+		capElectrodeWake();
+
 		if (activeLevel == ACTIVE_LEVEL_DEEPSLEEP) {
-			capElectrodeWake();
 			tftPowerOn();
 			touchScreenConnect();
 			spiPinsConnect();
@@ -328,9 +337,16 @@ void mainLoop()
 			wakeUp(SLEEP_TIMEOUT);
 		}
 
+		if (capElectrodeCheckWakeInterrupt()) {
+			capElectrodeClearWakeInterrupt();
+			wakeUp(SLEEP_TIMEOUT);
+		}
+
 		if (periodicTimerIrqCount) {
 			if (activeLevel == ACTIVE_LEVEL_SLEEP) {
-				deepSleep();
+				if (periodicTimerIrqCount > 150) {
+					deepSleep();
+				}
 			}
 			else {
 				frameCounter += periodicTimerIrqCount;

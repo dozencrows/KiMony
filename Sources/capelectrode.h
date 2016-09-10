@@ -26,6 +26,9 @@ typedef struct _Electrode {
 
 extern void capElectrodeInit();
 extern void capElectrodeSleep();
+extern void capElectrodeWakeableSleep(int electrode);
+extern int capElectrodeCheckWakeInterrupt();
+extern void capElectrodeClearWakeInterrupt();
 extern void capElectrodeWake();
 extern void capElectrodeSetElectrodes(int count, Electrode* electrodes);
 extern uint16_t capElectrodeGetValue(int electrode);
