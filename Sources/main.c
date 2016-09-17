@@ -372,9 +372,9 @@ void mainLoop()
 
 		buttonsUpdate(&event);
 		touchbuttonsRender();
+		rendererRenderDrawList();
 
 		if (event) {
-			rendererRenderDrawList();
 			if (event->type == EVENT_IRACTION) {
 				deviceDoIrAction((const Device*)GET_FLASH_PTR(event->deviceOffset), (const IrAction*)GET_FLASH_PTR(event->irActionOffset));
 			}
@@ -408,9 +408,6 @@ void mainLoop()
 			else if (event->type == EVENT_KEEPAWAKE) {
 				wakeUp(SLEEP_TIMEOUT_LONG);
 			}
-		}
-		else {
-			rendererRenderDrawList();
 		}
 
 		debugRenderOverlays();

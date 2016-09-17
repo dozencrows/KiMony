@@ -19,10 +19,38 @@ static int s_historyIndex = 0;
 #define DEBUG_TT_BEGIN s_historyIndex = 0
 #define DEBUG_TT(x) if (s_historyIndex < MAX_DEBUG_TT_LEN) s_history[s_historyIndex++] = (x)
 #define DEBUG_TT_END s_history[s_historyIndex] = '\0'
+
+#define SAMPLE_BUFFER_SIZE	300
+static uint8_t s_sampleBuffer[SAMPLE_BUFFER_SIZE];
+static int s_sampleBufferIndex = 0;
+
+#define DEBUG_SB_CLEAR		s_sampleBufferIndex = 0
+#define DEBUG_SB_SAMPLE(x)	if (s_sampleBufferIndex < SAMPLE_BUFFER_SIZE) s_sampleBuffer[s_sampleBufferIndex++] = (x);
+#define DEBUG_SB_UPDATE		debugSetOverlayHex(2, s_sampleBufferIndex)
 #else
 #define DEBUG_TT_BEGIN
 #define DEBUG_TT(x)
 #define DEBUG_TT_END
+
+#define DEBUG_SB_CLEAR
+#define DEBUG_SB_SAMPLE(x)
+#define DEBUG_SB_UPDATE
+#endif
+
+#ifdef _DEBUG
+#include "renderer.h"
+static void renderGesture() {
+	if (s_sampleBufferIndex > 0) {
+		rendererClearScreen();
+		rendererNewDrawList();
+		for (uint16_t y = 0; y < s_sampleBufferIndex; y++) {
+			rendererDrawHLine(s_sampleBuffer[y], y, 1, 0xffff);
+		}
+	}
+}
+#define DEBUG_RENDER_GESTURE renderGesture()
+#else
+#define DEBUG_RENDER_GESTURE
 #endif
 
 typedef enum {
@@ -35,8 +63,8 @@ typedef enum {
 typedef struct _SliderGesture {
 	// Configuration
 	uint8_t 		resolution;
-	uint8_t			tapTimeThreshold;
-	uint8_t			swipeThreshold;
+	uint8_t			tapTimeMinThreshold;
+	uint8_t			tapTimeMaxThreshold;
 	uint8_t			settleDelay;
 
 	// State
@@ -44,7 +72,6 @@ typedef struct _SliderGesture {
 	uint32_t		touchTime;
 	uint8_t 		firstValue;
 	uint8_t 		lastValue;
-	uint16_t		dragCount;
 } SliderGesture;
 
 static SliderGesture sliderGesture;
@@ -52,26 +79,25 @@ static SliderGesture sliderGesture;
 static void initSliderGesture(SliderGesture* sliderGesture)
 {
 	sliderGesture->resolution			= 20;	// units: percentage (delta threshold from first touch point)
-	sliderGesture->tapTimeThreshold 	= 20;	// units: time (roughly 100Hz base frequency)
-	sliderGesture->swipeThreshold		= 13;	// units: percentage (delta threshold in one frame)
+	sliderGesture->tapTimeMinThreshold 	= 5;	// units: time (roughly 100Hz base frequency)
+	sliderGesture->tapTimeMaxThreshold 	= 15;	// units: time (roughly 100Hz base frequency)
 	sliderGesture->settleDelay			= 40;	// units: time (roughly 100Hz base frequency)
 
 	sliderGesture->state 		= IDLE;
 	sliderGesture->touchTime	= 0;
 	sliderGesture->firstValue	= 0;
 	sliderGesture->lastValue	= 0;
-	sliderGesture->dragCount	= 0;
 }
 
 static Gesture updateSliderGesture(SliderGesture* sliderGesture, uint8_t sliderValue, uint32_t time)
 {
-	int sliderTimeElapsed = time - sliderGesture->touchTime;
 	Gesture result = NONE;
 
 	switch (sliderGesture->state) {
 		case IDLE: {
 			if (sliderValue > 0) {
 				DEBUG_TT_BEGIN;
+				DEBUG_SB_CLEAR;
 
 				sliderGesture->state 		= TOUCHING;
 				sliderGesture->firstValue 	= sliderValue;
@@ -79,95 +105,91 @@ static Gesture updateSliderGesture(SliderGesture* sliderGesture, uint8_t sliderV
 				sliderGesture->touchTime	= time;
 
 				DEBUG_TT('t');
-			}
-			break;
-		}
-
-		case TOUCHING: {
-			if (sliderValue == 0) {
-				int sliderDelta = sliderGesture->lastValue - sliderGesture->firstValue;
-
-				sliderGesture->state 		= SETTLING;
-				sliderGesture->firstValue 	= 0;
-				sliderGesture->lastValue 	= 0;
-				sliderGesture->touchTime 	= time;
-
-				if (abs(sliderDelta) <= sliderGesture->resolution && sliderTimeElapsed < sliderGesture->tapTimeThreshold) {
-					result = TAP;
-					DEBUG_TT('T');
-					break;
-				} else {
-					result = NONE;
-					break;
-				}
-			}
-
-			int sliderDelta = sliderGesture->lastValue - sliderGesture->firstValue;
-
-			if (abs(sliderDelta) <= sliderGesture->resolution && sliderTimeElapsed < sliderGesture->tapTimeThreshold) {
-				result = TOUCH;
+			} else {
 				break;
 			}
-
-			DEBUG_TT('D');
-			sliderGesture->state 		= DRAGGING;
-			sliderGesture->dragCount 	= 0;
 		}
 
-		case DRAGGING: {
-			if (sliderValue == 0) {
-				sliderGesture->state 		= SETTLING;
-				sliderGesture->firstValue 	= 0;
-				sliderGesture->lastValue 	= 0;
-				sliderGesture->touchTime 	= time;
-				result = NONE;
-				break;
-			}
+		default: {
+			DEBUG_SB_SAMPLE(sliderValue);
+			int sliderTimeElapsed = time - sliderGesture->touchTime;
 
-			int sliderDelta = sliderValue - sliderGesture->lastValue;
-			int sliderDeltaAbs = abs(sliderDelta);
+			switch (sliderGesture->state) {
+				case TOUCHING: {
+					if (sliderValue == 0) {
+						int sliderDelta = sliderGesture->lastValue - sliderGesture->firstValue;
 
-			if (sliderDeltaAbs >= sliderGesture->swipeThreshold && sliderGesture->dragCount == 0) {
-				sliderGesture->state 		= SETTLING;
-				sliderGesture->firstValue 	= 0;
-				sliderGesture->lastValue 	= 0;
-				sliderGesture->touchTime 	= time;
-				if (sliderDelta < 0) {
-					DEBUG_TT('L');
-					result = SWIPE_LEFT;
-				} else {
-					DEBUG_TT('R');
-					result = SWIPE_RIGHT;
+						sliderGesture->state 		= SETTLING;
+						sliderGesture->firstValue 	= 0;
+						sliderGesture->lastValue 	= 0;
+						sliderGesture->touchTime 	= time;
+
+						if (sliderTimeElapsed < sliderGesture->tapTimeMinThreshold) {
+							result = NONE;
+							break;
+						} else if (abs(sliderDelta) <= sliderGesture->resolution) {
+							result = TAP;
+							DEBUG_TT('T');
+							break;
+						} else {
+							if (sliderDelta < 0) {
+								DEBUG_TT('L');
+								result = SWIPE_LEFT;
+							} else {
+								DEBUG_TT('R');
+								result = SWIPE_RIGHT;
+							}
+							break;
+						}
+					}
+
+					if (sliderTimeElapsed < sliderGesture->tapTimeMaxThreshold) {
+						result = TOUCH;
+						break;
+					}
+
+					DEBUG_TT('D');
+					sliderGesture->state = DRAGGING;
 				}
-				break;
-			}
 
-			sliderDelta = sliderValue - sliderGesture->firstValue;
-			sliderDeltaAbs = abs(sliderDelta);
+				case DRAGGING: {
+					if (sliderValue == 0) {
+						sliderGesture->state 		= SETTLING;
+						sliderGesture->firstValue 	= 0;
+						sliderGesture->lastValue 	= 0;
+						sliderGesture->touchTime 	= time;
+						result = NONE;
+						break;
+					}
 
-			if (sliderDeltaAbs >= sliderGesture->resolution) {
-				sliderGesture->dragCount++;
-				if (sliderDelta < 0 && sliderGesture->firstValue > sliderGesture->resolution) {
-					sliderGesture->firstValue -= sliderGesture->resolution;
-					DEBUG_TT('l');
-					result = DRAG_LEFT;
-					break;
-				} else if (sliderGesture->firstValue < 100 - sliderGesture->resolution){
-					sliderGesture->firstValue += sliderGesture->resolution;
-					DEBUG_TT('r');
-					result = DRAG_RIGHT;
+					int sliderDelta = sliderValue - sliderGesture->firstValue;
+					int sliderDeltaAbs = abs(sliderDelta);
+
+					if (sliderDeltaAbs >= sliderGesture->resolution) {
+						if (sliderDelta < 0 && sliderGesture->firstValue > sliderGesture->resolution) {
+							sliderGesture->firstValue -= sliderGesture->resolution;
+							DEBUG_TT('l');
+							result = DRAG_LEFT;
+							break;
+						} else if (sliderGesture->firstValue < 100 - sliderGesture->resolution){
+							sliderGesture->firstValue += sliderGesture->resolution;
+							DEBUG_TT('r');
+							result = DRAG_RIGHT;
+							break;
+						}
+					}
+
+					result = TOUCH;
 					break;
 				}
-			}
 
-			result = TOUCH;
-			break;
-		}
-
-		case SETTLING: {
-			if (sliderTimeElapsed > sliderGesture->settleDelay) {
-				sliderGesture->state 		= IDLE;
-				sliderGesture->touchTime 	= time;
+				case SETTLING: {
+					if (sliderTimeElapsed > sliderGesture->settleDelay) {
+						sliderGesture->state 		= IDLE;
+						sliderGesture->touchTime 	= time;
+					}
+					break;
+				}
 			}
 			break;
 		}
@@ -177,7 +199,7 @@ static Gesture updateSliderGesture(SliderGesture* sliderGesture, uint8_t sliderV
 
 	DEBUG_TT_END;
 	debugSetOverlayText(0, s_history);
-	debugSetOverlayHex(1, sliderValue);
+//	debugSetOverlayHex(1, sliderValue);
 	return result;
 }
 
@@ -219,9 +241,11 @@ int sliderGestureUpdate(uint32_t time, const Event** eventTriggered)
 					break;
 				}
 			}
+			DEBUG_RENDER_GESTURE;
 			break;
 	}
 
+	DEBUG_SB_UPDATE;
 	return result;
 }
 
