@@ -18,3 +18,7 @@ serial via the UART pins.
 The linker script is customised to embed a copy of the binary data so that the remote doesn't start 'empty' -
 this is mostly for development purposes.
 
+Important Note
+--------------
+I am providing code inthis repository to you under an open source license.
+Because this is my personal repository, the license you receive to my code is from me and not from my employer (Facebook).
