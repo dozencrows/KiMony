@@ -8,11 +8,13 @@
 #ifndef TIMER_H_
 #define TIMER_H_
 #include <stdint.h>
+#include "MKL26Z4.h"
+
+#define TPM_CLOCKS_PER_MILLISECOND (DEFAULT_SYSTEM_CLOCK / 1000)	// Assumes TPM clock is PLL/2
 
 extern void tpmInit();
-extern void tpmStartMillisecondTimer(int timerIndex);
+extern void tpmStartTimer(int timerIndex, uint32_t periodClocks, uint32_t prescaleShift);
 extern uint32_t tpmGetTime(int timerIndex);
 extern void tpmStopTimer(int timerIndex);
-extern void tpmStartPwm(int timerIndex, int timerModulo, int pwmChannel, int pwmEdgeCount);
 
 #endif /* TIMER_H_ */

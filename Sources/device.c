@@ -269,7 +269,7 @@ void deviceSetStatesParallel(const DeviceState* states, int stateCount)
 	uint32_t lastTime = 0;
 	uint32_t currTime = lastTime;
 
-	tpmStartMillisecondTimer(0);
+	tpmStartTimer(0, TPM_CLOCKS_PER_MILLISECOND, 0);
 
 	while (finishedCount < activeDeviceCount) {
 		uint32_t elapsedTime = currTime - lastTime;
