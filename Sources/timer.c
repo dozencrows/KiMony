@@ -50,6 +50,20 @@ uint32_t tpmGetTime(int timerIndex)
 	return tpmCounter[timerIndex];
 }
 
+uint32_t tpmGetTimeHighPrecision(int timerIndex)
+{
+	uint32_t timerValue = tpmPtrs[timerIndex]->CNT;
+	uint32_t countValue = tpmCounter[timerIndex];
+	uint32_t timerValue2 = tpmPtrs[timerIndex]->CNT;
+
+	if (timerValue2 < timerValue) {
+		countValue = tpmCounter[timerIndex];
+		timerValue = timerValue2;
+	}
+
+	return countValue * tpmPtrs[timerIndex]->MOD + timerValue;
+}
+
 void tpmStopTimer(int timerIndex)
 {
 	tpmPtrs[timerIndex]->SC = 0;
