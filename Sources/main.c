@@ -39,12 +39,14 @@
 // Build configuration control
 //------------------------------------------
 
-//#define TIME_FRAME_RATE		// Run a short frame rate test on start
-//#define DISABLE_KEYPAD		// Turns off keypad setup via I2C and capacitative slider reading
-//#define ENABLE_TIMER_PIN		// Enables a PWM output on pin A13 to validate timing
+//#define TIME_FRAME_RATE			// Run a short frame rate test on start
+//#define DISABLE_KEYPAD			// Turns off keypad setup via I2C and capacitative slider reading
+//#define ENABLE_TIMER_PIN			// Enables a PWM output on pin A13 to validate timing
+#define ENABLE_TIMESTAMP_TIMING		// Enables tick timestamping to help measure performance
 
 #define SLEEP_TIMEOUT		500		// Time until backlight turns off when idle, in hundredths of a second
 #define SLEEP_TIMEOUT_LONG	1000	// Time until backlight turns off when idle after touching screen, in hundredths of a second
+
 
 //------------------------------------------
 
@@ -59,6 +61,15 @@ static int touchPage = 0;
 static const Activity* currentActivity = NULL;
 
 static volatile uint8_t periodicTimerIrqCount = 0;
+
+#if defined(ENABLE_TIMESTAMP_TIMING)
+#define TPM_TIMER_TIMESTAMPS	1
+static volatile uint32_t perfTimestamps[8];
+static volatile uint8_t perfTimestampIndex = 0;
+#define PERF_TIMESTAMP perfTimestamps[perfTimestampIndex++] = tpmGetTimeHighPrecision(TPM_TIMER_TIMESTAMPS); perfTimestampIndex &= 7
+#else
+#define PERF_TIMESTAMP
+#endif
 
 static void periodicTimerIrqHandler()
 {
@@ -478,6 +489,10 @@ void main(void)
 	tpmInit();
 	sysTickInit();
 	sysTickSetClockRate(SystemCoreClock);
+
+#if defined(ENABLE_TIMESTAMP_TIMING)
+	tpmStartTimer(TPM_TIMER_TIMESTAMPS, TPM_CLOCKS_PER_MILLISECOND, 0);
+#endif
 
 	i2cInit();
 	spiInit();
