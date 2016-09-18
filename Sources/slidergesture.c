@@ -113,7 +113,7 @@ static void initSliderGesture(SliderGesture* sliderGesture)
 	sliderGesture->tapOffsetMaxThreshold	= 18;	// units: percentage (delta threshold from first touch point)
 	sliderGesture->dragResolution			= 20;	// units: percentage (delta threshold from first touch point)
 	sliderGesture->tapTimeMinThreshold 		= 5;	// units: time (roughly 100Hz base frequency)
-	sliderGesture->tapTimeMaxThreshold 		= 15;	// units: time (roughly 100Hz base frequency)
+	sliderGesture->tapTimeMaxThreshold 		= 20;	// units: time (roughly 100Hz base frequency)
 	sliderGesture->settleDelay				= 40;	// units: time (roughly 100Hz base frequency)
 
 	sliderGesture->state 		= IDLE;
