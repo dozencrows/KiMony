@@ -10,6 +10,9 @@
 
 #include <stdint.h>
 
+// Define this to capture CPU tick timestamps with electrode samples
+//#define CAPELECTRODE_TIMESTAMPS
+
 // Flag values
 #define ELECTRODE_FLAGS_ACTIVE	0x0001	// Electrode has been initialised and is active
 
@@ -21,6 +24,9 @@ typedef struct _Electrode {
 	uint16_t	baseline;
 
 	uint16_t	buffer[ELECTRODE_BUFFER_SIZE];
+#if defined(CAPELECTRODE_TIMESTAMPS)
+	uint32_t	timestamp[ELECTRODE_BUFFER_SIZE];
+#endif
 	uint32_t	bufferWriteIndex;
 } Electrode;
 

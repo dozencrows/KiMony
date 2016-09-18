@@ -7,8 +7,10 @@
 #include "capelectrode.h"
 #include "MKL26Z4.h"
 #include <stddef.h>
+#include "timer.h"
 
 #define TSI_SCAN_COUNT		16
+#define TPM_TIMER			1
 
 static int electrodeCount = 0;
 static Electrode* electrodeList = NULL;
@@ -22,6 +24,9 @@ void TSI0_IRQHandler()
 		TSI0_GENCS |= TSI_GENCS_OUTRGF_MASK | TSI_GENCS_EOSF_MASK;
 		outOfRangeInterruptCount++;
 	} else {
+#if defined(CAPELECTRODE_TIMESTAMPS)
+		activeElectrode->timestamp[activeElectrode->bufferWriteIndex] = tpmGetTimeHighPrecision(TPM_TIMER);
+#endif
 		activeElectrode->buffer[activeElectrode->bufferWriteIndex++] = (TSI0_DATA & TSI_DATA_TSICNT_MASK) / TSI_SCAN_COUNT;
 		TSI0_GENCS |= TSI_GENCS_EOSF_MASK;
 		activeElectrode->bufferWriteIndex %= ELECTRODE_BUFFER_SIZE;
@@ -41,6 +46,10 @@ void TSI0_IRQHandler()
 
 void capElectrodeInit()
 {
+#if defined(CAPELECTRODE_TIMESTAMPS)
+	tpmStartTimer(TPM_TIMER, TPM_CLOCKS_PER_MILLISECOND, 0);
+#endif
+
 	SIM_SCGC5 |= SIM_SCGC5_TSI_MASK;
 
 	TSI0_GENCS = // Fields to clear
