@@ -89,7 +89,7 @@ static void periodicTimerStart()
 {
 	LPTMR0_CSR = 0;												// Ensure timer is stopped and counter cleared
 	LPTMR0_PSR = LPTMR_PSR_PCS(1) | LPTMR_PSR_PRESCALE(0);		// Counter frequency is 500Hz (1kHz LPO divided by 2)
-	LPTMR0_CMR = 5;												// 100Hz timer
+	LPTMR0_CMR = 5;												// ~83Hz timer
 	LPTMR0_CSR = LPTMR_CSR_TIE_MASK | LPTMR_CSR_TEN_MASK;		// Enable with interrupt.
 }
 
@@ -97,7 +97,7 @@ static void periodicTimerStartSleep()
 {
 	LPTMR0_CSR = 0;												// Ensure timer is stopped and counter cleared
 	LPTMR0_PSR = LPTMR_PSR_PCS(1) | LPTMR_PSR_PRESCALE(4);		// Counter frequency is 31.25Hz (1kHz LPO divided by 32)
-	LPTMR0_CMR = 2;												// 15Hz timer
+	LPTMR0_CMR = 2;												// ~10Hz timer
 	LPTMR0_CSR = LPTMR_CSR_TIE_MASK | LPTMR_CSR_TEN_MASK;		// Enable with interrupt.
 }
 
@@ -105,7 +105,7 @@ static void periodicTimerStartDeepSleep()
 {
 	LPTMR0_CSR = 0;												// Ensure timer is stopped and counter cleared
 	LPTMR0_PSR = LPTMR_PSR_PCS(1) | LPTMR_PSR_PRESCALE(4);		// Counter frequency is 31.25Hz (1kHz LPO divided by 32)
-	LPTMR0_CMR = 2;												// 15Hz timer
+	LPTMR0_CMR = 2;												// ~10Hz timer
 	LPTMR0_CSR = LPTMR_CSR_TEN_MASK;							// Enable without interrupt.
 }
 
@@ -344,8 +344,9 @@ void mainLoop()
 		}
 
 		if (accelCheckTransientInterrupt()) {
-			accelClearInterrupts();
-			wakeUp(SLEEP_TIMEOUT);
+			if (accelProcessInterrupt() == ACCEL_INTERRUPT_RECOGNISED) {
+				wakeUp(SLEEP_TIMEOUT);
+			}
 		}
 
 		if (capElectrodeCheckWakeInterrupt()) {

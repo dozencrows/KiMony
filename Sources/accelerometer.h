@@ -8,8 +8,11 @@
 #ifndef ACCELEROMETER_H_
 #define ACCELEROMETER_H_
 
+#define ACCEL_INTERRUPT_IGNORED		0
+#define ACCEL_INTERRUPT_RECOGNISED	1
+
 extern void accelInit();
 extern int accelCheckTransientInterrupt();
-extern void accelClearInterrupts();
+extern int accelProcessInterrupt();
 
 #endif /* ACCELEROMETER_H_ */
