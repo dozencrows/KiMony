@@ -6,8 +6,11 @@ Plan
   * USB data connection
   * Redesign keypad board for: surface mount switches, diodes on underside, adding FTDI I2C/USB serial connection
 * Software
-  * Cap-electrode daseline recalibration periodically (see https://github.com/jgillick/DiscoDanceFloor/blob/master/Arduino/DiscoFloorNode/CapacitiveTouch.cpp)
+  * Try driving TSI scan trigger from PIT timer to reduce frequency further.
+  * Move TSI baseline outside of interrupt to dedicated function, and do as part of init.
+  * Cap-electrode baseline recalibration periodically (see https://github.com/jgillick/DiscoDanceFloor/blob/master/Arduino/DiscoFloorNode/CapacitiveTouch.cpp)
   * Switch to Kalman filter from averaging for cap-electrodes
+  * Replace multi-handler LPTMR IRQ with single handler; refactor LPTMR code into its own module.
   * Interrupt-driven IR code queue system to avoid main-loop stalls (e.g. for better slider dragging, reduce power use)  
   * Implement draw priority system, affecting list insert for active DLEs
   * Solve 'in-fill' issue between DLE areas on same scan line
@@ -154,9 +157,14 @@ Done
   * Performance may be impacted by CPU stalls - e.g. IR output while dragging
 * Measured cap slider characteristics
   * Measured electrode capacitance at ~30pF
-  * Periodic timer frequency actually measured at 80Hz - expected to be 100Hz.
-  * Sider update frequency measured at 80Hz when idle.
+  * Periodic timer frequency actually measured at 80Hz - expected to be 100Hz. Actually due to off-by-one in setting LPTMR counter register.
+  * Slider update frequency measured at 80Hz when idle.
   * Trigger of IR send during drag can increase frame time by over 8x - significant impact on performance. 
+* Reduced TSI interrupt frequency
+  * Increasing prescale value definitely reduced frequency; but didn't seem to affect accuracy of LPTMR periodic interrupt.
+    It also increased sampled TSI counter values, and make them more noisy.
+  * Compensated for that with further divide down of sampled values; that helped.
+* Checked TSI interrupt handler disassembly: divides and modulo are shifts & masks for performance (in release at least).
   
 Notes
 =====

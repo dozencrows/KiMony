@@ -10,7 +10,9 @@
 #include "timer.h"
 
 #define TSI_SCAN_COUNT		16
-#define TPM_TIMER			1
+#define TSI_PRESCALE		4
+#define TPM_TIMER			2
+#define TSI_PRESCALE_DIVISOR	(1 << (TSI_PRESCALE - 1))
 
 static int electrodeCount = 0;
 static Electrode* electrodeList = NULL;
@@ -27,7 +29,7 @@ void TSI0_IRQHandler()
 #if defined(CAPELECTRODE_TIMESTAMPS)
 		activeElectrode->timestamp[activeElectrode->bufferWriteIndex] = tpmGetTimeHighPrecision(TPM_TIMER);
 #endif
-		activeElectrode->buffer[activeElectrode->bufferWriteIndex++] = (TSI0_DATA & TSI_DATA_TSICNT_MASK) / TSI_SCAN_COUNT;
+		activeElectrode->buffer[activeElectrode->bufferWriteIndex++] = (TSI0_DATA & TSI_DATA_TSICNT_MASK) / (TSI_SCAN_COUNT * TSI_PRESCALE_DIVISOR);
 		TSI0_GENCS |= TSI_GENCS_EOSF_MASK;
 		activeElectrode->bufferWriteIndex %= ELECTRODE_BUFFER_SIZE;
 
@@ -56,7 +58,7 @@ void capElectrodeInit()
 				 TSI_GENCS_OUTRGF_MASK | TSI_GENCS_EOSF_MASK |
 				 // Fields to set: int on end scan, 16uA ref charge, 8uA ext charge, 0.43V DVolt, X scans, enable interrupt & module, enable in low power
 				 TSI_GENCS_ESOR_MASK | TSI_GENCS_REFCHRG(5) | TSI_GENCS_DVOLT(2) | TSI_GENCS_EXTCHRG(4) | TSI_GENCS_STPE_MASK |
-				 TSI_GENCS_PS(1) | TSI_GENCS_NSCN(TSI_SCAN_COUNT - 1) | TSI_GENCS_TSIEN_MASK | TSI_GENCS_TSIIEN_MASK;
+				 TSI_GENCS_PS(4) | TSI_GENCS_NSCN(TSI_SCAN_COUNT - 1) | TSI_GENCS_TSIEN_MASK | TSI_GENCS_TSIIEN_MASK;
 }
 
 void capElectrodeSleep()
