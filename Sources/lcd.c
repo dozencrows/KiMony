@@ -91,6 +91,7 @@ static const PortConfig portEPinsOff =
 };
 
 static int backlightState = 0;
+static int sleepState = 0;
 
 #define TFT_PWR_MASK	(1 << 3)
 #define TFT_DC_MASK 	0x40000000U
@@ -302,6 +303,8 @@ void tftReset()
 	sysTickDelayMs(120);
 
 	tftWriteCmd(ILI9341_DISPON);
+
+	sleepState = 0;
 }
 
 struct TFTPixel {
@@ -786,6 +789,10 @@ void tftInit()
 
 void tftSetBacklight(int status)
 {
+	if (sleepState) {
+		return;
+	}
+
 	if (status) {
 		FGPIO_PSOR_REG(FGPIOD) = TFT_BL_MASK;
 	}
@@ -1002,10 +1009,12 @@ void tftSleep()
 {
 	tftWriteCmd(ILI9341_SLPIN);
 	sysTickDelayMs(120);
+	sleepState = 1;
 }
 
 void tftWake()
 {
 	tftWriteCmd(ILI9341_SLPOUT);
 	sysTickDelayMs(120);
+	sleepState = 0;
 }
