@@ -165,6 +165,7 @@ Done
     It also increased sampled TSI counter values, and make them more noisy.
   * Compensated for that with further divide down of sampled values; that helped.
 * Checked TSI interrupt handler disassembly: divides and modulo are shifts & masks for performance (in release at least).
+* Improved sync of backlight on/off with rendering and sleep modes.
   
 Notes
 =====

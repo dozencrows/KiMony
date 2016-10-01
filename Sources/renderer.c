@@ -589,6 +589,7 @@ void rendererRenderDrawList() {
 
 		PROFILE_EXIT(render);
 		tftEndBlit();
+		tftSetBacklight(1);
 
 		PROFILE_ENTER(profileOuter);
 		PROFILE_ENTER(profileInner);

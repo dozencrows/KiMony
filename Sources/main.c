@@ -160,9 +160,9 @@ static void wakeUp(uint32_t wake_time_hs)
 		}
 		else {
 			tftWake();
+			tftSetBacklight(1);
 		}
 
-		tftSetBacklight(1);
 		periodicTimerStop();
 		periodicTimerStart();
 		activeLevel = ACTIVE_LEVEL_AWAKE;
@@ -423,7 +423,9 @@ void mainLoop()
 			}
 		}
 
-		debugRenderOverlays();
+		if (activeLevel == ACTIVE_LEVEL_AWAKE) {
+			debugRenderOverlays();
+		}
 	}
 }
 
@@ -500,7 +502,6 @@ void main(void)
 	spiInit();
 
 	tftInit();
-	tftSetBacklight(1);
 	rendererInit();
 	rendererClearScreen();
 

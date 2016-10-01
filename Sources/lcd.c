@@ -182,8 +182,6 @@ void tftWriteData(unsigned char byte)
 
 void tftReset()
 {
-	FGPIO_PCOR_REG(FGPIOD) = TFT_BL_MASK;	// Turn off backlight
-
 	FGPIO_PCOR_REG(FGPIOE) = TFT_RS_MASK;	// LCD hardware reset
 	FGPIO_PSOR_REG(FGPIOE) = TFT_RS_MASK;
 
@@ -302,7 +300,8 @@ void tftReset()
 	tftWriteCmd(ILI9341_SLPOUT);    //Exit Sleep
 
 	sysTickDelayMs(120);
-	tftWriteCmd(ILI9341_DISPON);    //Display on
+
+	tftWriteCmd(ILI9341_DISPON);
 }
 
 struct TFTPixel {
@@ -770,9 +769,10 @@ void tftSetupPorts()
 	FGPIOC_PDDR |= 0xffU;
 	FGPIOD_PDDR |= TFT_BL_MASK;
 	FGPIOE_PDDR |= TFT_CS_MASK | TFT_WR_MASK | TFT_RS_MASK | TFT_DC_MASK;
-	backlightState = 1;
 
 	FGPIOE_PSOR = TFT_CS_MASK | TFT_WR_MASK | TFT_RS_MASK | TFT_DC_MASK;
+	FGPIOD_PCOR = TFT_BL_MASK;
+	backlightState = 0;
 }
 
 void tftInit()
@@ -805,6 +805,7 @@ void tftPowerOff()
 {
 	FGPIOB_PCOR = TFT_PWR_MASK;
 	FGPIOC_PCOR = 0xff;
+	FGPIOD_PCOR = TFT_BL_MASK;
 	FGPIOE_PCOR = TFT_CS_MASK | TFT_WR_MASK | TFT_RS_MASK | TFT_DC_MASK;
 
 	portInitialise(&portCPinsOff);
