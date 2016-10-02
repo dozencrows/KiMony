@@ -23,12 +23,14 @@ typedef enum {
 	DRAG_RIGHT	= 3,
 	SWIPE_LEFT	= 4,
 	SWIPE_RIGHT	= 5,
-	TOUCH		= 127
+	TOUCH		= 127,
+	TAP_WOKEN	= 128,
 } Gesture;
 
 extern void sliderGestureInit();
 extern void sliderGestureSetActiveMapping(const GestureMapping* mapping, int count);
 extern int sliderGestureUpdate(uint32_t time, const Event** eventTriggered);
+extern void sliderGestureWakeFromTap();
 extern void sliderGestureFlush();
 
 #endif /* SLIDERGESTURE_H_ */

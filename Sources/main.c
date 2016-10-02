@@ -351,6 +351,7 @@ void mainLoop()
 
 		if (capElectrodeCheckWakeInterrupt()) {
 			capElectrodeClearWakeInterrupt();
+			sliderGestureWakeFromTap();
 			wakeUp(SLEEP_TIMEOUT);
 		}
 

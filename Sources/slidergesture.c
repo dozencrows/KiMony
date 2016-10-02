@@ -252,6 +252,16 @@ static Gesture updateSliderGesture(SliderGesture* sliderGesture, uint8_t sliderV
 					}
 					break;
 				}
+
+				case TAP_WOKEN: {
+					if (sliderValue == 0) {
+						sliderGesture->state 		= SETTLING;
+						sliderGesture->firstValue 	= 0;
+						sliderGesture->lastValue 	= 0;
+						sliderGesture->touchTime 	= time;
+					}
+					break;
+				}
 			}
 			break;
 		}
@@ -309,6 +319,13 @@ int sliderGestureUpdate(uint32_t time, const Event** eventTriggered)
 
 	DEBUG_SB_UPDATE;
 	return result;
+}
+
+void sliderGestureWakeFromTap()
+{
+	sliderGesture.state = TAP_WOKEN;
+	DEBUG_TT_BEGIN;
+	DEBUG_TT('W');
 }
 
 void sliderGestureFlush()
