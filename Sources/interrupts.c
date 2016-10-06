@@ -15,6 +15,9 @@
 #include "interrupts.h"
 
 #define MAX_IRQ_HANDLERS	4
+#define MAX_TPM				3
+
+extern TPM_Type* const tpmPtrs[];
 
 static int lptmrIRQHandlerCount = 0;
 static PITIRQHandler lptmrIRQHandlers[MAX_IRQ_HANDLERS];
@@ -24,6 +27,8 @@ static int portAIRQHandlerCount = 0;
 static PortAIRQHandler portAIRQHandlers[MAX_IRQ_HANDLERS];
 static int portCDIRQHandlerCount = 0;
 static PortCDIRQHandler portCDIRQHandlers[MAX_IRQ_HANDLERS];
+static int tpmIRQHandlerCount[MAX_TPM] = { 0, 0, 0 };
+static TPMIRQHandler tpmIRQHandlers[MAX_TPM][MAX_IRQ_HANDLERS];
 
 void LPTimer_IRQHandler()
 {
@@ -43,6 +48,31 @@ void PIT_IRQHandler()
 	PIT_TFLG0 = PIT_TFLG_TIF_MASK;
 	PIT_TFLG1 = PIT_TFLG_TIF_MASK;
 }
+
+void TPM_IRQHandler(uint32_t tpm)
+{
+	for(int i = 0; i < tpmIRQHandlerCount[tpm]; i++) {
+		tpmIRQHandlers[tpm][i](tpm);
+	}
+
+	tpmPtrs[tpm]->SC |= TPM_SC_TOF_MASK;
+}
+
+void TPM0_IRQHandler()
+{
+	TPM_IRQHandler(0);
+}
+
+void TPM1_IRQHandler()
+{
+	TPM_IRQHandler(1);
+}
+
+void TPM2_IRQHandler()
+{
+	TPM_IRQHandler(2);
+}
+
 
 void PORTA_IRQHandler()
 {
@@ -84,6 +114,11 @@ void interruptRegisterLPTMRIRQHandler(LPTMRIRQHandler irqHandler)
 void interruptRegisterPITIRQHandler(PITIRQHandler irqHandler)
 {
 	addIrqHandler(irqHandler, &pitIRQHandlerCount, (void**)pitIRQHandlers);
+}
+
+void interruptRegisterTPMIRQHandler(TPMIRQHandler irqHandler, uint32_t tpm)
+{
+	addIrqHandler(irqHandler, tpmIRQHandlerCount + tpm, (void**)(tpmIRQHandlers + tpm));
 }
 
 void interruptRegisterPortAIRQHandler(PortAIRQHandler irqHandler)

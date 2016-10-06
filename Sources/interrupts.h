@@ -19,11 +19,13 @@
 
 typedef void (*LPTMRIRQHandler)();
 typedef void (*PITIRQHandler)();
+typedef void (*TPMIRQHandler)(uint32_t tpm);
 typedef void (*PortAIRQHandler)(uint32_t portAISFR);
 typedef void (*PortCDIRQHandler)(uint32_t portCISFR, uint32_t portDISFR);
 
 void interruptRegisterLPTMRIRQHandler(LPTMRIRQHandler irqHandler);
 void interruptRegisterPITIRQHandler(PITIRQHandler irqHandler);
+void interruptRegisterTPMIRQHandler(TPMIRQHandler irqHandler, uint32_t tpm);
 void interruptRegisterPortAIRQHandler(PortAIRQHandler irqHandler);
 void interruptRegisterPortCDIRQHandler(PortCDIRQHandler irqHandler);
 
