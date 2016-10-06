@@ -496,6 +496,7 @@ void main(void)
 	sysTickSetClockRate(SystemCoreClock);
 
 #if defined(ENABLE_TIMESTAMP_TIMING)
+	tpmEnableTimer(TPM_TIMER_TIMESTAMPS);
 	tpmStartTimer(TPM_TIMER_TIMESTAMPS, TPM_CLOCKS_PER_MILLISECOND, 0);
 #endif
 
@@ -514,6 +515,7 @@ void main(void)
 #endif
 
 	accelInit();
+	irInit();
 
 	if (FLASH_DATA_HEADER->watermark != FLASH_DATA_WATERMARK) {
 		cpuFlashDownload();

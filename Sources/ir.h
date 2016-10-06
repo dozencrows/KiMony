@@ -20,6 +20,9 @@
 #define IRCODE_RC6	1
 #define IRCODE_SIRC	2
 
+#define IR_ACTION_QUEUED	1
+#define IR_ACTION_IGNORED	0
+
 typedef struct _IrCode {
 	unsigned int encoding:4;
 	unsigned int bits:5;
@@ -32,6 +35,8 @@ typedef struct _IrAction {
 	IrCode	codes[];
 } IrAction;
 
+extern void irInit();
 extern void irDoAction(const IrAction* action, uint8_t* toggleFlag);
+extern int irQueueAction(const IrAction* action, uint8_t* toggleFlag);
 
 #endif /* IR_H_ */

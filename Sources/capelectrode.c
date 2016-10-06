@@ -49,6 +49,7 @@ void TSI0_IRQHandler()
 void capElectrodeInit()
 {
 #if defined(CAPELECTRODE_TIMESTAMPS)
+	tpmEnableTimer(TPM_TIMER);
 	tpmStartTimer(TPM_TIMER, TPM_CLOCKS_PER_MILLISECOND, 0);
 #endif
 

@@ -13,10 +13,12 @@
 #define TPM_CLOCKS_PER_MILLISECOND (DEFAULT_SYSTEM_CLOCK / 1000)	// Assumes TPM clock is PLL/2
 
 extern void tpmInit();
+extern void tpmEnableTimer(int timerIndex);
 extern void tpmStartTimer(int timerIndex, uint32_t periodClocks, uint32_t prescaleShift);
 void tpmOneShotTimer(int timerIndex, uint32_t periodClocks, uint32_t prescaleShift);
 extern uint32_t tpmGetTime(int timerIndex);
 extern uint32_t tpmGetTimeHighPrecision(int timerIndex);
 extern void tpmStopTimer(int timerIndex);
+extern void tpmDisableTimer(int timerIndex);
 
 #endif /* TIMER_H_ */

@@ -26,15 +26,19 @@ void tpmInit()
 	interruptRegisterTPMIRQHandler(timerTPMIRQHandler, 2);
 }
 
-void tpmStartTimer(int timerIndex, uint32_t periodClocks, uint32_t prescaleShift)
+void tpmEnableTimer(int timerIndex)
 {
 	SIM_SCGC6 |= tpmGateFlags[timerIndex];
+	NVIC_EnableIRQ(TPM0_IRQn + timerIndex);
+}
+
+void tpmStartTimer(int timerIndex, uint32_t periodClocks, uint32_t prescaleShift)
+{
 	tpmPtrs[timerIndex]->MOD  = (periodClocks >> (prescaleShift & TPM_SC_PS_MASK)) - 1;
 	tpmPtrs[timerIndex]->CNT  = 0;
 	tpmPtrs[timerIndex]->SC   = TPM_SC_TOIE_MASK|TPM_SC_TOF_MASK|TPM_SC_PS(prescaleShift);
 	tpmPtrs[timerIndex]->CONF = 0;
 	tpmCounter[timerIndex]    = 0;
-	NVIC_EnableIRQ(TPM0_IRQn + timerIndex);
 	tpmPtrs[timerIndex]->SC |= TPM_SC_CMOD(1);
 }
 
@@ -72,6 +76,10 @@ uint32_t tpmGetTimeHighPrecision(int timerIndex)
 void tpmStopTimer(int timerIndex)
 {
 	tpmPtrs[timerIndex]->SC = 0;
+}
+
+void tpmDisableTimer(int timerIndex)
+{
 	NVIC_DisableIRQ(TPM0_IRQn + timerIndex);
 	SIM_SCGC6 &= ~tpmGateFlags[timerIndex];
 }

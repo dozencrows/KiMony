@@ -18,7 +18,8 @@
 #include <stdio.h>
 
 #include "i2c.h"
-#include "systick.h"
+#include "timer.h"
+#include "interrupts.h"
 
 #define IR_I2C_ADDRESS	0x71
 #define IR_STAGE_COUNT  64
@@ -227,12 +228,28 @@ static int irEncodeSIRC(IrPacket* packet, uint32_t data, int bitCount, int repea
 //-----------------------------------------------------------------------------
 // Sending of IR packets
 //
+#define IR_TPM_TIMER		2
+#define IR_TPM_IRQ			(TPM0_IRQn + IR_TPM_TIMER)
+#define IRACTION_QUEUE_SIZE	4
+
+typedef struct _QueuedIrAction {
+	const IrAction* action;
+	uint8_t* toggleFlag;
+	int currentCode;
+} QueuedIrAction;
+
+volatile static QueuedIrAction irActionQueue[IRACTION_QUEUE_SIZE];
+volatile static uint32_t irActionQueueDelayMs = 0;
+volatile static uint8_t irActionQueueWriteIndex = 0;
+volatile static uint8_t irActionQueueReadIndex = 0;
+
 static void scheduleIrDelayMs(uint32_t delayMs)
 {
-	sysTickDelayMs(delayMs);
+	irActionQueueDelayMs = delayMs;
+	tpmStartTimer(IR_TPM_TIMER, TPM_CLOCKS_PER_MILLISECOND, 0);
 }
 
-static void sendIrPacketAndWait(IrPacket* packet, uint32_t endDelayUs)
+static void sendIrPacket(IrPacket* packet, uint32_t endDelayUs)
 {
 	uint32_t totalUs = 0;
 	for (int i = 0; i < packet->header.length; i++) {
@@ -252,36 +269,21 @@ static IrPacket irPacket;
 static void irSendRC6Code(uint32_t data, int bitCount)
 {
 	irEncodeRC6(&irPacket, data, bitCount);
-	sendIrPacketAndWait(&irPacket, 74000);
+	sendIrPacket(&irPacket, 74000);
 }
 
 static void irSendSIRCCode(uint32_t data, int bitCount)
 {
 	irEncodeSIRC(&irPacket, data, bitCount, SIRC_REPEATS);
-	sendIrPacketAndWait(&irPacket, 45000);
+	sendIrPacket(&irPacket, 45000);
 }
 
-//-----------------------------------------------------------------------------
-// Queued sending control
-//
-#define IRACTION_QUEUE_SIZE	4
-
-typedef struct _QueuedIrAction {
-	const IrAction* action;
-	uint8_t* toggleFlag;
-	int currentCode;
-} QueuedIrAction;
-
-static QueuedIrAction irActionQueue[IRACTION_QUEUE_SIZE];
-static uint8_t irActionQueueWriteIndex = 0;
-volatile static uint8_t irActionQueueReadIndex = 0;
-
-int irIsActionQueueEmpty()
+static int irIsActionQueueEmpty()
 {
 	return irActionQueueReadIndex == irActionQueueWriteIndex;
 }
 
-void irProcessNextActionCode()
+static void irProcessNextActionCode()
 {
 	uint8_t queueIndex = irActionQueueReadIndex % IRACTION_QUEUE_SIZE;
 	QueuedIrAction* queueEntry = irActionQueue + queueIndex;
@@ -330,29 +332,51 @@ void irProcessNextActionCode()
 	}
 }
 
-// TODO: Write irInit to set up interrupt-driven queuing
-// TODO: Make this part of the public API
-void irQueueAction(const IrAction* action, uint8_t* toggleFlag)
+static void irQueueInterruptHandler(uint32_t tpm)
 {
-	// TODO: disable update interrupt around this code
-	if (irActionQueueWriteIndex - irActionQueueReadIndex >= IRACTION_QUEUE_SIZE) {
-		return;
+	if (tpmGetTime(IR_TPM_TIMER) >= irActionQueueDelayMs) {
+		tpmStopTimer(IR_TPM_TIMER);
+		if (!irIsActionQueueEmpty()) {
+			irProcessNextActionCode();
+		}
+	}
+}
+
+void irInit()
+{
+	interruptRegisterTPMIRQHandler(irQueueInterruptHandler, IR_TPM_TIMER);
+	tpmEnableTimer(IR_TPM_TIMER);
+}
+
+int irQueueAction(const IrAction* action, uint8_t* toggleFlag)
+{
+	int result = IR_ACTION_IGNORED;
+	NVIC_DisableIRQ(IR_TPM_IRQ);
+
+	if (irActionQueueWriteIndex - irActionQueueReadIndex < IRACTION_QUEUE_SIZE) {
+		uint8_t queueIndex = irActionQueueWriteIndex % IRACTION_QUEUE_SIZE;
+
+		irActionQueue[queueIndex].action = action;
+		irActionQueue[queueIndex].toggleFlag = toggleFlag;
+		irActionQueue[queueIndex].currentCode = -1;
+
+		if (irIsActionQueueEmpty()) {
+			NVIC_SetPendingIRQ(IR_TPM_IRQ);
+		}
+		irActionQueueWriteIndex++;
+		result = IR_ACTION_QUEUED;
 	}
 
-	uint8_t queueIndex = irActionQueueWriteIndex % IRACTION_QUEUE_SIZE;
-
-	irActionQueue[queueIndex].action = action;
-	irActionQueue[queueIndex].toggleFlag = toggleFlag;
-	irActionQueue[queueIndex].currentCode = -1;
-	irActionQueueWriteIndex++;
+	NVIC_EnableIRQ(IR_TPM_IRQ);
+	return result;
 }
 
 void irDoAction(const IrAction* action, uint8_t* toggleFlag)
 {
-	irQueueAction(action, toggleFlag);
-	while (!irIsActionQueueEmpty()) {
-		// TODO: revise this to work with interrupt-driven queuing.
-		irProcessNextActionCode();
+	if (irQueueAction(action, toggleFlag) == IR_ACTION_QUEUED) {
+		while (!irIsActionQueueEmpty()) {
+			__asm("wfi");
+		}
 	}
 }
 
