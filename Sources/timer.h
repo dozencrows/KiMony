@@ -14,6 +14,7 @@
 
 extern void tpmInit();
 extern void tpmStartTimer(int timerIndex, uint32_t periodClocks, uint32_t prescaleShift);
+void tpmOneShotTimer(int timerIndex, uint32_t periodClocks, uint32_t prescaleShift);
 extern uint32_t tpmGetTime(int timerIndex);
 extern uint32_t tpmGetTimeHighPrecision(int timerIndex);
 extern void tpmStopTimer(int timerIndex);

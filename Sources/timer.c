@@ -29,10 +29,23 @@ void tpmInit()
 void tpmStartTimer(int timerIndex, uint32_t periodClocks, uint32_t prescaleShift)
 {
 	SIM_SCGC6 |= tpmGateFlags[timerIndex];
-	tpmPtrs[timerIndex]->MOD = (periodClocks >> (prescaleShift & TPM_SC_PS_MASK)) - 1;
-	tpmPtrs[timerIndex]->CNT = 0;
-	tpmPtrs[timerIndex]->SC  = TPM_SC_TOIE_MASK|TPM_SC_TOF_MASK|TPM_SC_PS(prescaleShift);
-	tpmCounter[timerIndex] = 0;
+	tpmPtrs[timerIndex]->MOD  = (periodClocks >> (prescaleShift & TPM_SC_PS_MASK)) - 1;
+	tpmPtrs[timerIndex]->CNT  = 0;
+	tpmPtrs[timerIndex]->SC   = TPM_SC_TOIE_MASK|TPM_SC_TOF_MASK|TPM_SC_PS(prescaleShift);
+	tpmPtrs[timerIndex]->CONF = 0;
+	tpmCounter[timerIndex]    = 0;
+	NVIC_EnableIRQ(TPM0_IRQn + timerIndex);
+	tpmPtrs[timerIndex]->SC |= TPM_SC_CMOD(1);
+}
+
+void tpmOneShotTimer(int timerIndex, uint32_t periodClocks, uint32_t prescaleShift)
+{
+	SIM_SCGC6 |= tpmGateFlags[timerIndex];
+	tpmPtrs[timerIndex]->MOD  = (periodClocks >> (prescaleShift & TPM_SC_PS_MASK)) - 1;
+	tpmPtrs[timerIndex]->CNT  = 0;
+	tpmPtrs[timerIndex]->SC   = TPM_SC_TOIE_MASK|TPM_SC_TOF_MASK|TPM_SC_PS(prescaleShift);
+	tpmPtrs[timerIndex]->CONF = TPM_CONF_CSOO_MASK;
+	tpmCounter[timerIndex]    = 0;
 	NVIC_EnableIRQ(TPM0_IRQn + timerIndex);
 	tpmPtrs[timerIndex]->SC |= TPM_SC_CMOD(1);
 }
