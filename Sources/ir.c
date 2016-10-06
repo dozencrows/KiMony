@@ -252,7 +252,7 @@ static void irSendSIRCCode(uint32_t data, int bitCount)
 
 static uint32_t toggleBit = 0;
 
-void irDoAction(const IrAction* action, int* toggleFlag)
+void irDoAction(const IrAction* action, uint8_t* toggleFlag)
 {
 	const IrCode* code = action->codes;
 

@@ -32,6 +32,6 @@ typedef struct _IrAction {
 	IrCode	codes[];
 } IrAction;
 
-extern void irDoAction(const IrAction* action, int* toggleFlag);
+extern void irDoAction(const IrAction* action, uint8_t* toggleFlag);
 
 #endif /* IR_H_ */
