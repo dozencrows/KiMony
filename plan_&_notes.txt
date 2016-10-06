@@ -7,11 +7,6 @@ Plan
   * Redesign keypad board for: surface mount switches, diodes on underside, adding FTDI I2C/USB serial connection
   * Redesign motherboard for:  connecting LCD read and TE pins, removing unused LCD pins, FTDI I2C/USB serial, using FFC connector for LCD
 * Software
-  * Interrupt-driven IR code queue system to avoid main-loop stalls (e.g. for better slider dragging, reduce power use)  
-	* Queue of IrAction instances.
-	* Use TPM timer 2 to time delays (currently generic counter; replace this with bespoke IRQ handler)
-	* Timer 2 interrupt handler implements actual queue operation and sending. If queue empty on new action, software trigger TPM2 interrupt to kick it off.
-	* Queue handler: steps action's IR sendings, ticking along from interrupt to interrupt. Time delay -> schedule next interrupt.
   * Try driving TSI scan trigger from PIT timer to reduce frequency further.
   * Move TSI baseline outside of interrupt to dedicated function, and do as part of init.
   * Cap-electrode baseline recalibration periodically (see https://github.com/jgillick/DiscoDanceFloor/blob/master/Arduino/DiscoFloorNode/CapacitiveTouch.cpp)
@@ -29,6 +24,16 @@ Plan
 
 Work-in-progress
 ================
+  * Interrupt-driven IR code queue system to avoid main-loop stalls (e.g. for better slider dragging, reduce power use)  
+	* Use TPM timer 2 to time delays (currently generic counter; replace this with bespoke IRQ handler)
+	  Want to switch TPMs to use fast internal reference clock (MCGIRCLK) at 4MHz, turned on for VLPS mode (but stop it when in sleep modes):
+	  
+	  	SIM_SOPT2 = (SIM_SOPT2 & ~SIM_SOPT2_TPMSRC_MASK) | SIM_SOPT2_TPMSRC(3);	// select MCGIRCLK for TPM source (current clock setup is for FLL/PLL_by_2)
+	  	MCG_SC   &= ~MCG_SC_FCRDIV_MASK;										// zero fast IR clock divider	  (already zero; may want to divide down anyway)
+	  	MCG_C1	 |= MCG_C1_IRCLKEN_MASK;										// enable MCGIRCLK				  (currently one)
+	  	MCG_C1   |= MCG_C1_IREFSTEN_MASK;										// enable MCGIRCLK in stop mode	  (currently zero)
+	  	MCG_C2	 |= MCG_C2_IRCS_MASK;											// select fast MCGIRCLK			  (currently zero)
+	  
 
 What's smart and/or novel?
 ==========================
@@ -172,6 +177,11 @@ Done
 * Checked TSI interrupt handler disassembly: divides and modulo are shifts & masks for performance (in release at least).
 * Improved sync of backlight on/off with rendering and sleep modes.
 * Debounced capacitive wake-on-tap.
+* Interrupt-driven IR code queue system to avoid main-loop stalls (e.g. for better slider dragging, reduce power use)  
+  * Queue of IrAction instances.
+  * Timer 2 interrupt handler implements actual queue operation and sending. If queue empty on new action, software trigger TPM2 interrupt to kick it off.
+  * Queue handler: steps action's IR sendings, ticking along from interrupt to interrupt. Time delay -> schedule next interrupt.
+  Discovered that use of VLPS mode for idle stops TPM2, so it only updates when other interrupts occur - slow response, eventually stops responding.
   
 Notes
 =====

@@ -184,7 +184,7 @@ void deviceSetStates(const DeviceState* states, int stateCount)
 void deviceDoIrAction(const Device* device, const IrAction* action)
 {
 	unsigned int deviceIndex = getDeviceIndex(device);
-	irDoAction(action, &deviceDynamicState[deviceIndex].toggleFlag);
+	irQueueAction(action, &deviceDynamicState[deviceIndex].toggleFlag);
 }
 
 int deviceAreAllOnDefault()
