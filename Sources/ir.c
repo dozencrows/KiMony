@@ -250,8 +250,6 @@ static void irSendSIRCCode(uint32_t data, int bitCount)
 	sendIrPacketAndWait(&irPacket, 45000);
 }
 
-static uint32_t toggleBit = 0;
-
 void irDoAction(const IrAction* action, uint8_t* toggleFlag)
 {
 	const IrCode* code = action->codes;
