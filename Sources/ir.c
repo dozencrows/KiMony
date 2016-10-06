@@ -37,6 +37,9 @@ typedef struct _IrPacket {
     uint16_t    	timing[IR_STAGE_COUNT];
 } IrPacket;
 
+//-----------------------------------------------------------------------------
+// Encoding of infra-red packets
+//
 #define IRENCODER_STATE_UNDEFINED		0
 #define IRENCODER_STATE_ON				1
 #define IRENCODER_STATE_OFF				2
@@ -221,6 +224,14 @@ static int irEncodeSIRC(IrPacket* packet, uint32_t data, int bitCount, int repea
 	return result;
 }
 
+//-----------------------------------------------------------------------------
+// Sending of IR packets
+//
+static void scheduleIrDelayMs(uint32_t delayMs)
+{
+	sysTickDelayMs(delayMs);
+}
+
 static void sendIrPacketAndWait(IrPacket* packet, uint32_t endDelayUs)
 {
 	uint32_t totalUs = 0;
@@ -233,7 +244,7 @@ static void sendIrPacketAndWait(IrPacket* packet, uint32_t endDelayUs)
 	i2cSendBlock(IR_I2C_ADDRESS, &packet->header.start, IR_PACKET_SIZE(packet));
 
 	uint32_t totalMs = (totalUs + 999) / 1000;
-	sysTickDelayMs(totalMs);
+	scheduleIrDelayMs(totalMs);
 }
 
 static IrPacket irPacket;
@@ -250,34 +261,98 @@ static void irSendSIRCCode(uint32_t data, int bitCount)
 	sendIrPacketAndWait(&irPacket, 45000);
 }
 
-void irDoAction(const IrAction* action, uint8_t* toggleFlag)
+//-----------------------------------------------------------------------------
+// Queued sending control
+//
+#define IRACTION_QUEUE_SIZE	4
+
+typedef struct _QueuedIrAction {
+	const IrAction* action;
+	uint8_t* toggleFlag;
+	int currentCode;
+} QueuedIrAction;
+
+static QueuedIrAction irActionQueue[IRACTION_QUEUE_SIZE];
+static uint8_t irActionQueueWriteIndex = 0;
+volatile static uint8_t irActionQueueReadIndex = 0;
+
+int irIsActionQueueEmpty()
 {
-	const IrCode* code = action->codes;
+	return irActionQueueReadIndex == irActionQueueWriteIndex;
+}
 
-	for (int i = 0; i < action->codeCount; i++, code++) {
-		unsigned int completedCode = code->code;
+void irProcessNextActionCode()
+{
+	uint8_t queueIndex = irActionQueueReadIndex % IRACTION_QUEUE_SIZE;
+	QueuedIrAction* queueEntry = irActionQueue + queueIndex;
 
-		if (code->toggleMask) {
-			*toggleFlag = !*toggleFlag;
+	do {
+		queueEntry->currentCode++;
 
-			if (*toggleFlag) {
-				completedCode |= code->toggleMask;
+		if (queueEntry->currentCode >= queueEntry->action->codeCount) {
+			irActionQueueReadIndex++;
+			if (irIsActionQueueEmpty()) {
+				// Explicitly reset empty queue to avoid eventual wrap-around issues.
+				irActionQueueWriteIndex = 0;
+				irActionQueueReadIndex  = 0;
+				return;
 			}
+
+			queueIndex = irActionQueueReadIndex % IRACTION_QUEUE_SIZE;
+			queueEntry = irActionQueue + queueIndex;
 		}
+	} while (queueEntry->currentCode < 0);
 
-		switch (code->encoding) {
-			case IRCODE_NOP: {
-				sysTickDelayMs(code->code);
-				break;
-			}
-			case IRCODE_RC6: {
-				irSendRC6Code(completedCode, code->bits);
-				break;
-			}
-			case IRCODE_SIRC: {
-				irSendSIRCCode(completedCode, code->bits);
-				break;
-			}
+	const IrCode* code = queueEntry->action->codes + queueEntry->currentCode;
+	unsigned int completedCode = code->code;
+
+	if (code->toggleMask) {
+		*queueEntry->toggleFlag = !*queueEntry->toggleFlag;
+
+		if (*queueEntry->toggleFlag) {
+			completedCode |= code->toggleMask;
+		}
+	}
+
+	switch (code->encoding) {
+		case IRCODE_NOP: {
+			scheduleIrDelayMs(code->code);
+			break;
+		}
+		case IRCODE_RC6: {
+			irSendRC6Code(completedCode, code->bits);
+			break;
+		}
+		case IRCODE_SIRC: {
+			irSendSIRCCode(completedCode, code->bits);
+			break;
 		}
 	}
 }
+
+// TODO: Write irInit to set up interrupt-driven queuing
+// TODO: Make this part of the public API
+void irQueueAction(const IrAction* action, uint8_t* toggleFlag)
+{
+	// TODO: disable update interrupt around this code
+	if (irActionQueueWriteIndex - irActionQueueReadIndex >= IRACTION_QUEUE_SIZE) {
+		return;
+	}
+
+	uint8_t queueIndex = irActionQueueWriteIndex % IRACTION_QUEUE_SIZE;
+
+	irActionQueue[queueIndex].action = action;
+	irActionQueue[queueIndex].toggleFlag = toggleFlag;
+	irActionQueue[queueIndex].currentCode = -1;
+	irActionQueueWriteIndex++;
+}
+
+void irDoAction(const IrAction* action, uint8_t* toggleFlag)
+{
+	irQueueAction(action, toggleFlag);
+	while (!irIsActionQueueEmpty()) {
+		// TODO: revise this to work with interrupt-driven queuing.
+		irProcessNextActionCode();
+	}
+}
+
