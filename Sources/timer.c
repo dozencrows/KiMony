@@ -19,7 +19,14 @@ void timerTPMIRQHandler(uint32_t tpm)
 
 void tpmInit()
 {
+#if defined(TPM_CLOCK_IRCLK)
+  	MCG_SC   &= ~MCG_SC_FCRDIV_MASK;										// zero fast IR clock divider
+  	MCG_C1	 |= MCG_C1_IRCLKEN_MASK | MCG_C1_IREFSTEN_MASK;					// enable MCGIRCLK, also in stop mode
+  	MCG_C2	 |= MCG_C2_IRCS_MASK;											// select fast MCGIRCLK
+  	SIM_SOPT2 = (SIM_SOPT2 & ~SIM_SOPT2_TPMSRC_MASK) | SIM_SOPT2_TPMSRC(3);	// select MCGIRCLK for TPM source
+#else
 	SIM_SOPT2 = (SIM_SOPT2 & ~SIM_SOPT2_TPMSRC_MASK) | SIM_SOPT2_TPMSRC(1);	// PLL / 2 clock
+#endif
 
 	interruptRegisterTPMIRQHandler(timerTPMIRQHandler, 0);
 	interruptRegisterTPMIRQHandler(timerTPMIRQHandler, 1);

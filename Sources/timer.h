@@ -10,7 +10,15 @@
 #include <stdint.h>
 #include "MKL26Z4.h"
 
+// Define this to configure and use the fast internal reference clock to drive TPM
+// at 4MHz
+#define TPM_CLOCK_IRCLK
+
+#if defined(TPM_CLOCK_IRCLK)
+#define TPM_CLOCKS_PER_MILLISECOND 4000
+#else
 #define TPM_CLOCKS_PER_MILLISECOND (DEFAULT_SYSTEM_CLOCK / 1000)	// Assumes TPM clock is PLL/2
+#endif
 
 extern void tpmInit();
 extern void tpmEnableTimer(int timerIndex);
