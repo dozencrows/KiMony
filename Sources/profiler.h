@@ -28,21 +28,21 @@
 #define PROFILE_REPORT(category) printf("%s: %d, %d\n", #category, profilerMetrics.ctr_##category, profilerMetrics.calls_##category)
 
 typedef struct _ProfilerMetrics {
-	PROFILE_CATEGORY(drawlist);
-	PROFILE_CATEGORY(render);
-	PROFILE_CATEGORY(scanline);
-	PROFILE_CATEGORY(clearline);
-	PROFILE_CATEGORY(activationCheck);
-	PROFILE_CATEGORY(primitives);
-	PROFILE_CATEGORY(hline);
-	PROFILE_CATEGORY(vline);
-	PROFILE_CATEGORY(rect);
-	PROFILE_CATEGORY(text);
-	PROFILE_CATEGORY(image);
-	PROFILE_CATEGORY(profileOuter);
-	PROFILE_CATEGORY(profileInner);
-	PROFILE_CATEGORY(blit);
-} ProfilerMetrics;
+    PROFILE_CATEGORY(drawlist);
+    PROFILE_CATEGORY(render);
+    PROFILE_CATEGORY(scanline);
+    PROFILE_CATEGORY(clearline);
+    PROFILE_CATEGORY(activationCheck);
+    PROFILE_CATEGORY(primitives);
+    PROFILE_CATEGORY(hline);
+    PROFILE_CATEGORY(vline);
+    PROFILE_CATEGORY(rect);
+    PROFILE_CATEGORY(text);
+    PROFILE_CATEGORY(image);
+    PROFILE_CATEGORY(profileOuter);
+    PROFILE_CATEGORY(profileInner);
+    PROFILE_CATEGORY(blit);
+}ProfilerMetrics;
 
 extern ProfilerMetrics profilerMetrics;
 
@@ -55,7 +55,5 @@ extern ProfilerMetrics profilerMetrics;
 #define PROFILE_REPORT(category)
 
 #endif
-
-
 
 #endif /* PROFILER_H_ */

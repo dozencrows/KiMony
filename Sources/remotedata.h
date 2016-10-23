@@ -15,10 +15,11 @@
 #ifndef REMOTEDATA_H_
 #define REMOTEDATA_H_
 
-typedef struct _RemoteDataHeader {
-	uint32_t	homeActivityOffset;
-	int			deviceCount;
-	uint32_t	devicesOffset;
+typedef struct _RemoteDataHeader
+{
+    uint32_t homeActivityOffset;
+    int deviceCount;
+    uint32_t devicesOffset;
 } RemoteDataHeader;
 
 #endif /* REMOTEDATA_H_ */

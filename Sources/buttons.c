@@ -24,49 +24,49 @@ static uint32_t buttonsNewState = 0;
 
 void buttonsSetActiveMapping(const ButtonMapping* mapping, int count)
 {
-	activeMapping = mapping;
-	activeMappingCount = count;
+    activeMapping = mapping;
+    activeMappingCount = count;
 }
 
 void buttonsInit()
 {
-	buttonsPollState();
-	buttonsState = buttonsNewState;
+    buttonsPollState();
+    buttonsState = buttonsNewState;
 }
 
 int buttonsPollState()
 {
-	buttonsNewState = keyMatrixPoll();
-	return (buttonsState ^ buttonsNewState) != 0;
+    buttonsNewState = keyMatrixPoll();
+    return (buttonsState ^ buttonsNewState) != 0;
 }
 
 void buttonsClearState()
 {
-	buttonsState = 0;
+    buttonsState = 0;
 }
 
 int buttonsUpdate(const Event** eventTriggered)
 {
-	int result = EVENT_NONE;
-	uint32_t buttonChange = buttonsState ^ buttonsNewState;
+    int result = EVENT_NONE;
+    uint32_t buttonChange = buttonsState ^ buttonsNewState;
 
-	if (buttonChange) {
-		debugSetOverlayHex(0, buttonsNewState);
+    if (buttonChange) {
+        debugSetOverlayHex(0, buttonsNewState);
 
-		uint32_t buttonsNewOn = buttonsNewState & buttonChange;
+        uint32_t buttonsNewOn = buttonsNewState & buttonChange;
 
-		if (buttonsNewOn) {
-			for (size_t i = 0; i < activeMappingCount; i++) {
-				if (activeMapping[i].buttonMask == buttonsNewOn && activeMapping[i].eventOffset) {
-					*eventTriggered = (const Event*)GET_FLASH_PTR(activeMapping[i].eventOffset);
-					result = (*eventTriggered)->type;
-					break;
-				}
-			}
-		}
+        if (buttonsNewOn) {
+            for (size_t i = 0; i < activeMappingCount; i++) {
+                if (activeMapping[i].buttonMask == buttonsNewOn && activeMapping[i].eventOffset) {
+                    *eventTriggered = (const Event*) GET_FLASH_PTR(activeMapping[i].eventOffset);
+                    result = (*eventTriggered)->type;
+                    break;
+                }
+            }
+        }
 
-		buttonsState = buttonsNewState;
-	}
+        buttonsState = buttonsNewState;
+    }
 
-	return result;
+    return result;
 }

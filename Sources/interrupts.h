@@ -29,5 +29,4 @@ void interruptRegisterTPMIRQHandler(TPMIRQHandler irqHandler, uint32_t tpm);
 void interruptRegisterPortAIRQHandler(PortAIRQHandler irqHandler);
 void interruptRegisterPortCDIRQHandler(PortCDIRQHandler irqHandler);
 
-
 #endif /* INTERRUPTS_H_ */

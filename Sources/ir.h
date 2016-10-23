@@ -23,16 +23,18 @@
 #define IR_ACTION_QUEUED	1
 #define IR_ACTION_IGNORED	0
 
-typedef struct _IrCode {
-	unsigned int encoding:4;
-	unsigned int bits:5;
-	unsigned int code:23;
-	uint32_t toggleMask;
+typedef struct _IrCode
+{
+    unsigned int encoding :4;
+    unsigned int bits :5;
+    unsigned int code :23;
+    uint32_t toggleMask;
 } IrCode;
 
-typedef struct _IrAction {
-	int		codeCount;
-	IrCode	codes[];
+typedef struct _IrAction
+{
+    int codeCount;
+    IrCode codes[];
 } IrAction;
 
 extern void irInit();

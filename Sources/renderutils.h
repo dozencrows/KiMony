@@ -19,5 +19,4 @@
 
 extern void renderMessage(const char* message, uint16_t colour);
 
-
 #endif /* RENDERUTILS_H_ */

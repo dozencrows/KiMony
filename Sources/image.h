@@ -17,11 +17,12 @@
 
 #include <stdint.h>
 
-typedef struct _Image {
-	uint16_t width;
-	uint16_t height;
-	uint32_t paletteOffset;
-	uint32_t pixelsOffset;
+typedef struct _Image
+{
+    uint16_t width;
+    uint16_t height;
+    uint32_t paletteOffset;
+    uint32_t pixelsOffset;
 } Image;
 
 #endif /* IMAGE_H_ */

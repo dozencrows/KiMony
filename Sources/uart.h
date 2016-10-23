@@ -18,7 +18,7 @@
 
 extern void uartInit(int channel, int sysclk, int baud);
 extern uint8_t uartGetchar(int channel);
-extern void uartPutchar (int channel, uint8_t ch);
+extern void uartPutchar(int channel, uint8_t ch);
 extern int uartCharReceived(int channel);
 
 #endif /* UART_H_ */

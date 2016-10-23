@@ -17,12 +17,13 @@
 
 #include "MKL26Z4.h"
 
-typedef struct _PortConfig {
-	PORT_MemMapPtr 	port;
-	uint32_t		pcr_mask;
-	uint32_t		pcr_bits;
-	int				pin_count;
-	uint8_t			pins[];
+typedef struct _PortConfig
+{
+    PORT_MemMapPtr port;
+    uint32_t pcr_mask;
+    uint32_t pcr_bits;
+    int pin_count;
+    uint8_t pins[];
 } PortConfig;
 
 typedef const PortConfig* PortConfigPtr;

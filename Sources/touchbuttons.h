@@ -26,14 +26,15 @@ typedef struct _Point Point;
 #define TB_NO_BORDER		0x04
 #define TB_NO_FILL			0x08
 
-typedef struct _TouchButton {
-	uint32_t	eventOffset;
-	uint32_t	textOffset;
-	uint16_t	x, y;
-	uint16_t	width, height;
-	uint16_t	colour;
-	uint16_t	flags;
-	uint32_t	imageOffsets[2];
+typedef struct _TouchButton
+{
+    uint32_t eventOffset;
+    uint32_t textOffset;
+    uint16_t x, y;
+    uint16_t width, height;
+    uint16_t colour;
+    uint16_t flags;
+    uint32_t imageOffsets[2];
 } TouchButton;
 
 extern void touchbuttonsInit();

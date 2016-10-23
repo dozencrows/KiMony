@@ -33,11 +33,12 @@
 
 #define TOUCH_DEBOUNCE_THRESHOLD	2
 
-typedef struct _ButtonState {
-	const TouchButton*	button;
-	unsigned int dirty:1;
-	unsigned int pressed:1;
-	unsigned int counter:6;
+typedef struct _ButtonState
+{
+    const TouchButton* button;
+    unsigned int dirty :1;
+    unsigned int pressed :1;
+    unsigned int counter :6;
 } ButtonState;
 
 static const TouchButton* activeTouchButtons = NULL;
@@ -49,67 +50,65 @@ static int currentTouchButton = -1;
 
 static void renderTouchButton(const TouchButton* button, ButtonState* state)
 {
-	uint16_t colour = state->pressed ? BUTTON_FLASH_COLOUR : button->colour;
-	uint16_t textColour = state->pressed ? 0x0000 : 0xffff;
-	uint32_t imageOffset = state->pressed ? button->imageOffsets[1] : button->imageOffsets[0];
+    uint16_t colour = state->pressed ? BUTTON_FLASH_COLOUR : button->colour;
+    uint16_t textColour = state->pressed ? 0x0000 : 0xffff;
+    uint32_t imageOffset = state->pressed ? button->imageOffsets[1] : button->imageOffsets[0];
 
-	if (!(button->flags & TB_NO_BORDER)) {
-		rendererDrawHLine(button->x, button->y, button->width, BUTTON_BORDER_COLOUR);
-		rendererDrawVLine(button->x, button->y, button->height, BUTTON_BORDER_COLOUR);
-		rendererDrawVLine(button->x + button->width - 1, button->y, button->height, BUTTON_BORDER_COLOUR);
-		rendererDrawHLine(button->x, button->y + button->height - 1, button->width, BUTTON_BORDER_COLOUR);
-	}
+    if (!(button->flags & TB_NO_BORDER)) {
+        rendererDrawHLine(button->x, button->y, button->width, BUTTON_BORDER_COLOUR);
+        rendererDrawVLine(button->x, button->y, button->height, BUTTON_BORDER_COLOUR);
+        rendererDrawVLine(button->x + button->width - 1, button->y, button->height, BUTTON_BORDER_COLOUR);
+        rendererDrawHLine(button->x, button->y + button->height - 1, button->width, BUTTON_BORDER_COLOUR);
+    }
 
-	if (!(button->flags & TB_NO_FILL)) {
-		if (button->flags & TB_NO_BORDER) {
-			rendererDrawRect(button->x, button->y, button->width, button->height, colour);
-		}
-		else {
-			rendererDrawRect(button->x + 1, button->y + 1, button->width - 2, button->height - 2, colour);
-		}
-	}
+    if (!(button->flags & TB_NO_FILL)) {
+        if (button->flags & TB_NO_BORDER) {
+            rendererDrawRect(button->x, button->y, button->width, button->height, colour);
+        } else {
+            rendererDrawRect(button->x + 1, button->y + 1, button->width - 2, button->height - 2, colour);
+        }
+    }
 
-	if (imageOffset) {
-		const Image* image = (const Image*) GET_FLASH_PTR(imageOffset);
-		rendererDrawImage(image, button->x + (button->width / 2) - (image->width / 2), button->y + (button->height / 2) - (image->height / 2));
-	}
+    if (imageOffset) {
+        const Image* image = (const Image*) GET_FLASH_PTR(imageOffset);
+        rendererDrawImage(image, button->x + (button->width / 2) - (image->width / 2), button->y + (button->height / 2) - (image->height / 2));
+    }
 
-	if (button->textOffset) {
-		const char* text = (const char*)GET_FLASH_PTR(button->textOffset);
-		uint16_t textWidth, textHeight;
-		rendererGetStringBounds(text, &KiMony, &textWidth, &textHeight);
+    if (button->textOffset) {
+        const char* text = (const char*) GET_FLASH_PTR(button->textOffset);
+        uint16_t textWidth, textHeight;
+        rendererGetStringBounds(text, &KiMony, &textWidth, &textHeight);
 
-		if (button->flags & TB_CENTRE_TEXT) {
-			rendererDrawString(text, button->x + (button->width / 2) - (textWidth / 2),
-									 button->y + (button->height / 2) - (textHeight / 2), &KiMony, textColour);
-		}
-		else {
-			rendererDrawString(text, button->x + 3, button->y + 3, &KiMony, textColour);
-		}
-	}
+        if (button->flags & TB_CENTRE_TEXT) {
+            rendererDrawString(text, button->x + (button->width / 2) - (textWidth / 2), button->y + (button->height / 2) - (textHeight / 2), &KiMony,
+                textColour);
+        } else {
+            rendererDrawString(text, button->x + 3, button->y + 3, &KiMony, textColour);
+        }
+    }
 }
 
 static int hitTestTouchButtons(const Point* touch)
 {
-	for(int i = 0; i < activeTouchButtonsCount; i++) {
-		const TouchButton* button = buttonState[i].button;
+    for (int i = 0; i < activeTouchButtonsCount; i++) {
+        const TouchButton* button = buttonState[i].button;
 
-		if (touch->x >= button->x && button->width > touch->x - button->x) {
-			if (touch->y >= button->y && button->height > touch->y - button->y) {
-				return i;
-			}
-		}
-	}
+        if (touch->x >= button->x && button->width > touch->x - button->x) {
+            if (touch->y >= button->y && button->height > touch->y - button->y) {
+                return i;
+            }
+        }
+    }
 
-	return -1;
+    return -1;
 }
 
 static void setCurrentButtonPressedState(int pressed)
 {
-	if (currentTouchButton >= 0) {
-		buttonState[currentTouchButton].pressed = pressed;
-		buttonState[currentTouchButton].dirty = 1;
-	}
+    if (currentTouchButton >= 0) {
+        buttonState[currentTouchButton].pressed = pressed;
+        buttonState[currentTouchButton].dirty = 1;
+    }
 }
 
 void touchbuttonsInit()
@@ -118,119 +117,117 @@ void touchbuttonsInit()
 
 void touchbuttonsSetActive(const TouchButton* buttons, int count)
 {
-	activeTouchButtons = buttons;
-	activeTouchButtonsCount = MIN(count, MAX_BUTTONS);
+    activeTouchButtons = buttons;
+    activeTouchButtonsCount = MIN(count, MAX_BUTTONS);
 
-	for (int i = 0; i < activeTouchButtonsCount; i++) {
-		buttonState[i].button = buttons + i;
-		buttonState[i].dirty = 1;
-		buttonState[i].pressed = 0;
-		buttonState[i].counter = 0;
-	}
+    for (int i = 0; i < activeTouchButtonsCount; i++) {
+        buttonState[i].button = buttons + i;
+        buttonState[i].dirty = 1;
+        buttonState[i].pressed = 0;
+        buttonState[i].counter = 0;
+    }
 }
 
 void touchbuttonsRender()
 {
-	//PROFILE_ENTER(drawlist);
-	for(int i = 0; i < activeTouchButtonsCount; i++) {
-		if (buttonState[i].dirty) {
-			const TouchButton* button = buttonState[i].button;
-			renderTouchButton(button, buttonState + i);
-			buttonState[i].dirty = 0;
-		}
-	}
-	//PROFILE_EXIT(drawlist);
+    //PROFILE_ENTER(drawlist);
+    for (int i = 0; i < activeTouchButtonsCount; i++) {
+        if (buttonState[i].dirty) {
+            const TouchButton* button = buttonState[i].button;
+            renderTouchButton(button, buttonState + i);
+            buttonState[i].dirty = 0;
+        }
+    }
+    //PROFILE_EXIT(drawlist);
 }
 
 void touchbuttonsRedraw()
 {
-	for(int i = 0; i < activeTouchButtonsCount; i++) {
-		buttonState[i].dirty = 1;
-	}
+    for (int i = 0; i < activeTouchButtonsCount; i++) {
+        buttonState[i].dirty = 1;
+    }
 }
 
 int touchButtonsUpdate(const Event** eventTriggered)
 {
-	int result = EVENT_NONE;
+    int result = EVENT_NONE;
 
-	for(int i = 0; i < activeTouchButtonsCount; i++) {
-		if (buttonState[i].counter > 0) {
-			buttonState[i].counter--;
-			if (buttonState[i].counter == 0) {
-				buttonState[i].pressed = 0;
-				buttonState[i].dirty = 1;
-			}
-		}
-	}
+    for (int i = 0; i < activeTouchButtonsCount; i++) {
+        if (buttonState[i].counter > 0) {
+            buttonState[i].counter--;
+            if (buttonState[i].counter == 0) {
+                buttonState[i].pressed = 0;
+                buttonState[i].dirty = 1;
+            }
+        }
+    }
 
-	touchStateCounter++;
+    touchStateCounter++;
 
-	switch (touchState) {
-		case TOUCH_STATE_PENDING: {
-			if (touchStateCounter > TOUCH_DEBOUNCE_THRESHOLD) {
-				Point touch;
+    switch (touchState) {
+        case TOUCH_STATE_PENDING: {
+            if (touchStateCounter > TOUCH_DEBOUNCE_THRESHOLD) {
+                Point touch;
 
-				if (touchScreenGetCoordinates(&touch)) {
-					int touchButton = hitTestTouchButtons(&touch);
-					if (touchButton >= 0 && touchButton == currentTouchButton) {
-						touchState = TOUCH_STATE_ACTIVE;
-						if (activeTouchButtons[currentTouchButton].eventOffset) {
-							if (activeTouchButtons[currentTouchButton].flags & TB_PRESS_ACTIVATE) {
-								*eventTriggered = (const Event*)GET_FLASH_PTR(activeTouchButtons[currentTouchButton].eventOffset);
-								result = (*eventTriggered)->type;
-							}
-						}
-					}
-					else {
-						touchState = TOUCH_STATE_IDLE;
-					}
-				}
-				else {
-					touchState = TOUCH_STATE_IDLE;
-				}
+                if (touchScreenGetCoordinates(&touch)) {
+                    int touchButton = hitTestTouchButtons(&touch);
+                    if (touchButton >= 0 && touchButton == currentTouchButton) {
+                        touchState = TOUCH_STATE_ACTIVE;
+                        if (activeTouchButtons[currentTouchButton].eventOffset) {
+                            if (activeTouchButtons[currentTouchButton].flags & TB_PRESS_ACTIVATE) {
+                                *eventTriggered = (const Event*) GET_FLASH_PTR(activeTouchButtons[currentTouchButton].eventOffset);
+                                result = (*eventTriggered)->type;
+                            }
+                        }
+                    } else {
+                        touchState = TOUCH_STATE_IDLE;
+                    }
+                } else {
+                    touchState = TOUCH_STATE_IDLE;
+                }
 
-				if (touchState == TOUCH_STATE_IDLE) {
-					setCurrentButtonPressedState(0);
-				}
-			}
-			break;
-		}
-		case TOUCH_STATE_ACTIVE: {
-			Point touch;
-			if (!touchScreenGetCoordinates(&touch)) {
-				touchState = TOUCH_STATE_IDLE;
-				setCurrentButtonPressedState(0);
-				if (currentTouchButton >= 0) {
-					if (activeTouchButtons[currentTouchButton].eventOffset) {
-						if (!(activeTouchButtons[currentTouchButton].flags & TB_PRESS_ACTIVATE)) {
-							*eventTriggered = (const Event*)GET_FLASH_PTR(activeTouchButtons[currentTouchButton].eventOffset);
-							result = (*eventTriggered)->type;
-						}
-					}
-				}
-			}
-			break;
-		}
-		default: {
-			break;
-		}
-	}
+                if (touchState == TOUCH_STATE_IDLE) {
+                    setCurrentButtonPressedState(0);
+                }
+            }
+            break;
+        }
+        case TOUCH_STATE_ACTIVE: {
+            Point touch;
+            if (!touchScreenGetCoordinates(&touch)) {
+                touchState = TOUCH_STATE_IDLE;
+                setCurrentButtonPressedState(0);
+                if (currentTouchButton >= 0) {
+                    if (activeTouchButtons[currentTouchButton].eventOffset) {
+                        if (!(activeTouchButtons[currentTouchButton].flags & TB_PRESS_ACTIVATE)) {
+                            *eventTriggered = (const Event*) GET_FLASH_PTR(activeTouchButtons[currentTouchButton].eventOffset);
+                            result = (*eventTriggered)->type;
+                        }
+                    }
+                }
+            }
+            break;
+        }
+        default: {
+            break;
+        }
+    }
 
-	return result;
+    return result;
 }
 
 void touchbuttonsProcessTouch(const Point* touch)
 {
-	switch (touchState) {
-		case TOUCH_STATE_IDLE: {
-			touchState = TOUCH_STATE_PENDING;
-			touchStateCounter = 0;
-			currentTouchButton = hitTestTouchButtons(touch);
-			setCurrentButtonPressedState(1);
-			break;
-		}
-		default: {
-			break;
-		}
-	}
+    switch (touchState) {
+        case TOUCH_STATE_IDLE: {
+            touchState = TOUCH_STATE_PENDING;
+            touchStateCounter = 0;
+            currentTouchButton = hitTestTouchButtons(touch);
+            setCurrentButtonPressedState(1);
+            break;
+        }
+        default: {
+            break;
+        }
+    }
 }

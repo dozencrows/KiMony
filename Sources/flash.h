@@ -23,8 +23,9 @@ extern void cpuFlashDownload();
 
 #define FLASH_DATA_WATERMARK 0xBABABEBE
 
-typedef struct _FlashDataHeader {
-	uint32_t watermark;
+typedef struct _FlashDataHeader
+{
+    uint32_t watermark;
 } FlashDataHeader;
 
 extern uint8_t __FlashStoreBase[];

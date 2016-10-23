@@ -18,16 +18,17 @@
 
 #define ELECTRODE_BUFFER_SIZE	4
 
-typedef struct _Electrode {
-	uint8_t 	channel;
-	uint8_t		flags;
-	uint16_t	baseline;
+typedef struct _Electrode
+{
+    uint8_t channel;
+    uint8_t flags;
+    uint16_t baseline;
 
-	uint16_t	buffer[ELECTRODE_BUFFER_SIZE];
+    uint16_t buffer[ELECTRODE_BUFFER_SIZE];
 #if defined(CAPELECTRODE_TIMESTAMPS)
-	uint32_t	timestamp[ELECTRODE_BUFFER_SIZE];
+    uint32_t timestamp[ELECTRODE_BUFFER_SIZE];
 #endif
-	uint32_t	bufferWriteIndex;
+    uint32_t bufferWriteIndex;
 } Electrode;
 
 extern void capElectrodeInit();

@@ -23,17 +23,7 @@ Plan
   * USB serial download of remote data instead of UART
 
 Work-in-progress
-================
-  * Interrupt-driven IR code queue system to avoid main-loop stalls (e.g. for better slider dragging, reduce power use)  
-	* Use TPM timer 2 to time delays (currently generic counter; replace this with bespoke IRQ handler)
-	  Want to switch TPMs to use fast internal reference clock (MCGIRCLK) at 4MHz, turned on for VLPS mode (but stop it when in sleep modes):
-	  
-	  	SIM_SOPT2 = (SIM_SOPT2 & ~SIM_SOPT2_TPMSRC_MASK) | SIM_SOPT2_TPMSRC(3);	// select MCGIRCLK for TPM source (current clock setup is for FLL/PLL_by_2)
-	  	MCG_SC   &= ~MCG_SC_FCRDIV_MASK;										// zero fast IR clock divider	  (already zero; may want to divide down anyway)
-	  	MCG_C1	 |= MCG_C1_IRCLKEN_MASK;										// enable MCGIRCLK				  (currently one)
-	  	MCG_C1   |= MCG_C1_IREFSTEN_MASK;										// enable MCGIRCLK in stop mode	  (currently zero)
-	  	MCG_C2	 |= MCG_C2_IRCS_MASK;											// select fast MCGIRCLK			  (currently zero)
-	  
+================	  
 
 What's smart and/or novel?
 ==========================
@@ -182,6 +172,7 @@ Done
   * Timer 2 interrupt handler implements actual queue operation and sending. If queue empty on new action, software trigger TPM2 interrupt to kick it off.
   * Queue handler: steps action's IR sendings, ticking along from interrupt to interrupt. Time delay -> schedule next interrupt.
   Discovered that use of VLPS mode for idle stops TPM2, so it only updates when other interrupts occur - slow response, eventually stops responding.
+  * Switch TPM base clock to fast internal reference clock (4MHz) so it can run in idle (VLPS) state.
   
 Notes
 =====
@@ -511,7 +502,7 @@ Preconditions: both electrodes need to be in touched state
 3. active.index  = e1.index < e2.index ? e1.index : e2.index
 4. first.value   = e1.index < e2.index ? e2.value : e1.value
 5. value = (active.index * electrode_range) + ((electrode_range * first.value) / e.range)
-
+		
 Analogue slider wakeup
 ----------------------
 On sleeping:
@@ -525,4 +516,11 @@ On waking, reconfigure TSI:
   - Disable wakeup
   - Set interrupt mode to 'end-of-scan'
   - Kick off new scan cycle, wait for buffers to fill
-  
+
+IRCLK use for TPM Timers
+------------------------
+SIM_SOPT2 = (SIM_SOPT2 & ~SIM_SOPT2_TPMSRC_MASK) | SIM_SOPT2_TPMSRC(3);	// select MCGIRCLK for TPM source (current clock setup is for FLL/PLL_by_2)
+MCG_SC   &= ~MCG_SC_FCRDIV_MASK;										// zero fast IR clock divider	  (already zero; may want to divide down anyway)
+MCG_C1	 |= MCG_C1_IRCLKEN_MASK;										// enable MCGIRCLK				  (currently one)
+MCG_C1   |= MCG_C1_IREFSTEN_MASK;										// enable MCGIRCLK in stop mode	  (currently zero)
+MCG_C2	 |= MCG_C2_IRCS_MASK;                                            // select fast MCGIRCLK			  (currently zero)

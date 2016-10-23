@@ -18,21 +18,23 @@
 
 #define ACTIVITY_NODEVICES	1
 
-typedef struct _TouchButtonPage {
-	int touchButtonCount;
-	uint32_t touchButtonOffset;
+typedef struct _TouchButtonPage
+{
+    int touchButtonCount;
+    uint32_t touchButtonOffset;
 } TouchButtonPage;
 
-typedef struct _Activity {
-	uint32_t flags;
-	int buttonMappingCount;
-	uint32_t buttonMappingOffset;
-	int gestureMappingCount;
-	uint32_t gestureMappingOffset;
-	int touchButtonPageCount;
-	uint32_t touchButtonPagesOffset;
-	int deviceStateCount;
-	uint32_t deviceStatesOffset;
+typedef struct _Activity
+{
+    uint32_t flags;
+    int buttonMappingCount;
+    uint32_t buttonMappingOffset;
+    int gestureMappingCount;
+    uint32_t gestureMappingOffset;
+    int touchButtonPageCount;
+    uint32_t touchButtonPagesOffset;
+    int deviceStateCount;
+    uint32_t deviceStatesOffset;
 } Activity;
 
 #endif /* ACTIVITY_H_ */

@@ -23,5 +23,4 @@ extern int keyMatrixCheckInterrupt();
 extern uint32_t keyMatrixPoll();
 extern void testKeyMatrix();
 
-
 #endif /* KEYMATRIX_H_ */

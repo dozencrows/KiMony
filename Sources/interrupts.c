@@ -32,101 +32,100 @@ static TPMIRQHandler tpmIRQHandlers[MAX_TPM][MAX_IRQ_HANDLERS];
 
 void LPTimer_IRQHandler()
 {
-	for(int i = 0; i < lptmrIRQHandlerCount; i++) {
-		lptmrIRQHandlers[i]();
-	}
+    for (int i = 0; i < lptmrIRQHandlerCount; i++) {
+        lptmrIRQHandlers[i]();
+    }
 
-	LPTMR0_CSR |= LPTMR_CSR_TCF_MASK;
+    LPTMR0_CSR |= LPTMR_CSR_TCF_MASK;
 }
 
 void PIT_IRQHandler()
 {
-	for(int i = 0; i < pitIRQHandlerCount; i++) {
-		pitIRQHandlers[i]();
-	}
+    for (int i = 0; i < pitIRQHandlerCount; i++) {
+        pitIRQHandlers[i]();
+    }
 
-	PIT_TFLG0 = PIT_TFLG_TIF_MASK;
-	PIT_TFLG1 = PIT_TFLG_TIF_MASK;
+    PIT_TFLG0 = PIT_TFLG_TIF_MASK;
+    PIT_TFLG1 = PIT_TFLG_TIF_MASK;
 }
 
 void TPM_IRQHandler(uint32_t tpm)
 {
-	for(int i = 0; i < tpmIRQHandlerCount[tpm]; i++) {
-		tpmIRQHandlers[tpm][i](tpm);
-	}
+    for (int i = 0; i < tpmIRQHandlerCount[tpm]; i++) {
+        tpmIRQHandlers[tpm][i](tpm);
+    }
 
-	tpmPtrs[tpm]->SC |= TPM_SC_TOF_MASK;
+    tpmPtrs[tpm]->SC |= TPM_SC_TOF_MASK;
 }
 
 void TPM0_IRQHandler()
 {
-	TPM_IRQHandler(0);
+    TPM_IRQHandler(0);
 }
 
 void TPM1_IRQHandler()
 {
-	TPM_IRQHandler(1);
+    TPM_IRQHandler(1);
 }
 
 void TPM2_IRQHandler()
 {
-	TPM_IRQHandler(2);
+    TPM_IRQHandler(2);
 }
-
 
 void PORTA_IRQHandler()
 {
-	uint32_t portAISFR = PORTA_ISFR;
+    uint32_t portAISFR = PORTA_ISFR;
 
-	for(int i = 0; i < portAIRQHandlerCount; i++) {
-		portAIRQHandlers[i](portAISFR);
-	}
+    for (int i = 0; i < portAIRQHandlerCount; i++) {
+        portAIRQHandlers[i](portAISFR);
+    }
 
-	PORTA_ISFR = portAISFR;
+    PORTA_ISFR = portAISFR;
 }
 
 void PORTC_PORTD_IRQHandler()
 {
-	uint32_t portCISFR = PORTC_ISFR;
-	uint32_t portDISFR = PORTD_ISFR;
+    uint32_t portCISFR = PORTC_ISFR;
+    uint32_t portDISFR = PORTD_ISFR;
 
-	for(int i = 0; i < portCDIRQHandlerCount; i++) {
-		portCDIRQHandlers[i](portCISFR, portDISFR);
-	}
+    for (int i = 0; i < portCDIRQHandlerCount; i++) {
+        portCDIRQHandlers[i](portCISFR, portDISFR);
+    }
 
-	PORTC_ISFR = portCISFR;
-	PORTD_ISFR = portDISFR;
+    PORTC_ISFR = portCISFR;
+    PORTD_ISFR = portDISFR;
 }
 
 static void addIrqHandler(void* irqHandler, int* irqHandlerCount, void** irqHandlerArray)
 {
-	if (*irqHandlerCount < MAX_IRQ_HANDLERS) {
-		irqHandlerArray[*irqHandlerCount] = irqHandler;
-		*irqHandlerCount = *irqHandlerCount + 1;
-	}
+    if (*irqHandlerCount < MAX_IRQ_HANDLERS) {
+        irqHandlerArray[*irqHandlerCount] = irqHandler;
+        *irqHandlerCount = *irqHandlerCount + 1;
+    }
 }
 
 void interruptRegisterLPTMRIRQHandler(LPTMRIRQHandler irqHandler)
 {
-	addIrqHandler(irqHandler, &lptmrIRQHandlerCount, (void**)lptmrIRQHandlers);
+    addIrqHandler(irqHandler, &lptmrIRQHandlerCount, (void**) lptmrIRQHandlers);
 }
 
 void interruptRegisterPITIRQHandler(PITIRQHandler irqHandler)
 {
-	addIrqHandler(irqHandler, &pitIRQHandlerCount, (void**)pitIRQHandlers);
+    addIrqHandler(irqHandler, &pitIRQHandlerCount, (void**) pitIRQHandlers);
 }
 
 void interruptRegisterTPMIRQHandler(TPMIRQHandler irqHandler, uint32_t tpm)
 {
-	addIrqHandler(irqHandler, tpmIRQHandlerCount + tpm, (void**)(tpmIRQHandlers + tpm));
+    addIrqHandler(irqHandler, tpmIRQHandlerCount + tpm, (void**) (tpmIRQHandlers + tpm));
 }
 
 void interruptRegisterPortAIRQHandler(PortAIRQHandler irqHandler)
 {
-	addIrqHandler(irqHandler, &portAIRQHandlerCount, (void**)portAIRQHandlers);
+    addIrqHandler(irqHandler, &portAIRQHandlerCount, (void**) portAIRQHandlers);
 }
 
 void interruptRegisterPortCDIRQHandler(PortCDIRQHandler irqHandler)
 {
-	addIrqHandler(irqHandler, &portCDIRQHandlerCount, (void**)portCDIRQHandlers);
+    addIrqHandler(irqHandler, &portCDIRQHandlerCount, (void**) portCDIRQHandlers);
 }

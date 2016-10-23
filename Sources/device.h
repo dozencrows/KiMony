@@ -25,23 +25,26 @@ typedef struct _IrAction IrAction;
 #define OPTION_ALWAYS_SET			0x0008
 #define OPTION_ABSOLUTE_FROM_ZERO	0x0010
 
-typedef struct _Option {
-	uint16_t	flags;
-	uint8_t		maxValue;
-	uint8_t		actionCount;
-	uint32_t	preActionOffset;
-	uint32_t	actionsOffset;
-	uint32_t	postDelaysOffset;
+typedef struct _Option
+{
+    uint16_t flags;
+    uint8_t maxValue;
+    uint8_t actionCount;
+    uint32_t preActionOffset;
+    uint32_t actionsOffset;
+    uint32_t postDelaysOffset;
 } Option;
 
-typedef struct _Device {
-	int			optionCount;
-	uint32_t	optionsOffset;
+typedef struct _Device
+{
+    int optionCount;
+    uint32_t optionsOffset;
 } Device;
 
-typedef struct _DeviceState {
-	uint32_t	deviceOffset;
-	uint32_t	optionValuesOffset;
+typedef struct _DeviceState
+{
+    uint32_t deviceOffset;
+    uint32_t optionValuesOffset;
 } DeviceState;
 
 extern void deviceInit();

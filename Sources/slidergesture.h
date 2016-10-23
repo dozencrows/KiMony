@@ -11,20 +11,15 @@
 #include <stdint.h>
 #include "event.h"
 
-typedef struct _GestureMapping {
-	uint32_t	gesture;
-	uint32_t	eventOffset;
+typedef struct _GestureMapping
+{
+    uint32_t gesture;
+    uint32_t eventOffset;
 } GestureMapping;
 
-typedef enum {
-	NONE 		= 0,
-	TAP			= 1,
-	DRAG_LEFT	= 2,
-	DRAG_RIGHT	= 3,
-	SWIPE_LEFT	= 4,
-	SWIPE_RIGHT	= 5,
-	TOUCH		= 127,
-	TAP_WOKEN	= 128,
+typedef enum
+{
+    NONE = 0, TAP = 1, DRAG_LEFT = 2, DRAG_RIGHT = 3, SWIPE_LEFT = 4, SWIPE_RIGHT = 5, TOUCH = 127, TAP_WOKEN = 128,
 } Gesture;
 
 extern void sliderGestureInit();

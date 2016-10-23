@@ -20,7 +20,7 @@ typedef struct _Point Point;
 extern void touchScreenInit();
 extern void touchScreenCalibrate();
 extern void touchScreenTest();
-extern int	touchScreenGetCoordinates(Point* p);
+extern int touchScreenGetCoordinates(Point* p);
 extern void touchScreenClearInterrupt();
 extern int touchScreenCheckInterrupt();
 extern void touchScreenDisconnect();

@@ -28,15 +28,18 @@
 typedef struct _IrAction IrAction;
 typedef struct _Activity Activity;
 
-typedef struct _Event {
-	uint32_t	type;
-	union {
-		struct {
-			uint32_t irActionOffset;
-			uint32_t deviceOffset;
-		};
-		uint32_t activityOffset;
-	};
+typedef struct _Event
+{
+    uint32_t type;
+    union
+    {
+        struct
+        {
+            uint32_t irActionOffset;
+            uint32_t deviceOffset;
+        };
+        uint32_t activityOffset;
+    };
 } Event;
 
 #endif /* EVENT_H_ */

@@ -94,77 +94,78 @@
 #define FXOS8700CQ_TRANS_THS_THS(x)			((x & 0x7f) << FXOS8700CQ_TRANS_THS_THS_BIT)
 #define FXOS8700CQ_TRANS_THS_DBCNTM_MASK	(1 << FXOS8700CQ_TRANS_THS_DBCNTM_BIT)
 
-typedef struct _SensorData {
-	int16_t	x, y, z;
+typedef struct _SensorData
+{
+    int16_t x, y, z;
 } SensorData;
 
 static int accelInitialised = 0;
 
-static const PortConfig portDPins =
-{
-	PORTD_BASE_PTR,
-	~(PORT_PCR_ISF_MASK | PORT_PCR_MUX_MASK | PORT_PCR_IRQC_MASK),
-	PORT_PCR_MUX(1) | PORT_PCR_IRQC(0x0a) | PORT_PCR_PS_MASK | PORT_PCR_PE_MASK,
-	2,
-	{ 0, 1 }
+static const PortConfig portDPins = {
+    PORTD_BASE_PTR,
+    ~(PORT_PCR_ISF_MASK | PORT_PCR_MUX_MASK | PORT_PCR_IRQC_MASK),
+    PORT_PCR_MUX(1) | PORT_PCR_IRQC(0x0a) | PORT_PCR_PS_MASK | PORT_PCR_PE_MASK,
+    2,
+    { 0, 1 }
 };
 
 static volatile int accelerometerInt1Flag = 0;
 
 static void irqHandlerPortCD(uint32_t portCISFR, uint32_t portDISFR)
 {
-	if (portDISFR & 1) {
-		//debugLEDOn();
-		accelerometerInt1Flag++;
-	}
+    if (portDISFR & 1) {
+        //debugLEDOn();
+        accelerometerInt1Flag++;
+    }
 }
 
 int accelProcessInterrupt()
 {
-	accelerometerInt1Flag = 0;
-	uint8_t intSource = i2cChannelReadByte(FXOS8700CQ_I2C_CHANNEL, FXOS8700CQ_SLAVE_ADDR, FXOS8700CQ_INT_SOURCE);
+    accelerometerInt1Flag = 0;
+    uint8_t intSource = i2cChannelReadByte(FXOS8700CQ_I2C_CHANNEL, FXOS8700CQ_SLAVE_ADDR, FXOS8700CQ_INT_SOURCE);
 
-	if (intSource & FXOS8700CQ_INT_TRANS_MASK) {
-		uint8_t transientStatus = i2cChannelReadByte(FXOS8700CQ_I2C_CHANNEL, FXOS8700CQ_SLAVE_ADDR, FXOS8700CQ_TRANSIENT_SRC);
-		uint8_t zAxisStatus = transientStatus & (FXOS8700CQ_TRANS_SRC_TRAN_ZEF_MASK|FXOS8700CQ_TRANS_SRC_TRAN_ZPOL_MASK);
-		if (zAxisStatus == FXOS8700CQ_TRANS_SRC_Z_NEGATIVE) {
-			return ACCEL_INTERRUPT_RECOGNISED;
-		}
-	}
+    if (intSource & FXOS8700CQ_INT_TRANS_MASK) {
+        uint8_t transientStatus = i2cChannelReadByte(FXOS8700CQ_I2C_CHANNEL, FXOS8700CQ_SLAVE_ADDR, FXOS8700CQ_TRANSIENT_SRC);
+        uint8_t zAxisStatus = transientStatus & (FXOS8700CQ_TRANS_SRC_TRAN_ZEF_MASK | FXOS8700CQ_TRANS_SRC_TRAN_ZPOL_MASK);
+        if (zAxisStatus == FXOS8700CQ_TRANS_SRC_Z_NEGATIVE) {
+            return ACCEL_INTERRUPT_RECOGNISED;
+        }
+    }
 
-	return ACCEL_INTERRUPT_IGNORED;
+    return ACCEL_INTERRUPT_IGNORED;
 }
 
 void accelInit()
 {
-	sysTickDelayMs(5);
+    sysTickDelayMs(5);
 
-	uint8_t whoAmI = i2cChannelReadByte(FXOS8700CQ_I2C_CHANNEL, FXOS8700CQ_SLAVE_ADDR, FXOS8700CQ_WHOAMI);
+    uint8_t whoAmI = i2cChannelReadByte(FXOS8700CQ_I2C_CHANNEL, FXOS8700CQ_SLAVE_ADDR, FXOS8700CQ_WHOAMI);
 
-	if (whoAmI == FXOS8700CQ_WHOAMI_VAL) {
-		SIM_SCGC5 |= SIM_SCGC5_PORTD_MASK;
-		portInitialise(&portDPins);
-		FGPIOD_PDDR &= ~(3);
+    if (whoAmI == FXOS8700CQ_WHOAMI_VAL) {
+        SIM_SCGC5 |= SIM_SCGC5_PORTD_MASK;
+        portInitialise(&portDPins);
+        FGPIOD_PDDR &= ~(3);
 
-		// Set up transient acceleration interrupt on all axes with 100Hz read rate, 0.063g threshold, debounced to 150ms
-		i2cChannelSendByte(FXOS8700CQ_I2C_CHANNEL, FXOS8700CQ_SLAVE_ADDR, FXOS8700CQ_CTRL_REG1, 0);
-		i2cChannelSendByte(FXOS8700CQ_I2C_CHANNEL, FXOS8700CQ_SLAVE_ADDR, FXOS8700CQ_TRANSIENT_CFG,
-							FXOS8700CQ_TRANS_CFG_ELE_MASK|FXOS8700CQ_TRANS_CFG_ZEFE_MASK);
-		i2cChannelSendByte(FXOS8700CQ_I2C_CHANNEL, FXOS8700CQ_SLAVE_ADDR, FXOS8700CQ_TRANSIENT_THS, FXOS8700CQ_TRANS_THS_THS(1));
-		i2cChannelSendByte(FXOS8700CQ_I2C_CHANNEL, FXOS8700CQ_SLAVE_ADDR, FXOS8700CQ_TRANSIENT_COUNT, 15);
-		// Transient interrupt enabled on INT1 output (MCU input D0)
-		i2cChannelSendByte(FXOS8700CQ_I2C_CHANNEL, FXOS8700CQ_SLAVE_ADDR, FXOS8700CQ_CTRL_REG4, FXOS8700CQ_INT_TRANS_MASK);
-		i2cChannelSendByte(FXOS8700CQ_I2C_CHANNEL, FXOS8700CQ_SLAVE_ADDR, FXOS8700CQ_CTRL_REG5, FXOS8700CQ_INT_TRANS_MASK);
+        // Set up transient acceleration interrupt on all axes with 100Hz read rate, 0.063g threshold, debounced to 150ms
+        i2cChannelSendByte(FXOS8700CQ_I2C_CHANNEL, FXOS8700CQ_SLAVE_ADDR, FXOS8700CQ_CTRL_REG1, 0);
+        i2cChannelSendByte(FXOS8700CQ_I2C_CHANNEL, FXOS8700CQ_SLAVE_ADDR, FXOS8700CQ_TRANSIENT_CFG,
+        FXOS8700CQ_TRANS_CFG_ELE_MASK | FXOS8700CQ_TRANS_CFG_ZEFE_MASK);
+        i2cChannelSendByte(FXOS8700CQ_I2C_CHANNEL, FXOS8700CQ_SLAVE_ADDR, FXOS8700CQ_TRANSIENT_THS, FXOS8700CQ_TRANS_THS_THS(1));
+        i2cChannelSendByte(FXOS8700CQ_I2C_CHANNEL, FXOS8700CQ_SLAVE_ADDR, FXOS8700CQ_TRANSIENT_COUNT, 15);
+        // Transient interrupt enabled on INT1 output (MCU input D0)
+        i2cChannelSendByte(FXOS8700CQ_I2C_CHANNEL, FXOS8700CQ_SLAVE_ADDR, FXOS8700CQ_CTRL_REG4, FXOS8700CQ_INT_TRANS_MASK);
+        i2cChannelSendByte(FXOS8700CQ_I2C_CHANNEL, FXOS8700CQ_SLAVE_ADDR, FXOS8700CQ_CTRL_REG5, FXOS8700CQ_INT_TRANS_MASK);
 
-		interruptRegisterPortCDIRQHandler(irqHandlerPortCD);
-		NVIC_EnableIRQ(PORTC_PORTD_IRQn);
-		i2cChannelSendByte(FXOS8700CQ_I2C_CHANNEL, FXOS8700CQ_SLAVE_ADDR, FXOS8700CQ_CTRL_REG1, FXOS8700CQ_CTRL_REG1_ODR(3)|FXOS8700CQ_CTRL_REG1_ACTIVE_MASK);
+        interruptRegisterPortCDIRQHandler(irqHandlerPortCD);
+        NVIC_EnableIRQ(PORTC_PORTD_IRQn);
+        i2cChannelSendByte(FXOS8700CQ_I2C_CHANNEL, FXOS8700CQ_SLAVE_ADDR, FXOS8700CQ_CTRL_REG1,
+            FXOS8700CQ_CTRL_REG1_ODR(3) | FXOS8700CQ_CTRL_REG1_ACTIVE_MASK);
 
-		accelInitialised = 1;
-	}
+        accelInitialised = 1;
+    }
 }
 
 int accelCheckTransientInterrupt()
 {
-	return accelerometerInt1Flag > 0;
+    return accelerometerInt1Flag > 0;
 }

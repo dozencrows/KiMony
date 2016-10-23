@@ -18,9 +18,10 @@
 #include <stdint.h>
 #include "event.h"
 
-typedef struct _ButtonMapping {
-	uint32_t	buttonMask;
-	uint32_t	eventOffset;
+typedef struct _ButtonMapping
+{
+    uint32_t buttonMask;
+    uint32_t eventOffset;
 } ButtonMapping;
 
 extern void buttonsInit();
